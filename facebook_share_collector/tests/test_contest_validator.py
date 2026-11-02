@@ -1,0 +1,640 @@
+import os
+import tempfile
+from app.models.share_profile import ShareProfile
+from app.utils.contest_validator import ContestValidator
+from app.automation.profile_extractor import ProfileExtractor
+from app.automation.browser_dom_extractor import (
+    clean_facebook_profile_url,
+    BrowserDOMExtractor,
+    BackgroundHTMLExtractor,
+)
+from app.exporters.lottery_print_exporter import LotteryPrintExporter
+
+
+def test_three_action_contest_validation():
+    profiles = [
+        # Alice completes all 3 actions (Like + Comment + Share)
+        ShareProfile(name="Alice Rahman", source="ui", confidence=0.9, session_id="s1", action_type="like"),
+        ShareProfile(name="Alice Rahman ", source="ui", confidence=0.9, session_id="s1", action_type="comment", content="Awesome work!"),
+        ShareProfile(name="Alice Rahman", source="ui", confidence=0.9, session_id="s1", action_type="share", content="Must watch"),
+
+        # Bob only likes and comments (missing share -> ineligible)
+        ShareProfile(name="Bob Karim", source="ui", confidence=0.9, session_id="s1", action_type="like"),
+        ShareProfile(name="Bob Karim", source="ui", confidence=0.9, session_id="s1", action_type="comment", content="Great post"),
+
+        # Charlie only shares (missing like & comment -> ineligible)
+        ShareProfile(name="Charlie Hasan", source="ui", confidence=0.9, session_id="s1", action_type="share"),
+    ]
+
+    participants = ContestValidator.validate_participants(profiles)
+    counts = ContestValidator.compute_counts(profiles)
+
+    assert counts["total_participants"] == 3
+    assert counts["likes"] == 2
+    assert counts["comments"] == 2
+    assert counts["shares"] == 2
+    assert counts["eligible"] == 1
+
+    # Alice should be first, eligible, and assigned Serial #0001
+    alice = participants[0]
+    assert alice.name == "Alice Rahman"
+    assert alice.serial_code == "#0001"
+    assert alice.liked is True
+    assert alice.commented is True
+    assert alice.shared is True
+    assert alice.actions_completed == 3
+    assert alice.is_eligible is True
+    assert alice.status_label == "ELIGIBLE (3/3)"
+    assert "Awesome work!" in alice.comment_texts
+    assert "Must watch" in alice.share_contents
+
+    # Bob has 2/3 actions and no lottery serial number
+    bob = next(p for p in participants if p.name == "Bob Karim")
+    assert bob.is_eligible is False
+    assert bob.serial_code == "-"
+    assert bob.actions_completed == 2
+    assert bob.missing_actions == ["Share"]
+
+
+def test_same_name_disambiguation_by_avatar_and_url():
+    """
+    Verifies that two different users with the exact same name ('Md Rahim')
+    who have different profile photos (avatar_hash) or URLs are NEVER merged into a fake winner,
+    while the same user with a matching avatar hash (Hamming distance <= 8) IS matched across all 3 actions.
+    """
+    profiles = [
+        # Md Rahim #1 (Avatar hash all 0s) only Likes and Comments
+        ShareProfile(name="Md Rahim", source="ui", confidence=0.9, session_id="s1", action_type="like", avatar_hash="0000000000000000"),
+        ShareProfile(name="Md Rahim", source="ui", confidence=0.9, session_id="s1", action_type="comment", content="First Rahim comment", avatar_hash="0000000000000001"),
+
+        # Md Rahim #2 (Completely different Avatar hash all Fs, non-adjacent scroll) only Shares
+        ShareProfile(name="Md Rahim", source="ui", confidence=0.9, session_id="s1", action_type="share", content="Second Rahim share", avatar_hash="ffffffffffffffff", scroll_index=15),
+
+        # Md Rahim #3 (Different URL, completes all 3 actions!)
+        ShareProfile(name="Md Rahim", profile_url="https://facebook.com/rahim.three", source="ui", confidence=0.9, session_id="s1", action_type="like"),
+        ShareProfile(name="Md Rahim", profile_url="https://facebook.com/rahim.three", source="ui", confidence=0.9, session_id="s1", action_type="comment", content="Done all 3!"),
+        ShareProfile(name="Md Rahim", profile_url="https://facebook.com/rahim.three", source="ui", confidence=0.9, session_id="s1", action_type="share"),
+    ]
+
+    participants = ContestValidator.validate_participants(profiles)
+    # Must be 3 distinct 'Md Rahim' participants!
+    assert len(participants) == 3
+
+    eligible_rahims = [p for p in participants if p.is_eligible]
+    assert len(eligible_rahims) == 1
+    assert eligible_rahims[0].profile_url == "https://facebook.com/rahim.three"
+    assert eligible_rahims[0].serial_code == "#0001"
+    assert "User #3" in eligible_rahims[0].display_name
+
+
+def test_printable_lottery_tickets_export():
+    profiles = [
+        ShareProfile(name="Winner One", source="ui", confidence=0.9, session_id="s1", action_type="like", avatar_hash="1234567890abcdef"),
+        ShareProfile(name="Winner One", source="ui", confidence=0.9, session_id="s1", action_type="comment", content="Loved it!", avatar_hash="1234567890abcdef"),
+        ShareProfile(name="Winner One", source="ui", confidence=0.9, session_id="s1", action_type="share", avatar_hash="1234567890abcdef"),
+    ]
+    participants = ContestValidator.validate_participants(profiles)
+
+    with tempfile.TemporaryDirectory() as tmpdir:
+        out_html = os.path.join(tmpdir, "lottery.html")
+        ok = LotteryPrintExporter.export_printable_tickets(participants, out_html)
+        assert ok is True
+        assert os.path.isfile(out_html)
+        html_text = open(out_html, encoding="utf-8").read()
+        assert "#0001" in html_text
+        assert "Winner One" in html_text
+        assert "Loved it!" in html_text
+
+
+def test_extract_likes_and_comments_xml():
+    likes_xml = """<?xml version='1.0' encoding='UTF-8' standalone='yes' ?>
+    <hierarchy rotation="0">
+      <node class="androidx.recyclerview.widget.RecyclerView" scrollable="true">
+        <node class="android.view.ViewGroup" content-desc="All 120" />
+        <node class="android.view.ViewGroup">
+          <node class="android.widget.Button" text="Nusrat Jahan" clickable="true" />
+          <node class="android.widget.Button" text="Add friend" clickable="true" />
+        </node>
+        <node class="android.view.ViewGroup">
+          <node class="android.view.ViewGroup" content-desc="Tanvir Hasan, Follow" clickable="true" />
+        </node>
+      </node>
+    </hierarchy>
+    """
+    extractor = ProfileExtractor(min_confidence=0.6)
+    like_profiles = extractor.extract(likes_xml, session_id="s1", action_type="like")
+    like_names = [p.name for p in like_profiles]
+    assert "Nusrat Jahan" in like_names
+    assert "Tanvir Hasan" in like_names
+    assert all(p.action_type == "like" for p in like_profiles)
+
+    comments_xml = """<?xml version='1.0' encoding='UTF-8' standalone='yes' ?>
+    <hierarchy rotation="0">
+      <node class="androidx.recyclerview.widget.RecyclerView" scrollable="true" bounds="[0,240][1080,2280]">
+        <!-- Cut-off fragment at top of screen (no profile picture node, has Reply to / comment button) -> MUST BE IGNORED -->
+        <node class="android.view.ViewGroup">
+          <node class="android.view.ViewGroup" text="💓💓" />
+          <node class="android.widget.Button" content-desc="Reply to Asfia's comment" />
+          <node class="android.widget.Button" content-desc="Like Asfia's comment button. Double tap and hold to show reaction tray." />
+          <node class="android.widget.Button" content-desc="Downvote Asfia's comment" />
+        </node>
+        <!-- Real Facebook Android Comment #1 -->
+        <node class="android.view.ViewGroup">
+          <node class="android.widget.Button" content-desc="Mohammad Sharif profile picture, unseen story" bounds="[36,400][136,500]" />
+          <node class="android.view.ViewGroup" text="Mohammad Sharif&#10;· Follow&#10;Ready&#10;See original" />
+          <node class="android.widget.Button" content-desc="Reply to Mohammad's comment" />
+          <node class="android.widget.Button" content-desc="Like Mohammad's comment button. Double tap and hold to show reaction tray." />
+          <node class="android.widget.Button" content-desc="Downvote Mohammad's comment" />
+        </node>
+        <!-- Real Facebook Android Comment #2 -->
+        <node class="android.view.ViewGroup">
+          <node class="android.view.ViewGroup" text="Top fan" />
+          <node class="android.widget.Button" content-desc="Nusrat Jahan profile picture" bounds="[36,600][136,700]" />
+          <node class="android.widget.Button" text="Nusrat Jahan" clickable="true" />
+          <node class="android.view.ViewGroup" text="Loved by author" />
+          <node class="android.view.ViewGroup" text="Loved this project so much!" />
+          <node class="android.view.ViewGroup" text="See original" />
+          <node class="android.view.ViewGroup" text="2h" />
+          <node class="android.widget.Button" text="Like" />
+          <node class="android.widget.Button" text="Reply" />
+        </node>
+      </node>
+    </hierarchy>
+    """
+    comment_profiles = extractor.extract(comments_xml, session_id="s1", action_type="comment")
+    assert len(comment_profiles) == 2
+    assert comment_profiles[0].name == "Mohammad Sharif"
+    assert comment_profiles[0].content == "Ready"
+    assert comment_profiles[1].name == "Nusrat Jahan"
+    assert comment_profiles[1].action_type == "comment"
+    assert comment_profiles[1].content == "Loved this project so much!"
+
+
+def test_browser_dom_extractor_and_canonical_profile_links():
+    # 1. URL cleaning & canonicalization
+    assert clean_facebook_profile_url("https://www.facebook.com/nusrat.jahan.99?__cft__[0]=AZX&__tn__=-UC") == "https://www.facebook.com/nusrat.jahan.99"
+    assert clean_facebook_profile_url("/profile.php?id=10008877665544&__cft__[0]=AZ") == "https://www.facebook.com/profile.php?id=10008877665544"
+    assert clean_facebook_profile_url("/people/Md-Rahim/100011223344/") == "https://www.facebook.com/profile.php?id=100011223344"
+    assert clean_facebook_profile_url("https://www.facebook.com/groups/12345/user/1000998877/") == "https://www.facebook.com/profile.php?id=1000998877"
+    # Non-profile links must return None
+    assert clean_facebook_profile_url("https://www.facebook.com/post/123?comment_id=987654") is None
+    assert clean_facebook_profile_url("https://www.facebook.com/hashtag/contest") is None
+
+    # 2. BrowserDOMExtractor parsing + 3-action cross-matching by exact profile_url
+    likes = BrowserDOMExtractor.parse_dom_items(
+        [{"name": "Md Rahim", "url": "https://www.facebook.com/profile.php?id=1000111", "content": ""}],
+        session_id="s_web", action_type="like"
+    )
+    comments = BrowserDOMExtractor.parse_dom_items(
+        [{"name": "Md Rahim", "url": "/profile.php?id=1000111&__cft__=1", "content": "Joined the lottery!"}],
+        session_id="s_web", action_type="comment"
+    )
+    shares = BrowserDOMExtractor.parse_dom_items(
+        [
+            {"name": "Md Rahim", "url": "https://www.facebook.com/profile.php?id=1000111", "content": ""},
+            {"name": "Md Rahim", "url": "https://www.facebook.com/profile.php?id=1000222", "content": ""},
+        ],
+        session_id="s_web", action_type="share"
+    )
+
+    participants = ContestValidator.validate_participants(likes + comments + shares)
+    assert len(participants) == 2
+    assert participants[0].is_eligible is True
+    assert participants[0].serial_code == "#0001"
+    assert participants[0].profile_url == "https://www.facebook.com/profile.php?id=1000111"
+    assert participants[1].is_eligible is False
+    assert participants[1].profile_url == "https://www.facebook.com/profile.php?id=1000222"
+
+
+def test_background_html_extractor_dialog_comments_and_json():
+    # 1. Likes dialog HTML (with avatar aria-label link + span text link, plus background feed link to ignore)
+    likes_html = """
+    <html><body>
+      <a href="https://www.facebook.com/sidebar.friend">Sidebar Friend</a>
+      <div role="dialog" aria-label="People who reacted">
+        <div>
+          <a href="https://www.facebook.com/hasmot.ali?__cft__[0]=AZ" aria-label="Hasmot Ali's profile picture"></a>
+          <a href="https://www.facebook.com/hasmot.ali?__cft__[0]=AZ"><span>Hasmot Ali</span></a>
+        </div>
+        <div>
+          <a href="/profile.php?id=1000998877&amp;__tn__=-UC" aria-label="Md Shipon"></a>
+        </div>
+      </div>
+    </body></html>
+    """
+    like_profiles = BackgroundHTMLExtractor.extract_from_html(likes_html, session_id="s1", action_type="like")
+    assert len(like_profiles) == 2
+    assert like_profiles[0].name == "Hasmot Ali"
+    assert like_profiles[0].profile_url == "https://www.facebook.com/hasmot.ali"
+    assert like_profiles[1].name == "Md Shipon"
+    assert like_profiles[1].profile_url == "https://www.facebook.com/profile.php?id=1000998877"
+
+    # 2. Comments HTML (<div role="article" aria-label="Comment by ...">)
+    comments_html = """
+    <html><body>
+      <div role="article" aria-label="Comment by Hasmot Ali 3 hours ago">
+        <a href="https://www.facebook.com/hasmot.ali?__cft__[0]=AZ" aria-label="Hasmot Ali"></a>
+        <div dir="auto">Hasmot Ali</div>
+        <div dir="auto">Alhamdulillah done!</div>
+        <a href="https://www.facebook.com/post/1?comment_id=123">3h</a>
+      </div>
+      <div role="article" aria-label="Comment by Md Shipon yesterday">
+        <a href="/profile.php?id=1000998877">Md Shipon</a>
+        <img alt="💓" />
+        <img alt="🔥" />
+      </div>
+    </body></html>
+    """
+    comment_profiles = BackgroundHTMLExtractor.extract_from_html(comments_html, session_id="s1", action_type="comment")
+    assert len(comment_profiles) == 2
+    assert comment_profiles[0].name == "Hasmot Ali"
+    assert comment_profiles[0].profile_url == "https://www.facebook.com/hasmot.ali"
+    assert comment_profiles[0].content == "Alhamdulillah done!"
+    assert comment_profiles[1].name == "Md Shipon"
+    assert comment_profiles[1].profile_url == "https://www.facebook.com/profile.php?id=1000998877"
+    assert comment_profiles[1].content == "💓🔥"
+
+    # 3. Embedded Relay JSON fallback
+    json_html = """
+    <html><body><script type="application/json">
+    {"data":{"reactors":{"edges":[{"node":{"actor":{"id":"1000555","name":"Tanvir Hasan","url":"https:\\/\\/www.facebook.com\\/tanvir.hasan"}}}]}}}
+    </script></body></html>
+    """
+    json_profiles = BackgroundHTMLExtractor.extract_from_html(json_html, session_id="s1", action_type="share")
+    assert len(json_profiles) == 1
+    assert json_profiles[0].name == "Tanvir Hasan"
+    assert json_profiles[0].profile_url == "https://www.facebook.com/tanvir.hasan"
+
+
+def test_extension_clipboard_batch_bridge():
+    batch_payload = (
+        'FB_CONTEST_BATCH_V1:{"batch_id":"b_101","action_type":"all","items":['
+        '{"name":"Hasmot Ali","url":"https://www.facebook.com/hasmot.ali?__cft__=1","content":"","action_type":"like"},'
+        '{"name":"Hasmot Ali","url":"https://www.facebook.com/hasmot.ali","content":"Done all 3!","action_type":"comment"},'
+        '{"name":"Hasmot Ali","url":"https://www.facebook.com/hasmot.ali","content":"","action_type":"share"}'
+        ']}'
+    )
+    parsed = BrowserDOMExtractor.parse_clipboard_batch(batch_payload, session_id="s_ext")
+    assert parsed is not None
+    batch_id, profiles = parsed
+    assert batch_id == "b_101"
+    assert len(profiles) == 3
+
+    participants = ContestValidator.validate_participants(profiles)
+    assert len(participants) == 1
+    assert participants[0].is_eligible is True
+    assert participants[0].serial_code == "#0001"
+    assert participants[0].profile_url == "https://www.facebook.com/hasmot.ali"
+    assert participants[0].comment_texts == ["Done all 3!"]
+
+
+def test_nested_reply_comments_and_sharer_post_card_urls():
+    # 1. Sharer post card URLs (/username/posts/... and /permalink.php?story_fbid=...&id=...)
+    assert clean_facebook_profile_url("https://www.facebook.com/a2ein3d/posts/pfbid02xyz?__cft__[0]=AZ") == "https://www.facebook.com/a2ein3d"
+    assert clean_facebook_profile_url("https://www.facebook.com/permalink.php?story_fbid=pfbid01&id=100037037439374") == "https://www.facebook.com/profile.php?id=100037037439374"
+
+    # 2. Nested reply inside parent comment article must NOT cause parent comment to be skipped or mixed
+    nested_comments_html = """
+    <html><body>
+      <div role="article" aria-label="Comment by Imtiaz Ahmed Nahid 2 hours ago">
+        <a href="https://www.facebook.com/a2ein3d"><span>Imtiaz Ahmed Nahid</span></a>
+        <div dir="auto">Joined the contest!</div>
+        <div role="article" aria-label="Reply by Vejal Nai 1 hour ago">
+          <a href="https://www.facebook.com/vejalnaibd"><span>Vejal Nai</span></a>
+          <div dir="auto">Thank you!</div>
+        </div>
+      </div>
+    </body></html>
+    """
+    extracted_comments = BackgroundHTMLExtractor.extract_from_html(
+        nested_comments_html, session_id="s_nested", action_type="comment"
+    )
+    by_name = {c.name: c for c in extracted_comments}
+    assert "Imtiaz Ahmed Nahid" in by_name
+    assert by_name["Imtiaz Ahmed Nahid"].profile_url == "https://www.facebook.com/a2ein3d"
+    assert by_name["Imtiaz Ahmed Nahid"].content == "Joined the contest!"
+
+    # 3. Reaction-suffixed Like ("Imtiaz Ahmed Nahid Loved") + Nested Comment + Share Card URL -> Eligible 3/3!
+    like_batch = BrowserDOMExtractor.parse_dom_items(
+        [{"name": "Imtiaz Ahmed Nahid Loved", "url": "https://www.facebook.com/a2ein3d", "action_type": "like"}],
+        session_id="s_nested", action_type="like"
+    )
+    share_batch = BrowserDOMExtractor.parse_dom_items(
+        [{"name": "Imtiaz Ahmed Nahid", "url": "https://www.facebook.com/a2ein3d/posts/pfbid0999", "action_type": "share"}],
+        session_id="s_nested", action_type="share"
+    )
+    participants = ContestValidator.validate_participants(
+        like_batch + [by_name["Imtiaz Ahmed Nahid"]] + share_batch
+    )
+    assert len(participants) == 1
+    assert participants[0].name == "Imtiaz Ahmed Nahid"
+    assert participants[0].is_eligible is True
+    assert participants[0].serial_code == "#0001"
+
+
+def test_android_single_window_lock_and_comment_expand_coords():
+    """
+    Verifies that when both a background Post/Comments RecyclerView AND a foreground
+    Likes popup RecyclerView exist in the Android XML dump, ProfileExtractor locks
+    strictly onto the single foreground window matching action_type (never mixing both!).
+    """
+    overlapping_xml = """<?xml version="1.0" encoding="UTF-8"?>
+    <hierarchy rotation="0">
+      <!-- Background Post/Comments RecyclerView -->
+      <androidx.recyclerview.widget.RecyclerView bounds="[0,200][1080,2200]" scrollable="true">
+        <android.view.ViewGroup bounds="[0,250][1080,450]">
+          <android.view.View content-desc="Background Commenter profile picture" bounds="[30,260][110,340]" />
+          <android.widget.TextView text="Background Commenter" heading="true" bounds="[130,260][500,310]" />
+          <android.widget.TextView text="Great post!" bounds="[130,320][500,370]" />
+          <android.view.View content-desc="Comment button" bounds="[130,380][250,420]" />
+        </android.view.ViewGroup>
+        <android.view.ViewGroup bounds="[0,460][1080,540]">
+          <android.widget.TextView text="View more comments" bounds="[40,470][440,530]" />
+        </android.view.ViewGroup>
+      </androidx.recyclerview.widget.RecyclerView>
+
+      <!-- Foreground Likes Bottom-Sheet Popup RecyclerView -->
+      <androidx.recyclerview.widget.RecyclerView bounds="[0,700][1080,2200]" scrollable="true">
+        <android.view.ViewGroup bounds="[0,720][1080,860]">
+          <android.view.View content-desc="Foreground Reactor profile picture" bounds="[40,730][120,810]" />
+          <android.widget.TextView text="Foreground Reactor Liked" heading="true" bounds="[140,740][600,800]" />
+          <android.widget.Button text="Add friend" bounds="[800,740][1020,800]" />
+        </android.view.ViewGroup>
+      </androidx.recyclerview.widget.RecyclerView>
+    </hierarchy>
+    """
+    extractor = ProfileExtractor(min_confidence=0.6)
+
+    # 1. Extracting Likes must ONLY return "Foreground Reactor" (with "Liked" suffix stripped) and lock to [0,700][1080,2200]
+    likes = extractor.extract(overlapping_xml, session_id="s_and", action_type="like")
+    assert len(likes) == 1
+    assert likes[0].name == "Foreground Reactor"
+    assert extractor.last_detected_window_type == "like"
+    assert extractor.last_active_bounds == (0, 700, 1080, 1500)
+
+    # 2. Extracting Comments must ONLY return "Background Commenter" and lock to [0,200][1080,2200]
+    comments = extractor.extract(overlapping_xml, session_id="s_and", action_type="comment")
+    assert len(comments) == 1
+    assert comments[0].name == "Background Commenter"
+    assert comments[0].content == "Great post!"
+    assert extractor.last_detected_window_type == "comment"
+    assert extractor.last_active_bounds == (0, 200, 1080, 2000)
+
+    # 3. Verify 'View more comments' tap coordinate detection
+    tap_xy = ProfileExtractor.find_expand_comments_tap_coords(overlapping_xml)
+    assert tap_xy == (240, 500)
+
+
+def test_comment_author_links_with_comment_id_and_inline_timestamps():
+    """
+    Verifies that commenter profile links containing ?comment_id=... and inline
+    timestamp/badge suffixes ('Ayatullah Mushkan Maryam · 4h', 'Moni Mreedha · 6h · Top fan')
+    are normalized into canonical profile URLs and clean author names.
+    """
+    # 1. Comment author URLs with ?comment_id= must be preserved as profile URLs
+    assert (
+        clean_facebook_profile_url("https://www.facebook.com/ayatullah.maryam?comment_id=Y29tbWVudDoxMjM=&__cft__[0]=AZ")
+        == "https://www.facebook.com/ayatullah.maryam"
+    )
+    assert (
+        clean_facebook_profile_url("https://www.facebook.com/profile.php?id=1000888999&comment_id=Y29tbWVudDoxMjM=")
+        == "https://www.facebook.com/profile.php?id=1000888999"
+    )
+    assert (
+        clean_facebook_profile_url("https://www.facebook.com/people/Ayatullah-Mushkan-Maryam/pfbid02xyz?comment_id=123")
+        == "https://www.facebook.com/people/Ayatullah-Mushkan-Maryam/pfbid02xyz"
+    )
+    # Whereas post permalink timestamp links (/vejalnaibd/posts/pfbid...?comment_id=123) must still return None
+    assert (
+        clean_facebook_profile_url("https://www.facebook.com/vejalnaibd/posts/pfbid0k45Y7MQJ?comment_id=123")
+        is None
+    )
+
+    # 2. Inline timestamps ('· 4h', '· 6h · Top fan') stripped from author names
+    parsed = BrowserDOMExtractor.parse_dom_items(
+        [
+            {
+                "name": "Ayatullah Mushkan Maryam · 4h",
+                "url": "https://www.facebook.com/ayatullah.maryam?comment_id=Y29tbWVudDoxMjM=",
+                "content": "Redy",
+                "action_type": "comment",
+            },
+            {
+                "name": "Moni Mreedha · 6h · Top fan",
+                "url": "https://www.facebook.com/profile.php?id=1000888999&comment_id=Y29tbWVudDoxMjM=",
+                "content": "Insha'Allah",
+                "action_type": "comment",
+            },
+        ],
+        session_id="s_inline",
+        action_type="comment",
+    )
+    assert len(parsed) == 2
+    assert parsed[0].name == "Ayatullah Mushkan Maryam"
+    assert parsed[0].profile_url == "https://www.facebook.com/ayatullah.maryam"
+    assert parsed[0].content == "Redy"
+    assert parsed[1].name == "Moni Mreedha"
+    assert parsed[1].profile_url == "https://www.facebook.com/profile.php?id=1000888999"
+    assert parsed[1].content == "Insha'Allah"
+
+
+def test_hybrid_profile_sync_engine_three_layers():
+    """
+    Tests the separate Hybrid Phone + Web ProfileSyncEngine:
+      1. Unique Name Phone (Share + Comment without URL) + Web (Like with URL) -> 3/3 Eligible with URL applied.
+      2. Same-Name Collision ('Md Shipon' #1 and 'Md Shipon' #2) disambiguated accurately via 64-bit Avatar dHash.
+    """
+    from app.utils.profile_sync_engine import ProfileSyncEngine
+
+    raw_profiles = [
+        # Person 1: Hasmot Ali (Liked on Web with URL, Commented & Shared on Phone without URL)
+        ShareProfile(
+            name="Hasmot Ali",
+            profile_url="https://www.facebook.com/hasmot.ali",
+            action_type="like",
+            source="facebook_browser_extension",
+            confidence=1.0,
+            session_id="s_hyb",
+        ),
+        ShareProfile(
+            name="Hasmot Ali",
+            profile_url=None,
+            content="Alhamdulillah",
+            action_type="comment",
+            source="facebook_android_ui",
+            confidence=0.95,
+            session_id="s_hyb",
+        ),
+        ShareProfile(
+            name="Hasmot Ali",
+            profile_url=None,
+            action_type="share",
+            source="facebook_android_ui",
+            confidence=0.95,
+            session_id="s_hyb",
+        ),
+        # Person 2A & 2B: Two distinct people named "Md Shipon" disambiguated by Avatar pHash!
+        ShareProfile(
+            name="Md Shipon",
+            profile_url=None,
+            avatar_hash="1111222233334444",
+            action_type="share",
+            source="facebook_android_ui",
+            confidence=0.95,
+            session_id="s_hyb",
+        ),
+        ShareProfile(
+            name="Md Shipon",
+            profile_url=None,
+            avatar_hash="ffffaaaabbbbcccc",
+            action_type="share",
+            source="facebook_android_ui",
+            confidence=0.95,
+            session_id="s_hyb",
+        ),
+        ShareProfile(
+            name="Md Shipon",
+            profile_url="https://www.facebook.com/shipon.one",
+            avatar_hash="1111222233334440",  # Distance 1 from first Phone Shipon
+            action_type="like",
+            source="facebook_browser_extension",
+            confidence=1.0,
+            session_id="s_hyb",
+        ),
+        ShareProfile(
+            name="Md Shipon",
+            profile_url="https://www.facebook.com/shipon.two",
+            avatar_hash="ffffaaaabbbbccc0",  # Distance 2 from second Phone Shipon
+            action_type="like",
+            source="facebook_browser_extension",
+            confidence=1.0,
+            session_id="s_hyb",
+        ),
+    ]
+
+    engine = ProfileSyncEngine()
+    rows = engine.build_sync_checklist(raw_profiles)
+    assert len(rows) == 3
+
+    # Verify Hasmot Ali is 3/3 Eligible and matched across Phone + Web
+    hasmot_row = next(r for r in rows if r.name == "Hasmot Ali")
+    assert hasmot_row.is_eligible is True
+    assert hasmot_row.profile_url == "https://www.facebook.com/hasmot.ali"
+    assert hasmot_row.sync_status == "VERIFIED_UNIQUE_NAME"
+
+    # Verify the two "Md Shipon" rows matched their exact respective Web URLs via Layer 2 Avatar dHash!
+    shipon_rows = {r.profile_url: r for r in rows if r.name == "Md Shipon"}
+    assert "https://www.facebook.com/shipon.one" in shipon_rows
+    assert "https://www.facebook.com/shipon.two" in shipon_rows
+    assert shipon_rows["https://www.facebook.com/shipon.one"].sync_status == "VERIFIED_3_LAYER"
+    assert shipon_rows["https://www.facebook.com/shipon.one"].phone_avatar_hash == "1111222233334444"
+    assert shipon_rows["https://www.facebook.com/shipon.two"].sync_status == "VERIFIED_3_LAYER"
+    assert shipon_rows["https://www.facebook.com/shipon.two"].phone_avatar_hash == "ffffaaaabbbbcccc"
+
+    # Apply synced URLs back to raw_profiles and verify main ContestValidator
+    updated = engine.apply_synced_urls_to_profiles(rows)
+    assert updated == 4
+    participants = ContestValidator.validate_participants(raw_profiles)
+    eligible = [p for p in participants if p.is_eligible]
+    assert len(eligible) == 1
+    assert eligible[0].name == "Hasmot Ali"
+    assert eligible[0].profile_url == "https://www.facebook.com/hasmot.ali"
+
+
+def test_same_name_conflict_resolution_via_comment_bridge():
+    """
+    Tests Same-Name Conflict Avoidance when two users have the exact same name ('Md Sakib'),
+    two different Web URLs ('sakib.real' and 'sakib.other'), and NO Web avatar hashes yet,
+    by bridging Phone AvatarHash <-> Comment Text <-> Web Profile URL!
+    """
+    from app.utils.profile_sync_engine import ProfileSyncEngine
+
+    profiles = [
+        # Web records for two different "Md Sakib" users
+        ShareProfile(name="Md Sakib", profile_url="https://www.facebook.com/sakib.real", action_type="like", source="facebook_browser_extension", confidence=1.0, session_id="s_col"),
+        ShareProfile(name="Md Sakib", profile_url="https://www.facebook.com/sakib.real", content="রেডি আছি ইনশাআল্লাহ", action_type="comment", source="facebook_browser_extension", confidence=1.0, session_id="s_col"),
+        ShareProfile(name="Md Sakib", profile_url="https://www.facebook.com/sakib.other", action_type="like", source="facebook_browser_extension", confidence=1.0, session_id="s_col"),
+        ShareProfile(name="Md Sakib", profile_url="https://www.facebook.com/sakib.other", content="আমিও অংশ নিলাম", action_type="comment", source="facebook_browser_extension", confidence=1.0, session_id="s_col"),
+
+        # Phone records for "Md Sakib" #1 (who commented "রেডি আছি ইনশাআল্লাহ" AND shared the post!)
+        ShareProfile(name="Md Sakib", profile_url=None, avatar_hash="d8d8cae657d5cce0", content="রেডি আছি ইনশাআল্লাহ", action_type="comment", source="facebook_android_ui", confidence=0.95, session_id="s_col"),
+        ShareProfile(name="Md Sakib", profile_url=None, avatar_hash="d8d8cae657d5cce1", action_type="share", source="facebook_android_ui", confidence=0.95, session_id="s_col"),
+    ]
+
+    engine = ProfileSyncEngine()
+    rows = engine.build_sync_checklist(profiles)
+    engine.apply_synced_urls_to_profiles(rows)
+
+    participants = ContestValidator.validate_participants(profiles)
+    assert len(participants) == 2
+
+    by_url = {p.profile_url: p for p in participants}
+    assert by_url["https://www.facebook.com/sakib.real"].is_eligible is True
+    assert by_url["https://www.facebook.com/sakib.real"].shared is True
+    assert by_url["https://www.facebook.com/sakib.other"].is_eligible is False
+    assert by_url["https://www.facebook.com/sakib.other"].shared is False
+
+
+def test_zero_data_inconsistency_between_validator_sync_and_exporters():
+    """
+    End-to-end consistency verification across:
+      - Vertical-shift-invariant dHash matching (absorbing Android uiautomator/screencap jitter)
+      - Corrupted screen-transition hash sanitization ('0100000000e0c285', 'e1c9b1cd00040800')
+      - Tab 1 (ContestValidator) vs Tab 2 (ProfileSyncEngine) vs CSVExporter vs LotteryPrintExporter
+    """
+    import csv
+    from app.utils.profile_sync_engine import ProfileSyncEngine
+    from app.exporters.csv_exporter import CSVExporter
+
+    profiles = [
+        # User 1: Mohammad Forhad — Web Like + Comment (with URL), Phone Share + Vertically-Shifted Phone Comment Hash
+        ShareProfile(name="Mohammad Forhad", profile_url="https://www.facebook.com/forhaduni", action_type="like", source="facebook_browser_extension", confidence=1.0, session_id="s_cons"),
+        ShareProfile(name="Mohammad Forhad", profile_url=None, avatar_hash="f0f0ecc486ccb2d4", content="Waiting", action_type="comment", source="facebook_android_ui", confidence=0.95, session_id="s_cons", scroll_index=3),
+        ShareProfile(name="Mohammad Forhad", profile_url=None, avatar_hash="e8b2f0e8ecc686cc", content="Waiting", action_type="comment", source="facebook_android_ui", confidence=0.95, session_id="s_cons", scroll_index=4),
+        ShareProfile(name="Mohammad Forhad", profile_url=None, avatar_hash="f0ecac86a286c4f0", action_type="share", source="facebook_android_ui", confidence=0.95, session_id="s_cons", scroll_index=1),
+
+        # User 2: Shafiqul Islam — Phone Share with valid hash + Phone Share during home-screen transition (corrupted hash)
+        ShareProfile(name="Shafiqul Islam", profile_url=None, avatar_hash="d09682e39a8eb0b0", action_type="share", source="facebook_android_ui", confidence=0.95, session_id="s_cons", scroll_index=8),
+        ShareProfile(name="Shafiqul Islam", profile_url=None, avatar_hash="e1c9b1cd00040800", action_type="share", source="facebook_android_ui", confidence=0.95, session_id="s_cons", scroll_index=11),
+
+        # Legacy UI noise rows that must be ignored identically by both Tab 1 and Tab 2
+        ShareProfile(name="Reply to Forhad's comment", profile_url=None, action_type="comment", source="facebook_android_ui", confidence=0.5, session_id="s_cons"),
+        ShareProfile(name="Online status indicator active", profile_url=None, action_type="like", source="facebook_android_ui", confidence=0.5, session_id="s_cons"),
+    ]
+
+    engine = ProfileSyncEngine()
+    sync_rows = engine.build_sync_checklist(profiles)
+    engine.apply_synced_urls_to_profiles(sync_rows)
+    sync_rows = engine.build_sync_checklist(profiles)
+    participants = ContestValidator.validate_participants(profiles)
+
+    # 1. Exact same participant count & eligibility between Tab 1 and Tab 2
+    assert len(participants) == 2
+    assert len(sync_rows) == 2
+    assert [p.name for p in participants] == ["Mohammad Forhad", "Shafiqul Islam"]
+    assert all(p.disambiguator == "" for p in participants)
+
+    # 2. Mohammad Forhad is 3/3 Eligible with verified URL on all records
+    forhad = participants[0]
+    assert forhad.is_eligible is True
+    assert forhad.serial_code == "#0001"
+    assert forhad.profile_url == "https://www.facebook.com/forhaduni"
+
+    # 3. Exported Contest CSV matches ContestValidator 1:1
+    with tempfile.TemporaryDirectory() as tmpdir:
+        csv_path = os.path.join(tmpdir, "contest.csv")
+        assert CSVExporter.export_contest(participants, csv_path) is True
+        with open(csv_path, encoding="utf-8-sig") as f:
+            rows = list(csv.DictReader(f))
+        assert len(rows) == 2
+        assert rows[0]["Serial #"] == "#0001"
+        assert rows[0]["Profile URL"] == "https://www.facebook.com/forhaduni"
+
+
+
+
+
+
+
+
+

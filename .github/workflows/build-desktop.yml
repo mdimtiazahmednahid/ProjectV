@@ -1,0 +1,51 @@
+name: Build Multi-OS Desktop Application
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [ main ]
+
+jobs:
+  build-desktop:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: macOS-AppleSilicon-arm64
+            os: macos-14
+            python-version: "3.12"
+          - name: macOS-Intel-x86_64
+            os: macos-13
+            python-version: "3.12"
+          - name: Windows-10-11-x64
+            os: windows-latest
+            python-version: "3.12"
+
+    runs-on: ${{ matrix.os }}
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Install dependencies & PyInstaller
+        working-directory: facebook_share_collector
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt pyinstaller
+
+      - name: Build Standalone App with Bundled ADB
+        working-directory: facebook_share_collector
+        run: |
+          python build_desktop.py
+
+      - name: Upload Desktop App Artifact (${{ matrix.name }})
+        uses: actions/upload-artifact@v4
+        with:
+          name: FacebookContestValidator-${{ matrix.name }}
+          path: facebook_share_collector/dist/*
+

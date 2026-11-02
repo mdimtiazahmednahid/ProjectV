@@ -1,0 +1,32 @@
+# Virtual environment
+.venv/
+venv/
+ENV/
+
+# Python compiled
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Appium/Logs
+logs/
+*.log
+
+# Database
+data/
+*.sqlite
+*.db
+
+# Screenshots and exports
+screenshots/
+*.csv
+*.xlsx
+*.json
+
+# OS specific
+.DS_Store
+Thumbs.db
+
+# PySide6
+*.ui
+*.qrc
