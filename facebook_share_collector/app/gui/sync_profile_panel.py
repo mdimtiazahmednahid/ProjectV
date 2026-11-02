@@ -253,12 +253,15 @@ class SyncProfilePanel(QWidget):
             filtered.append(r)
         return filtered
 
+    MAX_TABLE_DISPLAY_ROWS = 1500
+
     def refresh_table_view(self):
         self.table.blockSignals(True)
         self.table.setUpdatesEnabled(False)
         try:
-            self.table.setRowCount(0)
             displayed = self._get_filtered_rows()
+            displayed_slice = displayed[: self.MAX_TABLE_DISPLAY_ROWS]
+            self.table.setRowCount(len(displayed_slice))
 
             bold_font = QFont()
             bold_font.setBold(True)
@@ -272,9 +275,7 @@ class SyncProfilePanel(QWidget):
             normal_fg = QBrush(QColor(241, 245, 249))        # Crisp white-gray (#f1f5f9)
             link_fg = QBrush(QColor(96, 165, 250))           # Bright sky blue (#60a5fa)
 
-            for idx, r in enumerate(displayed):
-                row_idx = self.table.rowCount()
-                self.table.insertRow(row_idx)
+            for row_idx, r in enumerate(displayed_slice):
 
                 name_item = QTableWidgetItem(r.name)
                 if r.is_eligible:

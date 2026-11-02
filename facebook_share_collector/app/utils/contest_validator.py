@@ -22,11 +22,19 @@ class IncrementalContestAggregator:
         self.participants: List[ContestParticipant] = []
         self._by_url: Dict[str, ContestParticipant] = {}
         self._by_name_buckets: Dict[str, List[ContestParticipant]] = {}
+        self._likes_count: int = 0
+        self._comments_count: int = 0
+        self._shares_count: int = 0
+        self._eligible_count: int = 0
 
     def clear(self):
         self.participants.clear()
         self._by_url.clear()
         self._by_name_buckets.clear()
+        self._likes_count = 0
+        self._comments_count = 0
+        self._shares_count = 0
+        self._eligible_count = 0
 
     @staticmethod
     def _clean_author_name(raw_name: str) -> str:
@@ -229,20 +237,28 @@ class IncrementalContestAggregator:
         if norm_url:
             self._by_url[norm_url] = participant
 
+        was_eligible = participant.is_eligible
         if action == "like":
-            participant.liked = True
+            if not participant.liked:
+                participant.liked = True
+                self._likes_count += 1
         elif action == "comment":
-            participant.commented = True
-            if p.content and p.content.strip():
-                clean_comment = self._clean_comment_text(p.content, clean_name)
-                if clean_comment and clean_comment not in participant.comment_texts:
-                    participant.comment_texts.append(clean_comment)
+            if not participant.commented:
+                participant.commented = True
+                self._comments_count += 1
+            if clean_text and clean_text not in participant.comment_texts:
+                participant.comment_texts.append(clean_text)
         else:
-            participant.shared = True
+            if not participant.shared:
+                participant.shared = True
+                self._shares_count += 1
             if p.content and p.content.strip():
                 clean_share = p.content.strip()
                 if clean_share not in participant.share_contents:
                     participant.share_contents.append(clean_share)
+
+        if not was_eligible and participant.is_eligible:
+            self._eligible_count += 1
 
         return participant
 
@@ -261,17 +277,12 @@ class IncrementalContestAggregator:
         return result
 
     def get_counts(self) -> Dict[str, int]:
-        likes_count = sum(1 for p in self.participants if p.liked)
-        comments_count = sum(1 for p in self.participants if p.commented)
-        shares_count = sum(1 for p in self.participants if p.shared)
-        eligible_count = sum(1 for p in self.participants if p.is_eligible)
-
         return {
             "total_participants": len(self.participants),
-            "likes": likes_count,
-            "comments": comments_count,
-            "shares": shares_count,
-            "eligible": eligible_count,
+            "likes": self._likes_count,
+            "comments": self._comments_count,
+            "shares": self._shares_count,
+            "eligible": self._eligible_count,
         }
 
 

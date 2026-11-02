@@ -94,6 +94,27 @@ class MainWindow(QMainWindow):
         self._clipboard_timer.timeout.connect(lambda: self._check_clipboard_for_extension_batch(manual=False))
         self._clipboard_timer.start()
 
+        # Debounced full cross-sync + CSV auto-save timer for mass loads (20k+ users)
+        self._deferred_sync_timer = QTimer(self)
+        self._deferred_sync_timer.setSingleShot(True)
+        self._deferred_sync_timer.setInterval(2500)
+        self._deferred_sync_timer.timeout.connect(self._run_deferred_sync_and_autosave)
+
+    def _run_deferred_sync_and_autosave(self):
+        if not self.results_panel.profiles:
+            return
+        sync_rows = self.sync_profile_panel.sync_engine.build_sync_checklist(self.results_panel.profiles)
+        enriched = self.sync_profile_panel.sync_engine.apply_synced_urls_to_profiles(sync_rows)
+        if enriched > 0:
+            self.results_panel.rebuild_from_profiles()
+            self.db.save_profiles_batch(self.results_panel.profiles)
+        else:
+            self.results_panel.refresh_table()
+        if self.tabs.currentIndex() == 1:
+            self.sync_profile_panel.rebuild_checklist()
+        if self.collector_panel.chk_auto_save.isChecked():
+            self._do_auto_save()
+
     def _check_clipboard_for_extension_batch(self, manual: bool = False):
         if self._checking_clipboard:
             return
@@ -134,34 +155,39 @@ class MainWindow(QMainWindow):
                 return
 
             self._processed_clipboard_batches.add(batch_id)
-            for p in profiles:
-                self._on_profile_found(p)
+            self._db_write_buffer.extend(profiles)
             self._flush_db_buffer()
-
-            # Automatically cross-sync Phone + Web records so newly imported Web URLs immediately
-            # enrich matching Phone Shares/Comments/Likes!
-            sync_rows = self.sync_profile_panel.sync_engine.build_sync_checklist(self.results_panel.profiles)
-            enriched = self.sync_profile_panel.sync_engine.apply_synced_urls_to_profiles(sync_rows)
-            if enriched > 0:
-                self.results_panel.rebuild_from_profiles()
-                self.db.save_profiles_batch(self.results_panel.profiles)
-            else:
-                self.results_panel.refresh_table()
-            if self.tabs.currentIndex() == 1:
-                self.sync_profile_panel.rebuild_checklist()
+            self.results_panel.add_profiles_batch(profiles)
 
             total_raw = len(self.results_panel.profiles)
             if self.current_session:
                 self.current_session.total_profiles = total_raw
                 self.db.update_session(self.current_session)
 
+            # For normal loads (<= 3,000 raw records) or manual click, cross-sync immediately;
+            # for mass loads (20k+ users / > 3,000 raw records), debounce cross-sync + CSV write
+            # so streaming 800 clipboard batches stays 60fps smooth!
+            enriched = 0
+            if total_raw <= 3000 or manual:
+                sync_rows = self.sync_profile_panel.sync_engine.build_sync_checklist(self.results_panel.profiles)
+                enriched = self.sync_profile_panel.sync_engine.apply_synced_urls_to_profiles(sync_rows)
+                if enriched > 0:
+                    self.results_panel.rebuild_from_profiles()
+                    self.db.save_profiles_batch(self.results_panel.profiles)
+                else:
+                    self.results_panel.refresh_table()
+                if self.tabs.currentIndex() == 1:
+                    self.sync_profile_panel.rebuild_checklist()
+                if self.collector_panel.chk_auto_save.isChecked():
+                    self._do_auto_save()
+            else:
+                self._deferred_sync_timer.start()
+
             self.collector_panel.update_stats(total_raw, self.current_device_scroll_index, len(profiles))
             self.collector_panel.lbl_status.setText(f"Status: EXT BATCH IMPORTED (+{len(profiles)} with links)")
             logger.info(
                 f"Auto-imported Browser Extension batch '{batch_id}' ({len(profiles)} profiles with links; {enriched} hybrid records synced)."
             )
-            if self.collector_panel.chk_auto_save.isChecked():
-                self._do_auto_save()
             if manual:
                 QMessageBox.information(
                     self,
@@ -279,8 +305,7 @@ class MainWindow(QMainWindow):
             if s_profs:
                 combined_profiles.extend(s_profs)
         self.results_panel.clear_results()
-        for p in combined_profiles:
-            self.results_panel.add_profile(p)
+        self.results_panel.add_profiles_batch(combined_profiles)
         sync_rows = self.sync_profile_panel.sync_engine.build_sync_checklist(self.results_panel.profiles)
         enriched = self.sync_profile_panel.sync_engine.apply_synced_urls_to_profiles(sync_rows)
         if enriched > 0:

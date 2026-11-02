@@ -19,12 +19,15 @@ class ResultsPanel(QWidget):
     load_last_session_requested = Signal()
     counts_changed = Signal(dict)
 
+    MAX_TABLE_DISPLAY_ROWS = 1500
+
     def __init__(self, parent=None):
         super().__init__(parent)
         self.profiles = []
-        self._raw_dedupe_keys = set()
+        self._raw_dedupe_map = {}
         self.aggregator = IncrementalContestAggregator()
         self.participants = []
+        self._participants_dirty = False
         self._icon_cache = {}
         
         self._refresh_timer = QTimer(self)
@@ -135,28 +138,44 @@ class ResultsPanel(QWidget):
             if txt.startswith("http://") or txt.startswith("https://"):
                 QDesktopServices.openUrl(QUrl(txt))
 
-    def add_profile(self, profile: ShareProfile):
+    def _ingest_single_profile(self, profile: ShareProfile):
         raw_key = (
             (profile.name or "").strip().lower(),
             (getattr(profile, "action_type", "share") or "share").lower(),
             (profile.profile_url or "").strip().lower(),
             (profile.content or "").strip()[:120],
         )
-        if raw_key in self._raw_dedupe_keys:
-            # Update missing avatar/URL on existing profile if enriched
-            for existing in reversed(self.profiles):
-                if (existing.name or "").strip().lower() == raw_key[0] and (getattr(existing, "action_type", "share") or "share").lower() == raw_key[1]:
-                    if not existing.profile_url and profile.profile_url:
-                        existing.profile_url = profile.profile_url
-                    if not existing.avatar_hash and profile.avatar_hash:
-                        existing.avatar_hash = profile.avatar_hash
-                        existing.avatar_path = profile.avatar_path
-                    break
+        existing = self._raw_dedupe_map.get(raw_key)
+        if existing is not None:
+            if not existing.profile_url and profile.profile_url:
+                existing.profile_url = profile.profile_url
+            if not existing.avatar_hash and profile.avatar_hash:
+                existing.avatar_hash = profile.avatar_hash
+                existing.avatar_path = profile.avatar_path
         else:
-            self._raw_dedupe_keys.add(raw_key)
+            self._raw_dedupe_map[raw_key] = profile
             self.profiles.append(profile)
         self.aggregator.add_profile(profile)
-        self.participants = self.aggregator.get_sorted_participants()
+        self._participants_dirty = True
+
+    def _ensure_sorted_participants(self):
+        if self._participants_dirty:
+            self.participants = self.aggregator.get_sorted_participants()
+            self._participants_dirty = False
+        return self.participants
+
+    def add_profile(self, profile: ShareProfile):
+        self._ingest_single_profile(profile)
+        self.counts_changed.emit(self.aggregator.get_counts())
+        if not self._refresh_timer.isActive():
+            self._refresh_timer.start()
+
+    def add_profiles_batch(self, profiles_list):
+        if not profiles_list:
+            return
+        for p in profiles_list:
+            self._ingest_single_profile(p)
+        self._ensure_sorted_participants()
         self.counts_changed.emit(self.aggregator.get_counts())
         if not self._refresh_timer.isActive():
             self._refresh_timer.start()
@@ -169,7 +188,8 @@ class ResultsPanel(QWidget):
         self.aggregator.clear()
         for p in self.profiles:
             self.aggregator.add_profile(p)
-        self.participants = self.aggregator.get_sorted_participants()
+        self._participants_dirty = True
+        self._ensure_sorted_participants()
         self.counts_changed.emit(self.aggregator.get_counts())
         self.refresh_table()
 
@@ -177,6 +197,7 @@ class ResultsPanel(QWidget):
         return self.filter_combo.currentIndex() in (0, 1)
 
     def _get_filtered_participants(self):
+        self._ensure_sorted_participants()
         if self.filter_combo.currentIndex() == 1:
             return [p for p in self.participants if p.is_eligible]
         return self.participants
@@ -202,6 +223,16 @@ class ResultsPanel(QWidget):
                     "Score", "Contest Status", "Comment / Share Text", "Identity / Profile URL"
                 ])
                 displayed = self._get_filtered_participants()
+                query = (self.search_input.text() or "").strip().lower()
+                if query:
+                    displayed = [
+                        p for p in displayed
+                        if query in p.display_name.lower()
+                        or query in p.serial_code.lower()
+                        or (p.profile_url and query in p.profile_url.lower())
+                    ]
+                displayed_slice = displayed[: self.MAX_TABLE_DISPLAY_ROWS]
+                self.table.setRowCount(len(displayed_slice))
                 eligible_bg = QBrush(QColor(6, 78, 59))        # Deep rich emerald green (#064e3b)
                 eligible_fg = QBrush(QColor(240, 253, 244))    # Bright crisp white-mint (#f0fdf4)
                 eligible_accent_fg = QBrush(QColor(74, 222, 128))  # Vibrant mint (#4ade80)
@@ -212,9 +243,7 @@ class ResultsPanel(QWidget):
                 bold_font = QFont()
                 bold_font.setBold(True)
 
-                for p in displayed:
-                    row = self.table.rowCount()
-                    self.table.insertRow(row)
+                for row, p in enumerate(displayed_slice):
 
                     serial_item = QTableWidgetItem(p.serial_code)
                     if p.is_eligible:
@@ -275,9 +304,18 @@ class ResultsPanel(QWidget):
                 raw_bg_odd = QBrush(QColor(26, 33, 46))
                 raw_fg = QBrush(QColor(241, 245, 249))
                 link_fg = QBrush(QColor(96, 165, 250))
-                for profile in self._get_filtered_raw_profiles():
-                    row = self.table.rowCount()
-                    self.table.insertRow(row)
+                raw_list = self._get_filtered_raw_profiles()
+                query = (self.search_input.text() or "").strip().lower()
+                if query:
+                    raw_list = [
+                        p for p in raw_list
+                        if query in (p.name or "").lower()
+                        or (p.profile_url and query in p.profile_url.lower())
+                        or (p.content and query in p.content.lower())
+                    ]
+                raw_slice = raw_list[-self.MAX_TABLE_DISPLAY_ROWS :] if len(raw_list) > self.MAX_TABLE_DISPLAY_ROWS else raw_list
+                self.table.setRowCount(len(raw_slice))
+                for row, profile in enumerate(raw_slice):
 
                     name_item = QTableWidgetItem(profile.name)
                     name_item.setData(Qt.UserRole, profile.scroll_index)
@@ -314,16 +352,12 @@ class ResultsPanel(QWidget):
             self.table.scrollToBottom()
 
     def search_name(self, text):
+        self.refresh_table()
         if not text:
             self.table.clearSelection()
             return
-            
-        items = self.table.findItems(text, Qt.MatchContains)
-        for item in items:
-            if item.column() in (0, 1):
-                self.table.setCurrentItem(item)
-                self.table.scrollToItem(item)
-                break
+        if self.table.rowCount() > 0:
+            self.table.selectRow(0)
 
     def _trigger_device_search(self):
         selected_items = self.table.selectedItems()
@@ -341,9 +375,10 @@ class ResultsPanel(QWidget):
     def clear_results(self):
         self.table.setRowCount(0)
         self.profiles.clear()
-        self._raw_dedupe_keys.clear()
+        self._raw_dedupe_map.clear()
         self.aggregator.clear()
         self.participants.clear()
+        self._participants_dirty = False
         self.counts_changed.emit({
             "total_participants": 0,
             "likes": 0,
@@ -359,6 +394,7 @@ class ResultsPanel(QWidget):
         return f"{prefix}_{timestamp}.{ext}"
 
     def export_printable_lottery(self):
+        self._ensure_sorted_participants()
         if not self.participants:
             QMessageBox.information(self, "No Data", "Collect Likes, Comments, and Shares first to generate lottery tickets.")
             return

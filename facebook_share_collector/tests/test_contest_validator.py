@@ -631,6 +631,76 @@ def test_zero_data_inconsistency_between_validator_sync_and_exporters():
         assert rows[0]["Profile URL"] == "https://www.facebook.com/forhaduni"
 
 
+def test_mass_load_20k_users_performance_and_consistency():
+    """
+    20,000-User Mass-Load Benchmark & Consistency Test:
+    Simulates 20,000 unique users with 50,000 raw interactions (20k Likes + 18k Comments + 12k Shares)
+    and verifies:
+      1. IncrementalContestAggregator + O(1) get_counts() completes in < 3.5s.
+      2. ProfileSyncEngine.build_sync_checklist + apply_synced_urls_to_profiles completes in < 3.5s.
+      3. Zero data loss: all 20,000 users and 12,000 Eligible (3/3) winners (#0001..#12000) match 100%.
+    """
+    import time
+    from app.utils.contest_validator import IncrementalContestAggregator
+    from app.utils.profile_sync_engine import ProfileSyncEngine
+    from app.exporters.csv_exporter import CSVExporter
+
+    profiles = []
+    for i in range(20000):
+        name = f"Contestant {i}"
+        url = f"https://www.facebook.com/contestant.{i}"
+        h = f"a1b2c3d4{(i & 0xFFFFFFFF):08x}"
+        profiles.append(
+            ShareProfile(name=name, profile_url=url, action_type="like", source="web", confidence=1.0, session_id="s_20k", scroll_index=i // 10)
+        )
+        if i < 18000:
+            profiles.append(
+                ShareProfile(name=name, profile_url=None, avatar_hash=h, content=f"Done {i}", action_type="comment", source="phone", confidence=0.95, session_id="s_20k", scroll_index=i // 8)
+            )
+        if i < 12000:
+            profiles.append(
+                ShareProfile(name=name, profile_url=None, avatar_hash=h, action_type="share", source="phone", confidence=0.95, session_id="s_20k", scroll_index=i // 8)
+            )
+
+    assert len(profiles) == 50000
+
+    t0 = time.perf_counter()
+    engine = ProfileSyncEngine()
+    sync_rows = engine.build_sync_checklist(profiles)
+    enriched = engine.apply_synced_urls_to_profiles(sync_rows)
+    t_sync = time.perf_counter() - t0
+
+    assert len(sync_rows) == 20000
+    assert enriched >= 30000  # All 30k phone records enriched with Web URLs + Web records enriched with avatar hashes!
+    assert all(p.profile_url for p in profiles)
+    assert t_sync < 3.5
+
+    t1 = time.perf_counter()
+    agg = IncrementalContestAggregator()
+    for p in profiles:
+        agg.add_profile(p)
+    counts = agg.get_counts()
+    participants = agg.get_sorted_participants()
+    t_agg = time.perf_counter() - t1
+
+    assert counts["total_participants"] == 20000
+    assert counts["likes"] == 20000
+    assert counts["comments"] == 18000
+    assert counts["shares"] == 12000
+    assert counts["eligible"] == 12000
+    assert len(participants) == 20000
+    assert participants[0].serial_code == "#0001"
+    assert participants[11999].serial_code == "#12000"
+    assert participants[12000].serial_code == "-"
+    assert t_agg < 3.5
+
+    with tempfile.TemporaryDirectory() as tmpdir:
+        out_csv = os.path.join(tmpdir, "contest_20k.csv")
+        assert CSVExporter.export_contest(participants, out_csv) is True
+        assert os.path.getsize(out_csv) > 1_000_000
+
+
+
 
 
 

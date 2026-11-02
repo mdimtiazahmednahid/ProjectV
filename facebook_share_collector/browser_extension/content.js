@@ -749,13 +749,19 @@
       if (rowNode) {
         processedRows.add(rowNode);
         lastExtractedElements.push(rowNode);
+        if (item.url && item.name) {
+          rowNode.dataset.fbScraped = "1";
+        }
       }
     };
 
     /* Engine A: Walk up from every leaf "Reply" node while countLeafReplyNodes === 1 */
-    const allSpansAndBtns = Array.from(root.querySelectorAll("span, div[role='button']"));
+    const allSpansAndBtns = Array.from(
+      root.querySelectorAll("span:not([data-fb-scraped='1']), div[role='button']:not([data-fb-scraped='1'])")
+    );
     for (const node of allSpansAndBtns) {
       if (node.children.length > 0) continue;
+      if (node.closest('[data-fb-scraped="1"]')) continue;
       if (isInsideIgnoredChrome(node)) continue;
       const t = cleanText(node.textContent).toLowerCase();
       if (t !== "reply" && t !== "উত্তর দিন") continue;
@@ -774,14 +780,16 @@
       if (bestCommentRow && !processedRows.has(bestCommentRow)) {
         const item = extractCommentFromSingleRowContainer(bestCommentRow, modalOwnerNameLower);
         if (item) {
+          if (item.url) node.dataset.fbScraped = "1";
           recordComment(item, bestCommentRow);
         }
       }
     }
 
     /* Engine B: Anchor-First <a href> scan (same mechanism that works for Likes!) */
-    const allLinks = Array.from(root.querySelectorAll("a[href]"));
+    const allLinks = Array.from(root.querySelectorAll("a[href]:not([data-fb-scraped='1'])"));
     for (const a of allLinks) {
+      if (a.closest('[data-fb-scraped="1"]')) continue;
       if (isInsideIgnoredChrome(a)) continue;
       if (a.closest('[role="tab"], [role="tablist"]')) continue;
 
@@ -840,7 +848,7 @@
   function extractLikesFromDialog(likeDialog) {
     const found = [];
     const scrollContainer = findSingleScrollableForWindow(likeDialog, "like") || likeDialog;
-    const links = Array.from(scrollContainer.querySelectorAll("a[href]"));
+    const links = Array.from(scrollContainer.querySelectorAll("a[href]:not([data-fb-scraped='1'])"));
     const urlToRecord = new Map();
     const orderedUrls = [];
 
@@ -868,6 +876,7 @@
         }
       }
       if (name) {
+        a.dataset.fbScraped = "1";
         lastExtractedElements.push(a);
       }
     }
@@ -890,7 +899,7 @@
   function extractSharesFromDialog(shareDialog) {
     const found = [];
     const scrollContainer = findSingleScrollableForWindow(shareDialog, "share") || shareDialog;
-    const links = Array.from(scrollContainer.querySelectorAll("a[href]"));
+    const links = Array.from(scrollContainer.querySelectorAll("a[href]:not([data-fb-scraped='1'])"));
     const urlToRecord = new Map();
     const orderedUrls = [];
 
@@ -918,6 +927,7 @@
         }
       }
       if (name) {
+        a.dataset.fbScraped = "1";
         lastExtractedElements.push(a);
       }
     }
@@ -1327,6 +1337,7 @@
     store.share.clear();
     unsentBatch = [];
     batchesSent = 0;
+    document.querySelectorAll("[data-fb-scraped]").forEach((el) => el.removeAttribute("data-fb-scraped"));
     updateUICounters();
     updateUIStatus("Cleared all counts.");
   }
