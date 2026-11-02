@@ -241,6 +241,7 @@ class MainWindow(QMainWindow):
         self.results_panel.profile_clicked.connect(self._scroll_to_profile_on_device)
         self.results_panel.scroll_top_requested.connect(self._scroll_to_top_on_device)
         self.results_panel.load_last_session_requested.connect(self._load_latest_session)
+        self.results_panel.manage_sessions_requested.connect(self._open_session_manager)
         self.results_panel.counts_changed.connect(self.collector_panel.update_contest_counts)
 
         self.sync_profile_panel = SyncProfilePanel()
@@ -296,12 +297,34 @@ class MainWindow(QMainWindow):
         if not sessions:
             QMessageBox.information(self, "No Saved Sessions", "No previous collection sessions found in database.")
             return
-        latest = sessions[0]
-        self.current_session = latest
-        # Merge recent sessions (up to 3 most recent) so any Phone + Web data collected across a restart is combined
+        self._load_sessions_by_ids([s.id for s in sessions[:3]])
+
+    def _open_session_manager(self):
+        from app.gui.session_manager_dialog import SessionManagerDialog
+        dlg = SessionManagerDialog(self.db, parent=self)
+        if dlg.exec():
+            if dlg.start_new_requested:
+                self.results_panel.clear_results()
+                self.sync_profile_panel.rebuild_checklist()
+                self.current_session = CollectionSession()
+                self.db.create_session(self.current_session)
+                self.collector_panel.update_stats(0, 0, 0)
+                self.collector_panel.lbl_status.setText("Status: NEW SESSION READY")
+                logger.info(f"Started fresh contest session {self.current_session.id[:8]}.")
+            elif dlg.selected_session_ids:
+                self._load_sessions_by_ids(dlg.selected_session_ids)
+
+    def _load_sessions_by_ids(self, session_ids: list):
+        if not session_ids:
+            return
+        sessions_by_id = {s.id: s for s in self.db.get_sessions()}
+        first_valid = next((sessions_by_id[sid] for sid in session_ids if sid in sessions_by_id), None)
+        if first_valid:
+            self.current_session = first_valid
+
         combined_profiles = []
-        for s in sessions[:3]:
-            s_profs = self.db.get_all_profiles_for_session(s.id)
+        for sid in session_ids:
+            s_profs = self.db.get_all_profiles_for_session(sid)
             if s_profs:
                 combined_profiles.extend(s_profs)
         self.results_panel.clear_results()
@@ -313,11 +336,11 @@ class MainWindow(QMainWindow):
         else:
             self.results_panel.refresh_table()
         self.sync_profile_panel.rebuild_checklist()
-        self.collector_panel.update_stats(len(combined_profiles), self.current_device_scroll_index, 0)
+        self.collector_panel.update_stats(len(self.results_panel.profiles), self.current_device_scroll_index, 0)
         if self.collector_panel.chk_auto_save.isChecked():
             self._do_auto_save()
         logger.info(
-            f"Loaded & synced {len(combined_profiles)} raw records ({enriched} enriched with URLs) across recent sessions."
+            f"Loaded & synced {len(self.results_panel.profiles)} unique raw records ({enriched} enriched with URLs) across {len(session_ids)} session(s)."
         )
 
     def _inspect_ui(self):

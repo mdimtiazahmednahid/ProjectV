@@ -194,3 +194,53 @@ class DatabaseRepository:
         except sqlite3.Error as e:
             logger.error(f"Failed to get sessions: {e}")
             return []
+
+    def get_session_action_summaries(self) -> dict:
+        """
+        Returns a mapping of session_id -> {'like': int, 'comment': int, 'share': int, 'total': int, 'urls': int}
+        for fast display in the Session Manager dialog.
+        """
+        summaries = {}
+        try:
+            with sqlite3.connect(self.db_path) as conn:
+                cursor = conn.cursor()
+                cursor.execute(
+                    """
+                    SELECT session_id,
+                           LOWER(COALESCE(action_type, 'share')) as act,
+                           COUNT(*) as cnt,
+                           SUM(CASE WHEN profile_url IS NOT NULL AND profile_url != '' THEN 1 ELSE 0 END) as url_cnt
+                    FROM profiles
+                    GROUP BY session_id, act
+                    """
+                )
+                for sid, act, cnt, url_cnt in cursor.fetchall():
+                    if not sid:
+                        continue
+                    entry = summaries.setdefault(
+                        sid, {"like": 0, "comment": 0, "share": 0, "total": 0, "urls": 0}
+                    )
+                    if act in ("like", "comment", "share"):
+                        entry[act] += cnt
+                    else:
+                        entry["share"] += cnt
+                    entry["total"] += cnt
+                    entry["urls"] += (url_cnt or 0)
+        except sqlite3.Error as e:
+            logger.error(f"Failed to query session action summaries: {e}")
+        return summaries
+
+    def delete_sessions(self, session_ids: List[str]) -> bool:
+        if not session_ids:
+            return False
+        try:
+            with sqlite3.connect(self.db_path) as conn:
+                cursor = conn.cursor()
+                placeholders = ",".join("?" for _ in session_ids)
+                cursor.execute(f"DELETE FROM profiles WHERE session_id IN ({placeholders})", session_ids)
+                cursor.execute(f"DELETE FROM collection_sessions WHERE id IN ({placeholders})", session_ids)
+                conn.commit()
+            return True
+        except sqlite3.Error as e:
+            logger.error(f"Failed to delete sessions {session_ids}: {e}")
+            return False

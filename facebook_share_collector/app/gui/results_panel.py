@@ -17,6 +17,7 @@ class ResultsPanel(QWidget):
     profile_clicked = Signal(str, int)
     scroll_top_requested = Signal()
     load_last_session_requested = Signal()
+    manage_sessions_requested = Signal()
     counts_changed = Signal(dict)
 
     MAX_TABLE_DISPLAY_ROWS = 1500
@@ -89,6 +90,10 @@ class ResultsPanel(QWidget):
         self.btn_print_lottery.setStyleSheet("font-weight: bold; background-color: #1b8a2f; color: white; padding: 6px 12px;")
         self.btn_print_lottery.clicked.connect(self.export_printable_lottery)
 
+        self.btn_live_spin = QPushButton("🎡 Live Spin Draw")
+        self.btn_live_spin.setStyleSheet("font-weight: bold; background-color: #7c3aed; color: white; padding: 6px 12px;")
+        self.btn_live_spin.clicked.connect(self.open_live_lottery_draw)
+
         self.btn_csv = QPushButton("Export CSV")
         self.btn_csv.clicked.connect(self.export_csv)
         self.btn_json = QPushButton("Export JSON")
@@ -99,6 +104,10 @@ class ResultsPanel(QWidget):
         self.btn_load_session = QPushButton("📂 Load Latest Session")
         self.btn_load_session.clicked.connect(self.load_last_session_requested.emit)
 
+        self.btn_manage_sessions = QPushButton("🗂 Manage / Merge Sessions")
+        self.btn_manage_sessions.setStyleSheet("font-weight: bold; background-color: #0284c7; color: white; padding: 6px 10px;")
+        self.btn_manage_sessions.clicked.connect(self.manage_sessions_requested.emit)
+
         self.btn_scroll_top = QPushButton("Scroll to Top")
         self.btn_scroll_top.clicked.connect(self.scroll_top_requested.emit)
         
@@ -106,11 +115,13 @@ class ResultsPanel(QWidget):
         self.btn_clear.clicked.connect(self.clear_results)
         
         btn_layout.addWidget(self.btn_print_lottery)
+        btn_layout.addWidget(self.btn_live_spin)
         btn_layout.addWidget(self.btn_csv)
         btn_layout.addWidget(self.btn_json)
         btn_layout.addWidget(self.btn_xlsx)
         btn_layout.addStretch()
         btn_layout.addWidget(self.btn_load_session)
+        btn_layout.addWidget(self.btn_manage_sessions)
         btn_layout.addWidget(self.btn_scroll_top)
         btn_layout.addWidget(self.btn_clear)
         
@@ -392,6 +403,21 @@ class ResultsPanel(QWidget):
         if not prefix:
             prefix = "facebook_contest_eligible" if self.filter_combo.currentIndex() == 1 else "facebook_contest_results"
         return f"{prefix}_{timestamp}.{ext}"
+
+    def open_live_lottery_draw(self):
+        self._ensure_sorted_participants()
+        eligible = [p for p in self.participants if p.is_eligible]
+        if not eligible:
+            QMessageBox.information(
+                self,
+                "No 3/3 Eligible Winners Yet",
+                "No participants have completed all 3 contest actions (Like + Comment + Share) yet.\n\n"
+                "Collect Likes, Comments, and Shares (or load a saved session) first!"
+            )
+            return
+        from app.gui.live_lottery_dialog import LiveLotteryDialog
+        dlg = LiveLotteryDialog(eligible, parent=self)
+        dlg.exec()
 
     def export_printable_lottery(self):
         self._ensure_sorted_participants()

@@ -6,20 +6,30 @@ import subprocess
 from typing import Dict, Any
 
 
-def get_os_arch_info() -> Dict[str, str]:
+def get_os_arch_info() -> Dict[str, Any]:
     """
     Returns normalized OS and CPU architecture info for macOS (Intel & Apple Silicon),
-    Windows (10/11 x64 & x86), and Linux.
+    Windows (10/11 x64, ARM64, & x86), and Linux.
     """
     sys_name = platform.system().lower()
-    machine = platform.machine().lower()
+    machine = (
+        os.environ.get("PROCESSOR_ARCHITEW6432")
+        or os.environ.get("PROCESSOR_ARCHITECTURE")
+        or platform.machine()
+        or ""
+    ).lower()
 
     if sys_name == "darwin":
         os_name = "macos"
         arch = "arm64" if machine in ("arm64", "aarch64") else "x86_64"
     elif sys_name == "windows":
         os_name = "windows"
-        arch = "x64" if "64" in machine else "x86"
+        if "arm" in machine or "aarch64" in machine:
+            arch = "arm64"
+        elif "64" in machine:
+            arch = "x64"
+        else:
+            arch = "x86"
     else:
         os_name = "linux"
         arch = "arm64" if machine in ("arm64", "aarch64") else "x86_64"
@@ -88,6 +98,9 @@ def resolve_adb_binary() -> str:
         sdk_candidates = [
             os.path.join(local_app_data, "Android", "Sdk", "platform-tools", "adb.exe"),
             r"C:\Android\platform-tools\adb.exe",
+            r"C:\platform-tools\adb.exe",
+            r"C:\Program Files (x86)\Android\android-sdk\platform-tools\adb.exe",
+            r"C:\Program Files\Android\android-sdk\platform-tools\adb.exe",
         ]
     else:
         sdk_candidates = [
