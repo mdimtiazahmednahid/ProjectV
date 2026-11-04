@@ -286,8 +286,50 @@ exec "{venv_py_link}" "{main_script}"
         f.write(cmd_content)
     os.chmod(cmd_path, os.stat(cmd_path).st_mode | stat.S_IXUSR | stat.S_IXGRP | stat.S_IXOTH)
 
-    # 2. Build self-contained macOS Intel (x86_64) .app bundle (stage in non-.app dir first so macOS AppManagement doesn't lock file writes mid-build)
+    # 2. Build or update self-contained macOS Intel (x86_64) .app bundle
     app_bundle = os.path.join(WORKSPACE_ROOT, "Facebook Contest Validator.app")
+    existing_payload = os.path.join(app_bundle, "Contents", "Resources", "app_bundle")
+    existing_bin = os.path.join(app_bundle, "Contents", "MacOS", "FacebookContestValidator")
+
+    # Sync any newer live data from existing .app bundle back to PROJECT_DIR/data first
+    existing_app_data = os.path.join(existing_payload, "data")
+    if os.path.isdir(existing_app_data):
+        os.makedirs(os.path.join(PROJECT_DIR, "data", "avatars"), exist_ok=True)
+        for item in os.listdir(existing_app_data):
+            s_path = os.path.join(existing_app_data, item)
+            d_path = os.path.join(PROJECT_DIR, "data", item)
+            if os.path.isfile(s_path):
+                if not os.path.exists(d_path) or os.path.getmtime(s_path) >= os.path.getmtime(d_path):
+                    shutil.copyfile(s_path, d_path)
+        existing_avatars = os.path.join(existing_app_data, "avatars")
+        if os.path.isdir(existing_avatars):
+            for av_file in os.listdir(existing_avatars):
+                s_av = os.path.join(existing_avatars, av_file)
+                d_av = os.path.join(PROJECT_DIR, "data", "avatars", av_file)
+                if os.path.isfile(s_av) and not os.path.exists(d_av):
+                    shutil.copyfile(s_av, d_av)
+
+    # Fast in-place code sync when .app bundle already exists (preserves live CWD inode for running app!)
+    if "--skip-dmg" in sys.argv and os.path.isdir(existing_payload) and os.path.isfile(existing_bin):
+        try:
+            for root_file in ("main.py", "run.py", "config.yaml"):
+                src_rf = os.path.join(PROJECT_DIR, root_file)
+                if os.path.isfile(src_rf):
+                    shutil.copyfile(src_rf, os.path.join(existing_payload, root_file))
+            for folder in ("app", "config", "browser_extension", "bin"):
+                src_f = os.path.join(PROJECT_DIR, folder)
+                if os.path.isdir(src_f):
+                    _copytree_no_xattr(
+                        src_f,
+                        os.path.join(existing_payload, folder),
+                        ignore=shutil.ignore_patterns("__pycache__", "*.pyc"),
+                    )
+            os.makedirs(existing_app_data, exist_ok=True)
+            print(f"Updated macOS Intel App Bundle in-place (preserving live CWD): {app_bundle}")
+            return
+        except OSError:
+            pass
+
     staging_bundle = os.path.join(WORKSPACE_ROOT, "_Facebook_Contest_Validator_stage")
     if os.path.exists(staging_bundle):
         shutil.rmtree(staging_bundle, ignore_errors=True)

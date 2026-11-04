@@ -7,11 +7,52 @@ from app.models.collection_session import CollectionSession
 
 logger = logging.getLogger(__name__)
 
+APP_BASE_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
+
+
+def ensure_writable_data_dir(subdir: str = "data") -> str:
+    """
+    Self-healing directory resolver:
+    If the process's current working directory was ever unlinked (e.g., an .app bundle was
+    rebuilt while the app was still open), automatically re-anchors `os.chdir(APP_BASE_DIR)`
+    and returns a guaranteed-existing `data` directory path.
+    """
+    try:
+        cwd = os.getcwd()
+        if not os.path.exists(cwd):
+            os.chdir(APP_BASE_DIR)
+    except OSError:
+        if os.path.isdir(APP_BASE_DIR):
+            try:
+                os.chdir(APP_BASE_DIR)
+            except OSError:
+                pass
+
+    target = subdir if os.path.isabs(subdir) else os.path.join(APP_BASE_DIR, subdir)
+    try:
+        os.makedirs(target, exist_ok=True)
+        return target
+    except OSError:
+        fallback = os.path.expanduser("~/Library/Application Support/FacebookContestValidator/data")
+        os.makedirs(fallback, exist_ok=True)
+        return fallback
+
+
 class DatabaseRepository:
     def __init__(self, db_path: str = "data/facebook_shares.sqlite"):
-        self.db_path = db_path
-        os.makedirs(os.path.dirname(self.db_path), exist_ok=True)
+        if not os.path.isabs(db_path):
+            ensure_writable_data_dir("data")
+            self.db_path = os.path.join(APP_BASE_DIR, db_path)
+        else:
+            self.db_path = db_path
+        self._ensure_db_dir()
         self._init_db()
+
+    def _ensure_db_dir(self):
+        ensure_writable_data_dir("data")
+        db_dir = os.path.dirname(os.path.abspath(self.db_path))
+        if db_dir:
+            os.makedirs(db_dir, exist_ok=True)
 
     def _init_db(self):
         try:
@@ -77,6 +118,7 @@ class DatabaseRepository:
 
     def create_session(self, session: CollectionSession):
         try:
+            self._ensure_db_dir()
             with sqlite3.connect(self.db_path) as conn:
                 cursor = conn.cursor()
                 cursor.execute(
@@ -89,6 +131,7 @@ class DatabaseRepository:
 
     def update_session(self, session: CollectionSession):
         try:
+            self._ensure_db_dir()
             with sqlite3.connect(self.db_path) as conn:
                 cursor = conn.cursor()
                 cursor.execute(
@@ -106,6 +149,7 @@ class DatabaseRepository:
         if not profiles:
             return
         try:
+            self._ensure_db_dir()
             with sqlite3.connect(self.db_path) as conn:
                 cursor = conn.cursor()
                 cursor.executemany(

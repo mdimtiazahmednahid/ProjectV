@@ -1523,11 +1523,13 @@ class ResultsPanel(QWidget):
         else:
             default_scope = "all"
 
+        from app.database.repository import ensure_writable_data_dir
+        data_dir = ensure_writable_data_dir("data")
         filename = self._get_default_filename("html", prefix="facebook_lottery_tickets")
         path, _ = QFileDialog.getSaveFileName(
             self,
             "Save Printable Lottery Tickets (HTML/PDF)",
-            os.path.join("data", filename),
+            os.path.join(data_dir, filename),
             "HTML Printable Document (*.html)"
         )
         if path:
@@ -1553,8 +1555,10 @@ class ResultsPanel(QWidget):
     def export_csv(self):
         if not self.profiles:
             return
+        from app.database.repository import ensure_writable_data_dir
+        data_dir = ensure_writable_data_dir("data")
         filename = self._get_default_filename("csv")
-        path, _ = QFileDialog.getSaveFileName(self, "Export CSV", os.path.join("data", filename), "CSV Files (*.csv)")
+        path, _ = QFileDialog.getSaveFileName(self, "Export CSV", os.path.join(data_dir, filename), "CSV Files (*.csv)")
         if path:
             if self._is_contest_view():
                 ok = CSVExporter.export_contest(self._get_filtered_participants(), path)
@@ -1566,8 +1570,10 @@ class ResultsPanel(QWidget):
     def export_json(self):
         if not self.profiles:
             return
+        from app.database.repository import ensure_writable_data_dir
+        data_dir = ensure_writable_data_dir("data")
         filename = self._get_default_filename("json")
-        path, _ = QFileDialog.getSaveFileName(self, "Export JSON", os.path.join("data", filename), "JSON Files (*.json)")
+        path, _ = QFileDialog.getSaveFileName(self, "Export JSON", os.path.join(data_dir, filename), "JSON Files (*.json)")
         if path:
             if self._is_contest_view():
                 try:
@@ -1585,8 +1591,10 @@ class ResultsPanel(QWidget):
     def export_xlsx(self):
         if not self.profiles:
             return
+        from app.database.repository import ensure_writable_data_dir
+        data_dir = ensure_writable_data_dir("data")
         filename = self._get_default_filename("xlsx")
-        path, _ = QFileDialog.getSaveFileName(self, "Export XLSX", os.path.join("data", filename), "Excel Files (*.xlsx)")
+        path, _ = QFileDialog.getSaveFileName(self, "Export XLSX", os.path.join(data_dir, filename), "Excel Files (*.xlsx)")
         if path:
             if self._is_contest_view():
                 ok = XLSXExporter.export_contest(self._get_filtered_participants(), path)
