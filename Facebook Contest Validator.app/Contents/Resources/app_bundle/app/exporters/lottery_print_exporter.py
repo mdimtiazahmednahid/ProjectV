@@ -134,6 +134,19 @@ class LotteryPrintExporter:
                     footer_html = f'<span class="profile-ref">{id_hint}</span>'
                     table_url_html = id_hint
 
+                full_share_caption_raw = (
+                    " | ".join(s for s in p.share_contents if s and s.strip())
+                    if getattr(p, "share_contents", None)
+                    else ""
+                )
+                raw_shared_post_url = getattr(p, "primary_shared_post_url", "") or ""
+                if raw_shared_post_url.startswith("http://") or raw_shared_post_url.startswith("https://"):
+                    safe_post_href = html.escape(raw_shared_post_url, quote=True)
+                    safe_post_label = html.escape(raw_shared_post_url)
+                    table_shared_post_html = f'<a class="profile-link" href="{safe_post_href}" target="_blank" rel="noopener noreferrer">{safe_post_label}</a>'
+                else:
+                    table_shared_post_html = html.escape(raw_shared_post_url)
+
                 missing_actions = []
                 if not p.liked:
                     missing_actions.append("No Reaction")
@@ -202,8 +215,10 @@ class LotteryPrintExporter:
                     <td>{'✅ Comment' if p.commented else '❌ Comment'} ({len(p.comment_texts)})</td>
                     <td>{'✅ Share' if p.shared else '❌ Share'}</td>
                     <td>{badge_label}</td>
-                    <td class="notranslate" translate="no">{html.escape(full_comment_raw[:140])}</td>
+                    <td class="notranslate" translate="no">{html.escape(" | ".join(p.comment_texts)[:140])}</td>
+                    <td class="notranslate" translate="no">{html.escape(full_share_caption_raw[:140])}</td>
                     <td class="col-url">{table_url_html}</td>
+                    <td class="col-url">{table_shared_post_html}</td>
                 </tr>
                 """)
 
@@ -806,7 +821,9 @@ class LotteryPrintExporter:
                     <th>Share</th>
                     <th>Contest Status / Reason</th>
                     <th>Comments Text</th>
+                    <th>Shared Caption</th>
                     <th>Profile Reference</th>
+                    <th>Shared Post Link</th>
                 </tr>
             </thead>
             <tbody>

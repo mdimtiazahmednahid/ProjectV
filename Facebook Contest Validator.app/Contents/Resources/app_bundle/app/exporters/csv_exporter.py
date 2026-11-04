@@ -15,7 +15,7 @@ class CSVExporter:
             # UTF-8 with BOM for Excel compatibility
             with open(output_path, 'w', newline='', encoding='utf-8-sig') as csvfile:
                 fieldnames = [
-                    'Name', 'Action', 'Profile URL', 'Share URL', 'Content', 'Reactions', 'Comments', 'Confidence', 
+                    'Name', 'Action', 'Profile URL', 'Shared Post URL', 'Share URL', 'Content', 'Reactions', 'Comments', 'Confidence', 
                     'Source', 'First Seen', 'Last Seen', 'Session ID'
                 ]
                 writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
@@ -26,6 +26,7 @@ class CSVExporter:
                         'Name': profile.name,
                         'Action': getattr(profile, 'action_type', 'share'),
                         'Profile URL': profile.profile_url or "",
+                        'Shared Post URL': getattr(profile, 'shared_post_url', None) or "",
                         'Share URL': profile.share_url or "",
                         'Content': profile.content or "",
                         'Reactions': profile.reactions or "0",
@@ -50,7 +51,7 @@ class CSVExporter:
             with open(output_path, 'w', newline='', encoding='utf-8-sig') as csvfile:
                 fieldnames = [
                     'Serial #', 'Name', 'Eligible', 'Actions Completed', 'Liked', 'Commented', 'Shared',
-                    'Status', 'Comments Text', 'Share Content', 'Profile URL', 'Avatar Hash', 'First Seen'
+                    'Status', 'Comments Text', 'Share Content', 'Profile URL', 'Shared Post URL', 'Avatar Hash', 'First Seen'
                 ]
                 writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
                 writer.writeheader()
@@ -69,6 +70,7 @@ class CSVExporter:
                         'Comments Text': " | ".join(p.comment_texts),
                         'Share Content': " | ".join(p.share_contents),
                         'Profile URL': p.profile_url or "",
+                        'Shared Post URL': " | ".join(getattr(p, 'shared_post_urls', [])),
                         'Avatar Hash': p.avatar_hash or "",
                         'First Seen': p.first_seen_at,
                     })

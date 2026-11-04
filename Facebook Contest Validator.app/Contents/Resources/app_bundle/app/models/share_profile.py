@@ -16,6 +16,7 @@ class ShareProfile:
     reactions: Optional[str] = None
     comments: Optional[str] = None
     action_type: str = "share"  # "like", "comment", or "share"
+    shared_post_url: Optional[str] = None
     avatar_hash: Optional[str] = None
     avatar_path: Optional[str] = None
     avatar_bounds: Optional[str] = None
@@ -30,6 +31,7 @@ class ShareProfile:
             "name": self.name,
             "profile_url": self.profile_url,
             "share_url": self.share_url,
+            "shared_post_url": self.shared_post_url,
             "content": self.content,
             "reactions": self.reactions,
             "comments": self.comments,
@@ -57,6 +59,7 @@ class ContestParticipant:
     shared: bool = False
     comment_texts: List[str] = field(default_factory=list)
     share_contents: List[str] = field(default_factory=list)
+    shared_post_urls: List[str] = field(default_factory=list)
     first_seen_at: str = field(default_factory=lambda: datetime.datetime.now().isoformat())
     scroll_index: int = 0
     serial_number: Optional[int] = None
@@ -109,12 +112,25 @@ class ContestParticipant:
             parts.append(f"Share ({len(self.share_contents)}): {' | '.join(self.share_contents)}")
         return " ; ".join(parts)
 
+    @property
+    def combined_comments(self) -> str:
+        return " | ".join(self.comment_texts)
+
+    @property
+    def combined_share_captions(self) -> str:
+        return " | ".join(self.share_contents)
+
+    @property
+    def primary_shared_post_url(self) -> str:
+        return self.shared_post_urls[0] if self.shared_post_urls else ""
+
     def to_dict(self):
         return {
             "serial_code": self.serial_code,
             "name": self.display_name,
             "raw_name": self.name,
             "profile_url": self.profile_url or "",
+            "shared_post_url": " | ".join(self.shared_post_urls),
             "avatar_hash": self.avatar_hash or "",
             "avatar_path": self.avatar_path or "",
             "liked": self.liked,

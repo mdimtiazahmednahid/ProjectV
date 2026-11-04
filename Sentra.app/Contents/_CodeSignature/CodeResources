@@ -78,7 +78,7 @@
 		</data>
 		<key>Resources/app_bundle/app/automation/browser_dom_extractor.py</key>
 		<data>
-		D+S0dGAsKTpWxCATR5Gk7WLjRpY=
+		tNErtNsjheVM8A7mi5/DiiDySrM=
 		</data>
 		<key>Resources/app_bundle/app/automation/collector_engine.py</key>
 		<data>
@@ -142,7 +142,7 @@
 		</data>
 		<key>Resources/app_bundle/app/database/repository.py</key>
 		<data>
-		wnZvwXQjlhX1JWOIMpZ/yU+6iD4=
+		0WX8F2uabTqoFnVBCBSMqVZ0o8c=
 		</data>
 		<key>Resources/app_bundle/app/exporters/__init__.py</key>
 		<data>
@@ -170,7 +170,7 @@
 		</data>
 		<key>Resources/app_bundle/app/exporters/csv_exporter.py</key>
 		<data>
-		pm41IuN9CC0d/X+8u5Z5e5B0MD8=
+		O6oOAZjKNlNjw4CYe4Q5uGr0sZg=
 		</data>
 		<key>Resources/app_bundle/app/exporters/json_exporter.py</key>
 		<data>
@@ -178,11 +178,11 @@
 		</data>
 		<key>Resources/app_bundle/app/exporters/lottery_print_exporter.py</key>
 		<data>
-		m3prNmElGzbj8g04ut1jgFr7NXU=
+		DURM8Gea6+HR9E6uIlMLCHrJplI=
 		</data>
 		<key>Resources/app_bundle/app/exporters/xlsx_exporter.py</key>
 		<data>
-		KZQCuEUY5E/+cNmUQigMNlcStLs=
+		9JMLiLqXQ/+Y1Lk55O4PTO7/jPc=
 		</data>
 		<key>Resources/app_bundle/app/gui/__init__.py</key>
 		<data>
@@ -246,7 +246,7 @@
 		</data>
 		<key>Resources/app_bundle/app/gui/results_panel.py</key>
 		<data>
-		U25pgX6tsggHnu7GylNuN+JbDaQ=
+		QSsuPq42LzRO5FkzbYZlKjgGdp0=
 		</data>
 		<key>Resources/app_bundle/app/gui/session_manager_dialog.py</key>
 		<data>
@@ -278,7 +278,7 @@
 		</data>
 		<key>Resources/app_bundle/app/models/share_profile.py</key>
 		<data>
-		dB+RTBNuGkXCa0GpQePjnohq0X8=
+		HHRJT5k/60gUX820AEZ72MdclZA=
 		</data>
 		<key>Resources/app_bundle/app/resources/AppIcon.ico</key>
 		<data>
@@ -350,7 +350,7 @@
 		</data>
 		<key>Resources/app_bundle/app/utils/contest_validator.py</key>
 		<data>
-		WBF280hT6bsKavBsFGjRgXykxZE=
+		jj36xypWfTDB0sJMvui7crV+stg=
 		</data>
 		<key>Resources/app_bundle/app/utils/deduplicator.py</key>
 		<data>
@@ -406,11 +406,11 @@
 		</data>
 		<key>Resources/app_bundle/browser_extension/bookmarklet.html</key>
 		<data>
-		e8Zj4BLUH52OPVf3CVA/oTKLX80=
+		MRaEvkdP6KWqACHWlk0qQpowEls=
 		</data>
 		<key>Resources/app_bundle/browser_extension/content.js</key>
 		<data>
-		XwCi3waGxK+vKIGtbh7B8nN6af4=
+		yyl34sxoBoiYmu4lkLBVb57mSJE=
 		</data>
 		<key>Resources/app_bundle/browser_extension/manifest.json</key>
 		<data>
@@ -9341,7 +9341,7 @@
 		<dict>
 			<key>hash2</key>
 			<data>
-			JjaRcw1W6qK3Fg0TxGzkfpCCXPk3sr4N/Vpc8H91pgw=
+			tmzDsRrjzi+tboL1IKyHu1jRFasgx1YHQkZtZBtdiFA=
 			</data>
 		</dict>
 		<key>Resources/app_bundle/app/automation/collector_engine.py</key>
@@ -9453,7 +9453,7 @@
 		<dict>
 			<key>hash2</key>
 			<data>
-			olP7Jaaa9qoKGHFphbwU2DVwmz+lcSw3J8UCu+OwG1U=
+			FExC/90fAyji6mIpYwOqi+ANmYZD6JZFwktC/TxZFDE=
 			</data>
 		</dict>
 		<key>Resources/app_bundle/app/exporters/__init__.py</key>
@@ -9502,7 +9502,7 @@
 		<dict>
 			<key>hash2</key>
 			<data>
-			6tzoJpAs92o+JJC7yJaNsnDpcxa1acfOJl+i2/xZ5BU=
+			ngHmm1+rEu2cB5s4lH9rhkr+6xBKnc889CfeqUjzvtM=
 			</data>
 		</dict>
 		<key>Resources/app_bundle/app/exporters/json_exporter.py</key>
@@ -9516,14 +9516,14 @@
 		<dict>
 			<key>hash2</key>
 			<data>
-			fVeOiVi4fJKKWKnlJTfZXjkfkcRdG2htRhUXT0dHsUs=
+			dP9SYVXg5rMXS87Hn5d2rnVjZ/YFcHaZptbXIhzI/U8=
 			</data>
 		</dict>
 		<key>Resources/app_bundle/app/exporters/xlsx_exporter.py</key>
 		<dict>
 			<key>hash2</key>
 			<data>
-			kbs0Wrv4HMv5xIJDCi0PGLHm03c26ZJOs7OzYek/l6U=
+			YdfZbW9db0Qz+9/SDS8Jt8VsCPCXrqX0egcIHa4aOhU=
 			</data>
 		</dict>
 		<key>Resources/app_bundle/app/gui/__init__.py</key>
@@ -9635,7 +9635,7 @@
 		<dict>
 			<key>hash2</key>
 			<data>
-			u4iNSZY/iOdhTvqX5Y7JD01Vv2YxgeXdU2nA4BODRog=
+			BIH++X8733xaSJvYIdv/TRH/mJGTnLnGzFuUveQXEN0=
 			</data>
 		</dict>
 		<key>Resources/app_bundle/app/gui/session_manager_dialog.py</key>
@@ -9691,7 +9691,7 @@
 		<dict>
 			<key>hash2</key>
 			<data>
-			5i2VUM/Z0p5/AQN7z+V84T356lpUK6jfq08FvkltVxQ=
+			0XT1HmZDryJEkhBvJweR9PKirr0lWk3I9yugW8R9PeQ=
 			</data>
 		</dict>
 		<key>Resources/app_bundle/app/resources/AppIcon.ico</key>
@@ -9817,7 +9817,7 @@
 		<dict>
 			<key>hash2</key>
 			<data>
-			0N0ko1CoAgAR2Fswn/t2udW+bx0I5kqav2+q7cWw5Tg=
+			KmPr7gC4j/kaMwuwmgV5x4K0rWfMsfwsfuuWiPVWk84=
 			</data>
 		</dict>
 		<key>Resources/app_bundle/app/utils/deduplicator.py</key>
@@ -9915,14 +9915,14 @@
 		<dict>
 			<key>hash2</key>
 			<data>
-			/ED7b6oFrD/uaisnPWFhai0GFbPHHjrVx5u+pBCflxA=
+			6Ram1Lptk3IT2WRrFQfzrmb3L9WulPMgX3NiNCidCoA=
 			</data>
 		</dict>
 		<key>Resources/app_bundle/browser_extension/content.js</key>
 		<dict>
 			<key>hash2</key>
 			<data>
-			DdW5qDgI/M3P31sq+h3+OhvmJ1xO18TTrv63qWArWGQ=
+			GovfddnuTfCcfEWPWA506quWBKEcenyi7dQFSxp7GDc=
 			</data>
 		</dict>
 		<key>Resources/app_bundle/browser_extension/manifest.json</key>

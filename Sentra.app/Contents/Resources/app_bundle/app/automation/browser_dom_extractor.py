@@ -140,6 +140,84 @@ def clean_facebook_profile_url(raw_url: str) -> Optional[str]:
     return f"https://www.facebook.com/{username}"
 
 
+def clean_facebook_post_url(raw_url: str) -> Optional[str]:
+    """
+    Normalizes a raw Facebook post / share permalink into a clean canonical post URL.
+    Supports:
+      - https://www.facebook.com/<username>/posts/<post_id_or_pfbid>
+      - https://www.facebook.com/permalink.php?story_fbid=...&id=...
+      - https://www.facebook.com/story.php?story_fbid=...&id=...
+      - https://www.facebook.com/groups/<gid>/posts/<post_id>
+      - https://www.facebook.com/share/p/<token>
+      - https://www.facebook.com/<username>/videos/<video_id>
+      - https://www.facebook.com/photo.php?fbid=...
+      - https://www.facebook.com/watch/?v=...
+    Returns None if raw_url is a plain profile URL or comment link.
+    """
+    if not raw_url:
+        return None
+
+    url = raw_url.strip()
+    if url.startswith("#") or url.startswith("javascript:"):
+        return None
+    if url.startswith("/"):
+        url = "https://www.facebook.com" + url
+    if "facebook.com" not in url.lower():
+        return None
+
+    try:
+        parsed = urlparse(url)
+    except Exception:
+        return None
+
+    qs = parse_qs(parsed.query)
+    if "comment_id" in qs or "reply_comment_id" in qs:
+        return None
+
+    path = parsed.path or "/"
+    clean_lower_path = path.lower().rstrip("/")
+
+    # 1. /permalink.php?story_fbid=...&id=... or /story.php?story_fbid=...&id=...
+    if clean_lower_path in ("/permalink.php", "/story.php"):
+        story_fbids = qs.get("story_fbid", [])
+        uids = qs.get("id", [])
+        if story_fbids and uids:
+            return f"https://www.facebook.com/permalink.php?story_fbid={quote(story_fbids[0])}&id={quote(uids[0])}"
+        if story_fbids:
+            return f"https://www.facebook.com/permalink.php?story_fbid={quote(story_fbids[0])}"
+        return None
+
+    # 2. /<username>/(posts|videos|activity)/<post_id_or_pfbid>
+    m_user_post = re.match(r"^/([^/]+)/(posts|videos|activity)/([^/?#]+)", path, re.IGNORECASE)
+    if m_user_post:
+        return f"https://www.facebook.com/{m_user_post.group(1)}/{m_user_post.group(2)}/{m_user_post.group(3)}"
+
+    # 3. /groups/<gid>/(posts|permalink)/<post_id>
+    m_group_post = re.match(r"^/groups/([^/]+)/(posts|permalink)/([^/?#]+)", path, re.IGNORECASE)
+    if m_group_post:
+        return f"https://www.facebook.com/groups/{m_group_post.group(1)}/{m_group_post.group(2)}/{m_group_post.group(3)}"
+
+    # 4. /share/p/<token> or /share/v/<token> or /share/<token>
+    m_share = re.match(r"^/share/(?:([pv])/)?([^/?#]+)", path, re.IGNORECASE)
+    if m_share:
+        kind_seg = f"{m_share.group(1)}/" if m_share.group(1) else ""
+        return f"https://www.facebook.com/share/{kind_seg}{m_share.group(2)}"
+
+    # 5. /photo.php?fbid=... or /photo/?fbid=...
+    if clean_lower_path in ("/photo.php", "/photo"):
+        fbids = qs.get("fbid", [])
+        if fbids:
+            return f"https://www.facebook.com/photo.php?fbid={quote(fbids[0])}"
+
+    # 6. /watch/?v=...
+    if clean_lower_path == "/watch":
+        vs = qs.get("v", [])
+        if vs:
+            return f"https://www.facebook.com/watch/?v={quote(vs[0])}"
+
+    return None
+
+
 def _is_valid_person_name(name: str) -> bool:
     if not name:
         return False
@@ -561,6 +639,7 @@ class BrowserDOMExtractor:
                 flags=re.IGNORECASE,
             ).strip()
             raw_url = item.get("url") or ""
+            raw_shared_post_url = item.get("shared_post_url") or ""
             avatar_url = (item.get("avatar_url") or "").strip()
             content = normalize_text(item.get("content") or "")
             item_action = (item.get("action_type") or action_type or "share").lower().strip()
@@ -568,6 +647,10 @@ class BrowserDOMExtractor:
                 item_action = "share"
 
             clean_url = clean_facebook_profile_url(raw_url)
+            clean_post_url = (
+                clean_facebook_post_url(raw_shared_post_url)
+                or (clean_facebook_post_url(raw_url) if item_action == "share" else None)
+            )
             if not raw_name:
                 continue
             # For comments (or items with avatar_url/content), allow keeping the record even if Facebook didn't hydrate an href
@@ -578,7 +661,12 @@ class BrowserDOMExtractor:
                 continue
 
             identity_key = (clean_url or raw_name).lower()
-            key = (identity_key, item_action, content if item_action == "comment" else "")
+            key = (
+                identity_key,
+                item_action,
+                content if item_action in ("comment", "share") else "",
+                clean_post_url or "" if item_action == "share" else "",
+            )
             if key in seen_keys:
                 continue
             seen_keys.add(key)
@@ -588,6 +676,7 @@ class BrowserDOMExtractor:
                     name=raw_name,
                     profile_url=clean_url,
                     share_url=avatar_url if avatar_url.startswith("http") else None,
+                    shared_post_url=clean_post_url,
                     content=content,
                     action_type=item_action,
                     confidence=1.0 if clean_url else 0.9,

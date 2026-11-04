@@ -26,7 +26,7 @@ class XLSXExporter:
             ws.title = "Facebook Shares"
             
             headers = [
-                'Name', 'Profile URL', 'Share URL', 'Content', 'Reactions', 'Comments', 'Confidence', 
+                'Name', 'Profile URL', 'Shared Post URL', 'Share URL', 'Content', 'Reactions', 'Comments', 'Confidence', 
                 'Source', 'First Seen', 'Last Seen', 'Session ID'
             ]
             
@@ -43,15 +43,16 @@ class XLSXExporter:
             for row, profile in enumerate(profiles, 2):
                 ws.cell(row=row, column=1, value=profile.name)
                 ws.cell(row=row, column=2, value=profile.profile_url or "")
-                ws.cell(row=row, column=3, value=profile.share_url or "")
-                ws.cell(row=row, column=4, value=profile.content or "")
-                ws.cell(row=row, column=5, value=profile.reactions or "0")
-                ws.cell(row=row, column=6, value=profile.comments or "0")
-                ws.cell(row=row, column=7, value=profile.confidence)
-                ws.cell(row=row, column=8, value=profile.source)
-                ws.cell(row=row, column=9, value=profile.first_seen_at)
-                ws.cell(row=row, column=10, value=profile.last_seen_at)
-                ws.cell(row=row, column=11, value=profile.session_id)
+                ws.cell(row=row, column=3, value=getattr(profile, "shared_post_url", None) or "")
+                ws.cell(row=row, column=4, value=profile.share_url or "")
+                ws.cell(row=row, column=5, value=profile.content or "")
+                ws.cell(row=row, column=6, value=profile.reactions or "0")
+                ws.cell(row=row, column=7, value=profile.comments or "0")
+                ws.cell(row=row, column=8, value=profile.confidence)
+                ws.cell(row=row, column=9, value=profile.source)
+                ws.cell(row=row, column=10, value=profile.first_seen_at)
+                ws.cell(row=row, column=11, value=profile.last_seen_at)
+                ws.cell(row=row, column=12, value=profile.session_id)
                 
             # Autofilter
             ws.auto_filter.ref = ws.dimensions
@@ -84,7 +85,7 @@ class XLSXExporter:
 
             headers = [
                 'Serial #', 'Name', 'Eligible', 'Actions Completed', 'Liked', 'Commented', 'Shared',
-                'Status', 'Comments Text', 'Share Content', 'Profile URL', 'Avatar Hash', 'First Seen'
+                'Status', 'Comments Text', 'Share Content', 'Profile URL', 'Shared Post URL', 'Avatar Hash', 'First Seen'
             ]
             for col, header in enumerate(headers, 1):
                 cell = ws.cell(row=1, column=col, value=header)
@@ -107,8 +108,9 @@ class XLSXExporter:
                 ws.cell(row=row, column=9, value=" | ".join(p.comment_texts))
                 ws.cell(row=row, column=10, value=" | ".join(p.share_contents))
                 ws.cell(row=row, column=11, value=p.profile_url or "")
-                ws.cell(row=row, column=12, value=p.avatar_hash or "")
-                ws.cell(row=row, column=13, value=p.first_seen_at)
+                ws.cell(row=row, column=12, value=" | ".join(getattr(p, "shared_post_urls", [])))
+                ws.cell(row=row, column=13, value=p.avatar_hash or "")
+                ws.cell(row=row, column=14, value=p.first_seen_at)
 
             ws.auto_filter.ref = ws.dimensions
             ws.column_dimensions['A'].width = 28

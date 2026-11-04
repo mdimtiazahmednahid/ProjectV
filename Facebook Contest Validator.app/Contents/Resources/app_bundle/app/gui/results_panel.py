@@ -500,10 +500,11 @@ class ResultsPanel(QWidget):
         # =========================================================================
         # Table
         # =========================================================================
-        self.table = QTableWidget(0, 9)
+        self.table = QTableWidget(0, 11)
         self.table.setHorizontalHeaderLabels([
             "Serial #", "Name & Avatar", "Reaction 👍", "Commented 💬", "Shared 🔄",
-            "Score", "Contest Status", "Comment / Share Text", "Identity / Profile URL"
+            "Score", "Contest Status", "Comment Text 💬", "Shared Caption 🔄",
+            "Identity / Profile URL", "Shared Post Link 🔗"
         ])
         self.table.setStyleSheet(
             "QTableWidget { background-color: #141923; color: #f8fafc; gridline-color: #2d3748; "
@@ -964,6 +965,9 @@ class ResultsPanel(QWidget):
             for s in other.share_contents:
                 if s not in master.share_contents:
                     master.share_contents.append(s)
+            for sp_url in getattr(other, "shared_post_urls", []):
+                if sp_url and sp_url not in master.shared_post_urls:
+                    master.shared_post_urls.append(sp_url)
             if not master.profile_url and other.profile_url:
                 master.profile_url = other.profile_url
             if not master.avatar_hash and other.avatar_hash:
@@ -1029,6 +1033,9 @@ class ResultsPanel(QWidget):
                 for s in p.share_contents:
                     if s not in primary.share_contents:
                         primary.share_contents.append(s)
+                for sp_url in getattr(p, "shared_post_urls", []):
+                    if sp_url and sp_url not in primary.shared_post_urls:
+                        primary.shared_post_urls.append(sp_url)
                 if not primary.profile_url and p.profile_url:
                     primary.profile_url = p.profile_url
                 if not primary.avatar_hash and p.avatar_hash:
@@ -1099,8 +1106,8 @@ class ResultsPanel(QWidget):
 
     def _on_item_clicked(self, item):
         col = item.column()
-        url_col = 8 if self._is_contest_view() else 2
-        if col == url_col:
+        url_cols = (9, 10) if self._is_contest_view() else (2, 3)
+        if col in url_cols:
             txt = (item.text() or "").strip()
             if txt.startswith("http://") or txt.startswith("https://"):
                 QDesktopServices.openUrl(QUrl(txt))
@@ -1116,6 +1123,13 @@ class ResultsPanel(QWidget):
         raw_key = (norm_name, act_type, id_key or "", content_snip)
         existing = self._raw_dedupe_map.get(raw_key)
 
+        # For 'share', if an earlier pass captured the sharer without caption (or truncated) and a later pass has full caption/post link, upgrade in-place!
+        if existing is None and act_type == "share":
+            empty_share_key = (norm_name, "share", id_key or "", "")
+            existing = self._raw_dedupe_map.get(empty_share_key)
+            if existing is not None:
+                self._raw_dedupe_map[raw_key] = existing
+
         # If previously ingested without URL on an earlier day/pass, upgrade the URL-less record in-place!
         if existing is None and id_key:
             no_url_key = (norm_name, act_type, "", content_snip)
@@ -1126,13 +1140,15 @@ class ResultsPanel(QWidget):
         # Conversely, if already ingested WITH URL on an earlier day and now seen without URL, reuse existing!
         if existing is None and not id_key:
             for k, v in self._raw_dedupe_map.items():
-                if k[0] == norm_name and k[1] == act_type and k[3] == content_snip and k[2]:
+                if k[0] == norm_name and k[1] == act_type and (k[3] == content_snip or act_type == "share") and k[2]:
                     existing = v
                     break
 
         if existing is not None:
             if profile.profile_url and (not existing.profile_url or "/people/" in existing.profile_url.lower()):
                 existing.profile_url = profile.profile_url
+            if getattr(profile, "shared_post_url", None) and not getattr(existing, "shared_post_url", None):
+                existing.shared_post_url = profile.shared_post_url
             if not existing.avatar_hash and profile.avatar_hash:
                 existing.avatar_hash = profile.avatar_hash
                 existing.avatar_path = profile.avatar_path
@@ -1275,7 +1291,8 @@ class ResultsPanel(QWidget):
             if self._is_contest_view():
                 base_headers = [
                     "Serial #", "Name & Avatar", "Reaction", "Comment", "Share",
-                    "Score", "Contest Status", "Comment / Share Text", "Identity / Profile URL"
+                    "Score", "Contest Status", "Comment Text 💬", "Shared Caption 🔄",
+                    "Identity / Profile URL", "Shared Post Link 🔗"
                 ]
                 rule_headers = [f"🧠 {r.name}" for r in self.custom_rules]
                 all_headers = base_headers + rule_headers
@@ -1290,6 +1307,7 @@ class ResultsPanel(QWidget):
                         if query in p.display_name.lower()
                         or query in p.serial_code.lower()
                         or (p.profile_url and query in p.profile_url.lower())
+                        or (p.primary_shared_post_url and query in p.primary_shared_post_url.lower())
                         or (p.combined_notes and query in p.combined_notes.lower())
                     ]
                 displayed_slice = displayed[: self.MAX_TABLE_DISPLAY_ROWS]
@@ -1330,7 +1348,12 @@ class ResultsPanel(QWidget):
                     commented_item = QTableWidgetItem(
                         f"✅ Comment ({len(p.comment_texts)})" if p.commented else "❌ Comment"
                     )
-                    shared_item = QTableWidgetItem("✅ Share" if p.shared else "❌ Share")
+                    shared_label = (
+                        f"✅ Share ({len(p.share_contents)})"
+                        if (p.shared and p.share_contents)
+                        else ("✅ Share" if p.shared else "❌ Share")
+                    )
+                    shared_item = QTableWidgetItem(shared_label)
                     score_item = QTableWidgetItem(f"{p.actions_completed}/3")
                     if is_qual:
                         score_item.setFont(bold_font)
@@ -1338,18 +1361,32 @@ class ResultsPanel(QWidget):
                     if is_qual or is_bad:
                         status_item.setFont(bold_font)
 
-                    notes_preview = p.combined_notes
-                    if len(notes_preview) > 60:
-                        notes_preview = notes_preview[:57] + "..."
-                    notes_item = QTableWidgetItem(notes_preview)
-                    notes_item.setToolTip(p.combined_notes)
+                    comment_preview = p.combined_comments
+                    if len(comment_preview) > 55:
+                        comment_preview = comment_preview[:52] + "..."
+                    comment_text_item = QTableWidgetItem(comment_preview)
+                    comment_text_item.setToolTip(p.combined_comments)
+
+                    share_caption_preview = p.combined_share_captions
+                    if len(share_caption_preview) > 55:
+                        share_caption_preview = share_caption_preview[:52] + "..."
+                    share_caption_item = QTableWidgetItem(share_caption_preview)
+                    share_caption_item.setToolTip(p.combined_share_captions)
 
                     id_text = p.profile_url or (f"AvatarHash:{p.avatar_hash[:8]}" if p.avatar_hash else "")
                     url_item = QTableWidgetItem(id_text)
+                    if p.profile_url:
+                        url_item.setToolTip(p.profile_url)
+
+                    shared_post_link = p.primary_shared_post_url
+                    shared_post_item = QTableWidgetItem(shared_post_link)
+                    if p.shared_post_urls:
+                        shared_post_item.setToolTip("\n".join(p.shared_post_urls))
 
                     row_items = [
                         serial_item, name_item, liked_item, commented_item, shared_item,
-                        score_item, status_item, notes_item, url_item
+                        score_item, status_item, comment_text_item, share_caption_item,
+                        url_item, shared_post_item
                     ]
                     for r_obj in self.custom_rules:
                         passed_r = ev.custom_rule_results.get(r_obj.id, False) if ev else False
@@ -1372,15 +1409,17 @@ class ResultsPanel(QWidget):
                         cell_item.setBackground(row_bg)
                         if is_qual and col in (0, 5, 6):
                             cell_item.setForeground(eligible_accent_fg)
-                        elif col == 8 and p.profile_url:
+                        elif col == 9 and p.profile_url:
+                            cell_item.setForeground(link_fg)
+                        elif col == 10 and shared_post_link:
                             cell_item.setForeground(link_fg)
                         else:
                             cell_item.setForeground(row_fg)
                         self.table.setItem(row, col, cell_item)
             else:
-                self.table.setColumnCount(8)
+                self.table.setColumnCount(9)
                 self.table.setHorizontalHeaderLabels([
-                    "Name", "Action", "Profile URL", "Content",
+                    "Name", "Action", "Profile URL", "Shared Post Link 🔗", "Content / Shared Caption",
                     "Reactions", "Comments", "Confidence", "First Seen"
                 ])
                 raw_bg_even = QBrush(QColor(20, 25, 35))
@@ -1394,6 +1433,7 @@ class ResultsPanel(QWidget):
                         p for p in raw_list
                         if query in (p.name or "").lower()
                         or (p.profile_url and query in p.profile_url.lower())
+                        or (getattr(p, "shared_post_url", None) and query in p.shared_post_url.lower())
                         or (p.content and query in p.content.lower())
                     ]
                 raw_slice = raw_list[-self.MAX_TABLE_DISPLAY_ROWS :] if len(raw_list) > self.MAX_TABLE_DISPLAY_ROWS else raw_list
@@ -1409,10 +1449,17 @@ class ResultsPanel(QWidget):
 
                     action_item = QTableWidgetItem((getattr(profile, "action_type", "share") or "share").upper())
                     url_item = QTableWidgetItem(profile.profile_url or "")
+                    if profile.profile_url:
+                        url_item.setToolTip(profile.profile_url)
+
+                    post_url_str = getattr(profile, "shared_post_url", None) or ""
+                    post_url_item = QTableWidgetItem(post_url_str)
+                    if post_url_str:
+                        post_url_item.setToolTip(post_url_str)
 
                     content_preview = profile.content or ""
-                    if len(content_preview) > 50:
-                        content_preview = content_preview[:47] + "..."
+                    if len(content_preview) > 55:
+                        content_preview = content_preview[:52] + "..."
                     content_item = QTableWidgetItem(content_preview)
                     content_item.setToolTip(profile.content or "")
 
@@ -1422,13 +1469,16 @@ class ResultsPanel(QWidget):
                     seen_item = QTableWidgetItem(profile.first_seen_at.split('.')[0].replace('T', ' '))
 
                     raw_cells = [
-                        name_item, action_item, url_item, content_item,
+                        name_item, action_item, url_item, post_url_item, content_item,
                         react_item, comm_item, conf_item, seen_item
                     ]
                     r_bg = raw_bg_even if row % 2 == 0 else raw_bg_odd
                     for col, c_item in enumerate(raw_cells):
                         c_item.setBackground(r_bg)
-                        c_item.setForeground(link_fg if (col == 2 and profile.profile_url) else raw_fg)
+                        if (col == 2 and profile.profile_url) or (col == 3 and post_url_str):
+                            c_item.setForeground(link_fg)
+                        else:
+                            c_item.setForeground(raw_fg)
                         self.table.setItem(row, col, c_item)
         finally:
             self.table.setUpdatesEnabled(True)
