@@ -1897,6 +1897,71 @@ def test_who_reacts_what_and_universal_profile_formats():
     assert shuvo.reaction_badge == "✅ 🥰 Care"
 
 
+def test_tecno_usb_and_adb_detection_edge_cases():
+    """
+    Verifies all Tecno / Transsion (e.g. TECNO Camon 20 Pro `CK7n` / `102622534S009003`) USB and ADB
+    detection edge cases:
+      1. `parse_macos_ioreg_usb_devices` splits `ioreg` blocks even when USB node names contain spaces
+         (`+-o TECNO Camon 20 Pro@14300000 <class IOUSBHostDevice...>` after an Apple `Headset@80400000`
+         with `idVendor = 1452`) or hub indentation (`| +-o TECNO CK7n@14200000 <class AppleUSBDevice...>`).
+      2. `resolve_friendly_model_and_vendor` maps `CK7n` / `TECNO_CK7n` -> `TECNO Camon 20 Pro`,
+         `CK8n` -> `TECNO Camon 20 Pro 5G`, and recognizes Transsion factory serials (`102622534S009003`).
+      3. `_parse_devices_output` enriches `unauthorized`, `offline`, and `device` outputs with friendly Tecno names.
+    """
+    from app.automation.device_manager import DeviceManager
+
+    sample_ioreg = """
++-o Headset@80400000  <class IOUSBHostDevice, id 0x100000342, registered, matched, active, busy 0 (23 ms), retain 29>
+  | {
+  |   "idVendor" = 1452
+  |   "USB Product Name" = "Headset"
+  |   "USB Vendor Name" = "Apple Inc."
+  |   "USB Serial Number" = "000000000000"
+  | }
+  | 
++-o TECNO CK7n@14300000  <class IOUSBHostDevice, id 0x100000899, registered, matched, active, busy 0 (12 ms), retain 25>
+  | {
+  |   "idVendor" = 3725
+  |   "kUSBProductString" = "TECNO CK7n"
+  |   "kUSBVendorString" = "TECNO"
+  |   "kUSBSerialNumberString" = "102622534S009003"
+  | }
+  | +-o IOUSBHostInterface@0  <class IOUSBHostInterface>
+  |   {
+  |     "bInterfaceClass" = 255
+  |     "bInterfaceSubClass" = 66
+  |     "bInterfaceProtocol" = 1
+  |   }
+"""
+    usb_found = DeviceManager.parse_macos_ioreg_usb_devices(sample_ioreg)
+    assert len(usb_found) == 1
+    assert usb_found[0]["serial"] == "102622534S009003"
+    assert usb_found[0]["vendor"] == "Tecno"
+    assert usb_found[0]["model"] == "TECNO Camon 20 Pro"
+    assert usb_found[0]["has_adb_interface"] == "true"
+
+    # Also test Tecno Model Code resolution & unauthorized/offline ADB output enrichment
+    v1, m1 = DeviceManager.resolve_friendly_model_and_vendor("102622534S009003", "TECNO_CK7n", "")
+    assert v1 == "Tecno"
+    assert m1 == "TECNO Camon 20 Pro"
+
+    v2, m2 = DeviceManager.resolve_friendly_model_and_vendor("098877665B001122", "CK8n", "")
+    assert v2 == "Tecno"
+    assert m2 == "TECNO Camon 20 Pro 5G"
+
+    adb_stdout = (
+        "List of devices attached\n"
+        "102622534S009003       device usb:338690048X product:CK7n model:TECNO_CK7n device:TECNO-CK7n transport_id:4\n"
+    )
+    parsed = DeviceManager._parse_devices_output(adb_stdout)
+    assert len(parsed) == 1
+    assert parsed[0]["serial"] == "102622534S009003"
+    assert parsed[0]["state"] == "device"
+    assert parsed[0]["model"] == "TECNO Camon 20 Pro"
+    assert parsed[0]["vendor"] == "Tecno"
+
+
+
 
 
 

@@ -265,26 +265,30 @@ exec "{venv_py_link}" "{main_script}"
 
     # 2. Build or update self-contained macOS Intel (x86_64) .app bundle
     app_bundle = os.path.join(WORKSPACE_ROOT, "Facebook Contest Validator.app")
+    sentra_app_bundle = os.path.join(WORKSPACE_ROOT, "Sentra.app")
     existing_payload = os.path.join(app_bundle, "Contents", "Resources", "app_bundle")
     existing_bin = os.path.join(app_bundle, "Contents", "MacOS", "FacebookContestValidator")
 
-    # Sync any newer live data from existing .app bundle back to PROJECT_DIR/data first
+    # Sync any newer live data from existing .app bundles back to PROJECT_DIR/data first
+    for cand_bundle in (sentra_app_bundle, app_bundle):
+        cand_data = os.path.join(cand_bundle, "Contents", "Resources", "app_bundle", "data")
+        if os.path.isdir(cand_data):
+            os.makedirs(os.path.join(PROJECT_DIR, "data", "avatars"), exist_ok=True)
+            for item in os.listdir(cand_data):
+                s_path = os.path.join(cand_data, item)
+                d_path = os.path.join(PROJECT_DIR, "data", item)
+                if os.path.isfile(s_path):
+                    if not os.path.exists(d_path) or os.path.getmtime(s_path) >= os.path.getmtime(d_path):
+                        shutil.copyfile(s_path, d_path)
+            cand_avatars = os.path.join(cand_data, "avatars")
+            if os.path.isdir(cand_avatars):
+                for av_file in os.listdir(cand_avatars):
+                    s_av = os.path.join(cand_avatars, av_file)
+                    d_av = os.path.join(PROJECT_DIR, "data", "avatars", av_file)
+                    if os.path.isfile(s_av) and not os.path.exists(d_av):
+                        shutil.copyfile(s_av, d_av)
+
     existing_app_data = os.path.join(existing_payload, "data")
-    if os.path.isdir(existing_app_data):
-        os.makedirs(os.path.join(PROJECT_DIR, "data", "avatars"), exist_ok=True)
-        for item in os.listdir(existing_app_data):
-            s_path = os.path.join(existing_app_data, item)
-            d_path = os.path.join(PROJECT_DIR, "data", item)
-            if os.path.isfile(s_path):
-                if not os.path.exists(d_path) or os.path.getmtime(s_path) >= os.path.getmtime(d_path):
-                    shutil.copyfile(s_path, d_path)
-        existing_avatars = os.path.join(existing_app_data, "avatars")
-        if os.path.isdir(existing_avatars):
-            for av_file in os.listdir(existing_avatars):
-                s_av = os.path.join(existing_avatars, av_file)
-                d_av = os.path.join(PROJECT_DIR, "data", "avatars", av_file)
-                if os.path.isfile(s_av) and not os.path.exists(d_av):
-                    shutil.copyfile(s_av, d_av)
 
     # Fast in-place code sync when .app bundle already exists (preserves live CWD inode for running app!)
     if "--skip-dmg" in sys.argv and os.path.isdir(existing_payload) and os.path.isfile(existing_bin):
@@ -312,8 +316,13 @@ exec "{venv_py_link}" "{main_script}"
                         ignore=shutil.ignore_patterns("__pycache__", "*.pyc"),
                     )
             os.makedirs(existing_app_data, exist_ok=True)
+            if os.path.isdir(os.path.join(PROJECT_DIR, "data")):
+                for item in os.listdir(os.path.join(PROJECT_DIR, "data")):
+                    src_df = os.path.join(PROJECT_DIR, "data", item)
+                    if os.path.isfile(src_df) and item.endswith((".sqlite", ".csv", ".html", ".json", ".xlsx")):
+                        shutil.copyfile(src_df, os.path.join(existing_app_data, item))
+
             # Also maintain Sentra.app bundle in workspace root
-            sentra_app_bundle = os.path.join(WORKSPACE_ROOT, "Sentra.app")
             if not os.path.exists(sentra_app_bundle):
                 _copytree_no_xattr(app_bundle, sentra_app_bundle)
             else:
@@ -333,6 +342,13 @@ exec "{venv_py_link}" "{main_script}"
                                 os.path.join(sentra_payload, folder),
                                 ignore=shutil.ignore_patterns("__pycache__", "*.pyc"),
                             )
+                    sentra_data = os.path.join(sentra_payload, "data")
+                    os.makedirs(sentra_data, exist_ok=True)
+                    if os.path.isdir(os.path.join(PROJECT_DIR, "data")):
+                        for item in os.listdir(os.path.join(PROJECT_DIR, "data")):
+                            src_df = os.path.join(PROJECT_DIR, "data", item)
+                            if os.path.isfile(src_df) and item.endswith((".sqlite", ".csv", ".html", ".json", ".xlsx")):
+                                shutil.copyfile(src_df, os.path.join(sentra_data, item))
             # Re-sign both .app bundles so macOS Gatekeeper / LaunchServices validates Info.plist & Resources
             for bundle_to_sign in (app_bundle, sentra_app_bundle):
                 subprocess.run(
@@ -437,10 +453,17 @@ exec "{venv_py_link}" "{main_script}"
             shutil.rmtree(old_trash, ignore_errors=True)
     os.rename(staging_bundle, app_bundle)
 
-    # Ad-hoc code sign the x86_64 .app bundle for macOS Gatekeeper / LaunchServices
-    subprocess.run(["/usr/bin/codesign", "--force", "--deep", "--sign", "-", app_bundle], check=False)
+    # Also sync Sentra.app in full rebuild path so both .app bundles are always identical
+    if not os.path.exists(sentra_app_bundle):
+        _copytree_no_xattr(app_bundle, sentra_app_bundle)
+    else:
+        _copytree_no_xattr(app_bundle, sentra_app_bundle)
 
-    print(f"Created macOS Intel App Bundle: {app_bundle}")
+    # Ad-hoc code sign both x86_64 .app bundles for macOS Gatekeeper / LaunchServices
+    for bundle_to_sign in (app_bundle, sentra_app_bundle):
+        subprocess.run(["/usr/bin/codesign", "--force", "--deep", "--sign", "-", bundle_to_sign], check=False)
+
+    print(f"Created macOS Intel App Bundles: {sentra_app_bundle} & {app_bundle}")
 
     if "--skip-dmg" in sys.argv:
         return

@@ -421,14 +421,16 @@ class DevicePanel(QGroupBox):
                 self.device_combo.addItem(f"✅ {model} ({serial})", serial)
                 ready_count += 1
             elif state == "unauthorized":
+                label_prefix = f"{model} ({serial})" if model and model not in ("Android Device", "Android Phone") else serial
                 self.device_combo.addItem(
-                    f"⚠️ {serial} (UNAUTHORIZED — Tap 'Allow USB Debugging' on phone)",
+                    f"⚠️ {label_prefix} — UNAUTHORIZED (Tap 'Allow USB Debugging' on phone)",
                     serial,
                 )
                 pending_states.append("unauthorized")
             elif state == "offline":
+                label_prefix = f"{model} ({serial})" if model and model not in ("Android Device", "Android Phone") else serial
                 self.device_combo.addItem(
-                    f"⚠️ {serial} (OFFLINE — Click '🔄 Fix / Install ADB' or re-plug USB)",
+                    f"⚠️ {label_prefix} — OFFLINE (Click '🔄 Fix / Install ADB' or re-plug USB)",
                     serial,
                 )
                 pending_states.append("offline")
@@ -669,8 +671,8 @@ class DevicePanel(QGroupBox):
                 self.connect_appium(silent=True)
                 return
 
-        # Also try a full USB + Wi-Fi refresh
-        DeviceManager.auto_connect_discovered_wireless_devices(timeout=1.0)
+        # Also try a full USB + Wi-Fi ADB daemon reset & scan (clears macOS e00002be lock and enables ADB_LIBUSB=1)
+        DeviceManager.restart_adb_server()
         self._last_device_signature = None
         self.refresh_devices(manual=True)
         devices = DeviceManager.get_connected_devices(auto_reconnect=False)
@@ -682,25 +684,35 @@ class DevicePanel(QGroupBox):
             self.connect_appium(silent=True)
             return
 
+        # If phone is plugged in with USB Debugging OFF, show the dedicated USB Debugging prompt
+        hw_only = [d for d in devices if d.get("state") in ("usb_debugging_off", "usb_adb_locked")]
+        if hw_only:
+            self._show_usb_debugging_prompt(hw_only[0].get("serial", s_serial), hw_only[0].get("model", s_model))
+            return
+
         box = QMessageBox(self)
         box.setIcon(QMessageBox.Information)
         box.setWindowTitle(f"🕘 Reconnect Saved Phone: {s_model}")
         box.setText(
             f"<b>Saved Device:</b> {s_model} (<code>{s_ipp or s_serial}</code>)<br><br>"
-            "This previously connected phone is currently offline or sleeping."
+            "This previously connected phone is currently not responding on USB or Wi-Fi."
         )
         box.setInformativeText(
-            "To reconnect it right now:\n"
-            "• For USB: Plug in the USB cable, unlock the phone screen, and ensure 'USB Debugging' is ON.\n"
-            "• For Wi-Fi: Make sure 'Wireless Debugging' is ON in Developer Options on your phone, "
-            "or click '📶 Scan Wi-Fi QR Code' below!"
+            "How to reconnect your Tecno / Android phone right now:\n\n"
+            "• For USB Cable: Plug in the USB cable, unlock the phone screen, swipe down the top notification bar "
+            "→ tap 'Charging this device via USB' → select 'File Transfer (MTP)', and ensure 'USB Debugging' is ON in Developer Options.\n\n"
+            "• For Wireless (No USB cable needed): Click '📶 Scan Wi-Fi QR Code' below and scan it from "
+            "Settings → System → Developer Options → Wireless Debugging → Pair device with QR code!"
         )
         btn_qr = box.addButton("📶 Scan Wi-Fi QR Code", QMessageBox.AcceptRole)
+        btn_retry_usb = box.addButton("🔄 Reset USB & Retry", QMessageBox.ActionRole)
         btn_forget = box.addButton("🗑 Forget Saved Device", QMessageBox.DestructiveRole)
         box.addButton(QMessageBox.Close)
         box.exec()
         if box.clickedButton() == btn_qr:
             self.open_wireless_adb_dialog()
+        elif box.clickedButton() == btn_retry_usb:
+            self.restart_adb_and_refresh()
         elif box.clickedButton() == btn_forget:
             DeviceManager.remove_saved_device(s_serial)
             self._last_device_signature = None

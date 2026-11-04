@@ -7,6 +7,7 @@ import select
 import socket
 import struct
 import subprocess
+import tempfile
 import time
 from typing import Dict, List, Optional, Tuple
 from app.utils.platform_binaries import (
@@ -38,13 +39,67 @@ ANDROID_USB_VENDOR_IDS = {
     0x2E04: "Tecno / Infinix / Itel (Transsion)",
     0x2C7C: "Tecno / Transsion",
     0x2FB8: "Tecno / Transsion",
+    0x271D: "Tecno / Gionee / Transsion",
     0x05C6: "Qualcomm / Android",
-    0x19D2: "ZTE / Nubia",
+    0x19D2: "ZTE / Nubia / Android",
     0x2A45: "Meizu",
     0x1D4D: "Pegatron",
     0x0489: "Foxconn / Nokia / Android",
     0x1BBB: "Alcatel / TCL",
     0x2A47: "Nothing / Android",
+    0x2006: "Android / Transsion",
+}
+
+# Exact Tecno / Transsion internal model code -> marketing name map
+TECNO_MODEL_CODE_MAP = {
+    "ck6": "TECNO Camon 20",
+    "ck6n": "TECNO Camon 20",
+    "tecno-ck6": "TECNO Camon 20",
+    "tecno_ck6": "TECNO Camon 20",
+    "tecno-ck6n": "TECNO Camon 20",
+    "tecno_ck6n": "TECNO Camon 20",
+    "ck7n": "TECNO Camon 20 Pro",
+    "tecno-ck7n": "TECNO Camon 20 Pro",
+    "tecno_ck7n": "TECNO Camon 20 Pro",
+    "ck8n": "TECNO Camon 20 Pro 5G",
+    "tecno-ck8n": "TECNO Camon 20 Pro 5G",
+    "tecno_ck8n": "TECNO Camon 20 Pro 5G",
+    "ck9n": "TECNO Camon 20 Premier 5G",
+    "tecno-ck9n": "TECNO Camon 20 Premier 5G",
+    "tecno_ck9n": "TECNO Camon 20 Premier 5G",
+    "cl6": "TECNO Camon 30",
+    "cl6k": "TECNO Camon 30",
+    "tecno-cl6": "TECNO Camon 30",
+    "tecno_cl6": "TECNO Camon 30",
+    "cl7": "TECNO Camon 30 5G",
+    "cl7k": "TECNO Camon 30 5G",
+    "cl8": "TECNO Camon 30 Pro 5G",
+    "cl9": "TECNO Camon 30 Premier 5G",
+    "cg8": "TECNO Camon 18P",
+    "cg8h": "TECNO Camon 18P",
+    "ch6": "TECNO Camon 19",
+    "ch6n": "TECNO Camon 19",
+    "ch7": "TECNO Camon 19 Pro",
+    "ch7n": "TECNO Camon 19 Pro",
+    "ch9": "TECNO Camon 19 Pro 5G",
+    "ch9n": "TECNO Camon 19 Pro 5G",
+    "kj5": "TECNO Spark 20",
+    "kj5n": "TECNO Spark 20",
+    "kj6": "TECNO Spark 20C",
+    "kj7": "TECNO Spark 20 Pro",
+    "kl7": "TECNO Spark 20 Pro+",
+    "ki5k": "TECNO Spark 10",
+    "ki5q": "TECNO Spark 10",
+    "ki7": "TECNO Spark 10 Pro",
+    "lh7n": "TECNO Pova 4",
+    "lh8n": "TECNO Pova 5",
+    "li6": "TECNO Pova 6 Neo",
+    "li7": "TECNO Pova 6",
+    "li9": "TECNO Pova 6 Pro 5G",
+    "ad8": "TECNO Phantom X2",
+    "ad9": "TECNO Phantom X2 Pro",
+    "ad10": "TECNO Phantom V Fold",
+    "ae10": "TECNO Phantom V Flip",
 }
 
 # Product/Model string signatures for Tecno (Camon 20 Pro, Spark, Pova, Phantom, Pop) & Transsion family
@@ -58,7 +113,9 @@ TECNO_MODEL_KEYWORDS = (
     "transsion",
     "infinix",
     "itel",
+    "hios",
     "tecno-",
+    "tecno_",
     "ck6",
     "ck7",
     "ck8",
@@ -66,23 +123,36 @@ TECNO_MODEL_KEYWORDS = (
     "cl6",
     "cl7",
     "cl8",
+    "cl9",
     "cg8",
     "ch6",
     "ch7",
     "ch9",
     "kj5",
+    "kj6",
+    "kj7",
     "kl7",
+    "ki5",
+    "ki7",
+    "li6",
     "li7",
+    "li9",
+    "lh7",
     "lh8",
     "lg7",
     "bf7",
 )
 
+# Transsion / Tecno factory USB serial number pattern (e.g. 102622534S009003, 098765432A001234)
+TRANSSION_SERIAL_RE = re.compile(r"^\d{6,10}[A-HJ-NP-Z]\d{5,8}$")
+
 
 class DeviceManager:
     _last_adb_diagnostic: str = ""
     _mdns_server_ensured: bool = False
+    _usb_ini_ensured: bool = False
     _model_props_cache: Dict[str, Tuple[str, str]] = {}
+    _tcpip_bridged_serials: set = set()
 
     @classmethod
     def get_last_diagnostic(cls) -> str:
@@ -145,8 +215,18 @@ class DeviceManager:
             cls._query_device_brand_and_model(serial)
         cached_vendor, cached_model = cls._model_props_cache.get(serial, ("", ""))
 
-        final_vendor = vendor or cached_vendor or ("Tecno" if any(k in (model or "").lower() for k in TECNO_MODEL_KEYWORDS) else "Android")
-        final_model = model if (model and model not in ("Android Device", "Android")) else (cached_model or model or "Android Phone")
+        final_vendor, final_model = cls.resolve_friendly_model_and_vendor(
+            serial=serial,
+            raw_model=model or cached_model,
+            raw_vendor=vendor or cached_vendor,
+            include_saved=False,
+        )
+
+        # If connected over USB, also discover phone's Wi-Fi IP so we can reconnect wirelessly later
+        if not ip_port and conn_type == "usb":
+            wlan_ip = cls._query_device_wlan_ip(serial)
+            if wlan_ip:
+                ip_port = f"{wlan_ip}:5555"
 
         now_str = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         existing = cls.get_saved_devices()
@@ -156,7 +236,7 @@ class DeviceManager:
                 ip_port and item.get("ip_port") and item.get("ip_port").split(":")[0] == ip_port.split(":")[0] and item.get("model") == final_model
             ):
                 item["serial"] = serial
-                if final_model and final_model != "Android Phone":
+                if final_model and final_model not in ("Android Phone", "Android Device"):
                     item["model"] = final_model
                 if final_vendor:
                     item["vendor"] = final_vendor
@@ -191,6 +271,113 @@ class DeviceManager:
             pass
 
     @classmethod
+    def resolve_friendly_model_and_vendor(
+        cls,
+        serial: str,
+        raw_model: str = "",
+        raw_vendor: str = "",
+        include_saved: bool = True,
+    ) -> Tuple[str, str]:
+        """
+        Resolves the best friendly `(vendor, model)` for any Android phone (especially Tecno Camon 20 Pro
+        `CK7n` / `CK8n` / serial `102622534S009003`), even when `adb devices -l` omits `model:` (e.g.
+        in `unauthorized` or `offline` states) or reports an internal code like `TECNO_CK7n`.
+        """
+        serial_clean = (serial or "").strip()
+        model_clean = (raw_model or "").strip().replace("_", " ")
+        vendor_clean = (raw_vendor or "").strip()
+
+        if serial_clean in cls._model_props_cache:
+            c_v, c_m = cls._model_props_cache[serial_clean]
+            if c_m and model_clean in ("", "Android Device", "Android", "Android Phone"):
+                model_clean = c_m
+            if c_v and not vendor_clean:
+                vendor_clean = c_v
+
+        # Check exact Tecno model code dictionary (e.g. CK7n -> TECNO Camon 20 Pro)
+        lookup_keys = [
+            (raw_model or "").strip().lower(),
+            model_clean.lower(),
+            model_clean.lower().replace(" ", "-"),
+            model_clean.lower().replace(" ", "_"),
+        ]
+        for lk in lookup_keys:
+            if lk in TECNO_MODEL_CODE_MAP:
+                model_clean = TECNO_MODEL_CODE_MAP[lk]
+                vendor_clean = "Tecno"
+                break
+
+        # Cross-reference saved devices if model is still generic
+        if include_saved and (not model_clean or model_clean in ("Android Device", "Android", "Android Phone")):
+            for sdev in cls.get_saved_devices():
+                s_ser = sdev.get("serial", "")
+                s_ipp = sdev.get("ip_port", "")
+                if s_ser == serial_clean or (
+                    ":" in serial_clean and s_ipp and s_ipp.split(":")[0] == serial_clean.split(":")[0]
+                ):
+                    if sdev.get("model") and sdev["model"] not in ("Android Device", "Android"):
+                        model_clean = sdev["model"]
+                    if sdev.get("vendor") and not vendor_clean:
+                        vendor_clean = sdev["vendor"]
+                    break
+
+        combined_lower = f"{vendor_clean} {model_clean} {raw_model}".lower()
+        is_tecno = any(kw in combined_lower for kw in TECNO_MODEL_KEYWORDS) or bool(
+            TRANSSION_SERIAL_RE.match(serial_clean)
+        )
+        if is_tecno:
+            vendor_clean = "Tecno"
+            if not model_clean or model_clean in ("Android Device", "Android", "Android Phone", "Tecno Phone"):
+                model_clean = "TECNO Phone"
+            elif "tecno" not in model_clean.lower() and not any(
+                b in model_clean.lower() for b in ("infinix", "itel")
+            ):
+                model_clean = f"TECNO {model_clean}".strip()
+
+        if not vendor_clean:
+            vendor_clean = "Android"
+        if not model_clean or model_clean in ("Android Device", "Android"):
+            model_clean = "Android Phone"
+        return vendor_clean, model_clean
+
+    @classmethod
+    def ensure_adb_usb_ini(cls) -> None:
+        """
+        Ensures `~/.android/adb_usb.ini` contains all Tecno / Transsion / MediaTek / Unisoc / OEM
+        USB Vendor IDs so `adb` always scans Tecno USB interfaces on both macOS and Windows.
+        """
+        if cls._usb_ini_ensured:
+            return
+        cls._usb_ini_ensured = True
+        try:
+            android_dir = os.path.expanduser("~/.android")
+            os.makedirs(android_dir, exist_ok=True)
+            ini_path = os.path.join(android_dir, "adb_usb.ini")
+            existing_vids = set()
+            if os.path.isfile(ini_path):
+                try:
+                    with open(ini_path, "r", encoding="utf-8", errors="ignore") as f:
+                        for line in f:
+                            s = line.strip().lower()
+                            if s.startswith("0x"):
+                                existing_vids.add(s)
+                except Exception:
+                    pass
+            required_vids = [f"0x{vid:04x}" for vid in sorted(ANDROID_USB_VENDOR_IDS.keys())]
+            missing = [v for v in required_vids if v.lower() not in existing_vids]
+            if missing or not os.path.isfile(ini_path):
+                all_vids = sorted(existing_vids.union(v.lower() for v in required_vids))
+                content = (
+                    "# ANDROID 3RD PARTY USB VENDOR ID LIST -- MANAGED BY SENTRA\n"
+                    + "\n".join(all_vids)
+                    + "\n"
+                )
+                with open(ini_path, "w", encoding="utf-8") as f:
+                    f.write(content)
+        except Exception:
+            pass
+
+    @classmethod
     def remove_saved_device(cls, serial: str) -> None:
         existing = [d for d in cls.get_saved_devices() if d.get("serial") != serial]
         try:
@@ -199,6 +386,36 @@ class DeviceManager:
                 json.dump(existing, f, ensure_ascii=False, indent=2)
         except Exception:
             pass
+
+    @classmethod
+    def _query_device_wlan_ip(cls, serial: str) -> str:
+        """
+        Queries a connected USB phone's `wlan0` IPv4 address and optionally enables TCP/IP port 5555
+        once per session so Sentra can seamlessly reconnect to the phone over Wi-Fi if the USB cable
+        is later unplugged or switches to charge-only mode.
+        """
+        if not serial or ":" in serial or "._adb-tls-" in serial:
+            return ""
+        adb_bin = resolve_adb_binary(auto_download=False)
+        if not os.path.isfile(adb_bin):
+            return ""
+        wlan_ip = ""
+        try:
+            res = subprocess.run(
+                [adb_bin, "-s", serial, "shell", "ip -f inet addr show wlan0"],
+                capture_output=True,
+                text=True,
+                encoding="utf-8",
+                errors="replace",
+                timeout=2.0,
+                **subprocess_windowless_kwargs(),
+            )
+            m = re.search(r"inet\s+(\d{1,3}(?:\.\d{1,3}){3})/", res.stdout or "")
+            if m and not m.group(1).startswith("127."):
+                wlan_ip = m.group(1)
+        except Exception:
+            pass
+        return wlan_ip
 
     @classmethod
     def _query_device_brand_and_model(cls, serial: str) -> Tuple[str, str]:
@@ -219,7 +436,7 @@ class DeviceManager:
                     "-s",
                     serial,
                     "shell",
-                    "getprop ro.product.brand; getprop ro.product.marketname; getprop ro.product.model",
+                    "getprop ro.product.brand; getprop ro.product.marketname; getprop ro.product.model; getprop ro.tran.device.name",
                 ],
                 capture_output=True,
                 text=True,
@@ -232,11 +449,15 @@ class DeviceManager:
             brand = lines[0] if len(lines) >= 1 else ""
             market = lines[1] if len(lines) >= 2 else ""
             model = lines[2] if len(lines) >= 3 else ""
-            friendly = market or model
-            if brand and friendly and brand.lower() not in friendly.lower():
-                friendly = f"{brand.upper() if brand.lower() == 'tecno' else brand.title()} {friendly}"
-            vendor = "Tecno" if "tecno" in f"{brand} {friendly}".lower() else (brand.title() if brand else "Android")
-            if friendly:
+            tran_name = lines[3] if len(lines) >= 4 else ""
+            raw_best = market or tran_name or model
+            vendor, friendly = cls.resolve_friendly_model_and_vendor(
+                serial=serial,
+                raw_model=raw_best,
+                raw_vendor=brand,
+                include_saved=False,
+            )
+            if friendly and friendly not in ("Android Phone", "Android Device"):
                 cls._model_props_cache[serial] = (vendor, friendly)
                 return (vendor, friendly)
         except Exception:
@@ -247,6 +468,27 @@ class DeviceManager:
     def is_adb_binary_present() -> bool:
         adb_bin = resolve_adb_binary(auto_download=False)
         return os.path.isfile(adb_bin)
+
+    @staticmethod
+    def _check_macos_adb_log_for_e00002be() -> bool:
+        """
+        Checks the tail of macOS `/var/folders/.../T/adb.<uid>.log` for `usb_osx.cpp:168 ... (e00002be)`.
+        When `adb` 35–37 runs with its legacy `usb_osx.cpp` backend on macOS Sequoia/Sonoma, it can spam
+        `Unable to create an interface plug-in (e00002be)` until restarted with `ADB_LIBUSB=1`.
+        """
+        try:
+            uid = os.getuid() if hasattr(os, "getuid") else 501
+            log_path = os.path.join(tempfile.gettempdir(), f"adb.{uid}.log")
+            if not os.path.isfile(log_path):
+                return False
+            with open(log_path, "rb") as f:
+                f.seek(0, os.SEEK_END)
+                size = f.tell()
+                f.seek(max(0, size - 4096), os.SEEK_SET)
+                tail = f.read().decode("utf-8", errors="ignore").lower()
+            return "e00002be" in tail or "unable to create an interface plug-in" in tail
+        except Exception:
+            return False
 
     @staticmethod
     def _force_kill_hung_adb() -> None:
@@ -261,7 +503,7 @@ class DeviceManager:
                     **subprocess_windowless_kwargs(),
                 )
             else:
-                # Also release macOS ptpcamerad if it holds exclusive lock on Samsung/Android MTP interface
+                # Also release macOS ptpcamerad if it holds exclusive lock on Tecno/Samsung/Android MTP interface
                 subprocess.run(
                     ["killall", "-9", "ptpcamerad"],
                     capture_output=True,
@@ -278,75 +520,121 @@ class DeviceManager:
             pass
 
     @staticmethod
+    def parse_macos_ioreg_usb_devices(text: str) -> List[Dict[str, str]]:
+        """
+        Parses `ioreg` output (`IOUSBHostDevice` / `AppleUSBDevice` / `IOUSBDevice`) into a list of
+        detected physical Android USB devices.
+        Handles USB product names containing spaces (e.g. `+-o TECNO Camon 20 Pro@14300000`,
+        `+-o TECNO CK7n@14300000`, `+-o MT65xx Android Phone@14300000`) and nested hub indentation (`| +-o`).
+        """
+        found: List[Dict[str, str]] = []
+        if not text:
+            return found
+
+        # Split on any USB device header line regardless of indentation or spaces in the node name
+        blocks = re.split(
+            r"(?=^[|\s]*\+-o\s+[^\n]+?<class\s+(?:IOUSBHostDevice|AppleUSBDevice|IOUSBDevice)\b)",
+            text,
+            flags=re.MULTILINE,
+        )
+        for blk in blocks:
+            if not re.search(r"<class\s+(?:IOUSBHostDevice|AppleUSBDevice|IOUSBDevice)\b", blk):
+                continue
+            vid_m = re.search(r'"idVendor"\s*=\s*(\d+)', blk)
+            if not vid_m:
+                continue
+            vid = int(vid_m.group(1))
+            # Skip Apple internal devices (0x05AC == 1452)
+            if vid == 0x05AC:
+                continue
+
+            header_m = re.search(
+                r"^[|\s]*\+-o\s+([^@\n]+?)(?:@[0-9a-fA-F]+)?\s+<class\s+(?:IOUSBHostDevice|AppleUSBDevice|IOUSBDevice)\b",
+                blk,
+                flags=re.MULTILINE,
+            )
+            node_title = header_m.group(1).strip() if header_m else ""
+
+            prod_m = re.search(r'"(?:USB Product Name|kUSBProductString)"\s*=\s*"([^"]+)"', blk)
+            prod_name = (prod_m.group(1).strip() if prod_m else "") or node_title
+            vend_m = re.search(r'"(?:USB Vendor Name|kUSBVendorString)"\s*=\s*"([^"]+)"', blk)
+            vend_str = vend_m.group(1).strip() if vend_m else ""
+            ser_m = re.search(r'"(?:USB Serial Number|kUSBSerialNumberString)"\s*=\s*"([^"]+)"', blk)
+            serial = ser_m.group(1).strip() if ser_m else ""
+
+            combined_usb_str = f"{prod_name} {vend_str} {node_title} {serial}".lower()
+            is_tecno_family = any(kw in combined_usb_str for kw in TECNO_MODEL_KEYWORDS) or bool(
+                TRANSSION_SERIAL_RE.match(serial)
+            )
+            if (
+                vid not in ANDROID_USB_VENDOR_IDS
+                and "android" not in combined_usb_str
+                and not is_tecno_family
+            ):
+                continue
+
+            if not serial:
+                serial = f"usb-{vid:04x}"
+
+            raw_vendor = "Tecno" if is_tecno_family else ANDROID_USB_VENDOR_IDS.get(vid, "Android")
+            vendor_name, model_name = DeviceManager.resolve_friendly_model_and_vendor(
+                serial=serial,
+                raw_model=prod_name,
+                raw_vendor=raw_vendor,
+            )
+
+            # Check if ADB USB Interface (Class 255, SubClass 66, Protocol 1) is active in descriptor
+            has_adb = bool(
+                re.search(
+                    r'"bInterfaceClass"\s*=\s*255[\s\S]{0,400}?"bInterfaceSubClass"\s*=\s*66',
+                    blk,
+                )
+                or "ADB Interface" in blk
+            )
+            if not any(d["serial"] == serial for d in found):
+                found.append(
+                    {
+                        "serial": serial,
+                        "model": model_name,
+                        "vendor": vendor_name,
+                        "has_adb_interface": "true" if has_adb else "false",
+                    }
+                )
+        return found
+
+    @staticmethod
     def detect_physical_usb_android_devices() -> List[Dict[str, str]]:
         """
         Detects physical Android phones plugged into USB at the OS hardware level
         (`ioreg` on macOS, `pnputil` on Windows) even when 'USB Debugging' is currently
-        switched OFF on the phone (e.g. Samsung MTP-only mode `0x04e8:0x6860`).
+        switched OFF on the phone (e.g. Tecno HiOS Charge/MTP mode or Samsung MTP-only mode).
         Returns a list of dicts:
           `{"serial": str, "model": str, "vendor": str, "has_adb_interface": "true"|"false"}`
         """
         found: List[Dict[str, str]] = []
         info = get_os_arch_info()
         if info["is_macos"] and os.path.isfile("/usr/sbin/ioreg"):
-            try:
-                res = subprocess.run(
-                    ["/usr/sbin/ioreg", "-r", "-c", "IOUSBHostDevice", "-l", "-w", "0"],
-                    capture_output=True,
-                    text=True,
-                    encoding="utf-8",
-                    errors="replace",
-                    timeout=4,
-                )
-                text = res.stdout or ""
-                # Split by top-level IOUSBHostDevice blocks
-                blocks = re.split(r"(?=^\+-o\s+\S+@\S+\s+<class IOUSBHostDevice)", text, flags=re.MULTILINE)
-                for blk in blocks:
-                    if "IOUSBHostDevice" not in blk:
-                        continue
-                    vid_m = re.search(r'"idVendor"\s*=\s*(\d+)', blk)
-                    if not vid_m:
-                        continue
-                    vid = int(vid_m.group(1))
-                    prod_m = re.search(r'"USB Product Name"\s*=\s*"([^"]+)"', blk)
-                    prod_name = prod_m.group(1).strip() if prod_m else ""
-                    vend_m = re.search(r'"(?:USB Vendor Name|kUSBVendorString)"\s*=\s*"([^"]+)"', blk)
-                    vend_str = vend_m.group(1).strip() if vend_m else ""
-                    combined_usb_str = f"{prod_name} {vend_str}".lower()
-                    is_tecno_family = any(kw in combined_usb_str for kw in TECNO_MODEL_KEYWORDS)
-                    if (
-                        vid not in ANDROID_USB_VENDOR_IDS
-                        and "android" not in combined_usb_str
-                        and not is_tecno_family
-                    ):
-                        continue
-
-                    ser_m = re.search(r'"(?:USB Serial Number|kUSBSerialNumberString)"\s*=\s*"([^"]+)"', blk)
-                    serial = ser_m.group(1).strip() if ser_m else f"usb-{vid}"
-                    vendor_name = "Tecno" if is_tecno_family else ANDROID_USB_VENDOR_IDS.get(vid, "Android")
-                    model_name = prod_name or f"{vendor_name} Phone"
-                    if is_tecno_family and "tecno" not in model_name.lower():
-                        model_name = f"TECNO {model_name}".strip()
-
-                    # Check if ADB USB Interface (Class 255, SubClass 66, Protocol 1) is active in descriptor
-                    has_adb = bool(
-                        re.search(
-                            r'"bInterfaceClass"\s*=\s*255[\s\S]{0,400}?"bInterfaceSubClass"\s*=\s*66',
-                            blk,
-                        )
-                        or "ADB Interface" in blk
+            for ioreg_cmd in (
+                ["/usr/sbin/ioreg", "-r", "-c", "IOUSBHostDevice", "-l", "-w", "0"],
+                ["/usr/sbin/ioreg", "-p", "IOUSB", "-l", "-w", "0"],
+            ):
+                try:
+                    res = subprocess.run(
+                        ioreg_cmd,
+                        capture_output=True,
+                        text=True,
+                        encoding="utf-8",
+                        errors="replace",
+                        timeout=4,
                     )
-                    if not any(d["serial"] == serial for d in found):
-                        found.append(
-                            {
-                                "serial": serial,
-                                "model": model_name,
-                                "vendor": vendor_name,
-                                "has_adb_interface": "true" if has_adb else "false",
-                            }
-                        )
-            except Exception:
-                pass
+                    parsed = DeviceManager.parse_macos_ioreg_usb_devices(res.stdout or "")
+                    for item in parsed:
+                        if not any(d["serial"] == item["serial"] for d in found):
+                            found.append(item)
+                    if found:
+                        break
+                except Exception:
+                    pass
         elif info["is_windows"]:
             try:
                 res = subprocess.run(
@@ -381,14 +669,17 @@ class DeviceManager:
                         parts = inst_line.split("\\")
                         matched_ser = parts[-1].strip() if len(parts) >= 3 else "TECNO-USB"
                     if matched_vendor and matched_ser:
-                        if any(kw in blk_lower for kw in TECNO_MODEL_KEYWORDS):
-                            matched_vendor = "Tecno"
+                        v_resolved, m_resolved = DeviceManager.resolve_friendly_model_and_vendor(
+                            serial=matched_ser,
+                            raw_model=matched_model,
+                            raw_vendor=matched_vendor,
+                        )
                         if not any(d["serial"] == matched_ser for d in found):
                             found.append(
                                 {
                                     "serial": matched_ser,
-                                    "model": matched_model or f"{matched_vendor} Android",
-                                    "vendor": matched_vendor,
+                                    "model": m_resolved,
+                                    "vendor": v_resolved,
                                     "has_adb_interface": "false",
                                 }
                             )
@@ -399,9 +690,10 @@ class DeviceManager:
     @staticmethod
     def ensure_adb_mdns_server() -> None:
         """
-        Ensures the running ADB daemon has `ADB_MDNS_OPENSCREEN=1` enabled so
-        `adb mdns services` and wireless QR code pairing work on macOS and Windows.
+        Ensures the running ADB daemon has `ADB_MDNS_OPENSCREEN=1` (and `ADB_LIBUSB=1` on macOS if
+        `usb_osx.cpp` hit `e00002be`) enabled so USB and wireless QR code pairing work reliably.
         """
+        DeviceManager.ensure_adb_usb_ini()
         if DeviceManager._mdns_server_ensured:
             return
         adb_bin = resolve_adb_binary(auto_download=True)
@@ -410,6 +702,8 @@ class DeviceManager:
         try:
             env = os.environ.copy()
             env["ADB_MDNS_OPENSCREEN"] = "1"
+            if get_os_arch_info()["is_macos"]:
+                env["ADB_LIBUSB"] = "1"
             chk = subprocess.run(
                 [adb_bin, "mdns", "check"],
                 capture_output=True,
@@ -421,7 +715,11 @@ class DeviceManager:
                 **subprocess_windowless_kwargs(),
             )
             chk_out = f"{chk.stdout or ''}\n{chk.stderr or ''}".lower()
-            if "openscreen" not in chk_out and ("error" in chk_out or "unknown" in chk_out or chk.returncode != 0):
+            need_restart = (
+                "openscreen" not in chk_out
+                and ("error" in chk_out or "unknown" in chk_out or chk.returncode != 0)
+            ) or (get_os_arch_info()["is_macos"] and DeviceManager._check_macos_adb_log_for_e00002be())
+            if need_restart:
                 subprocess.run(
                     [adb_bin, "kill-server"],
                     capture_output=True,
@@ -444,10 +742,13 @@ class DeviceManager:
 
     @staticmethod
     def get_connected_devices(auto_reconnect: bool = False) -> List[Dict[str, str]]:
+        DeviceManager.ensure_adb_usb_ini()
         devices: List[Dict[str, str]] = []
         adb_bin = resolve_adb_binary(auto_download=auto_reconnect)
         env = os.environ.copy()
         env["ADB_MDNS_OPENSCREEN"] = "1"
+        if get_os_arch_info()["is_macos"]:
+            env["ADB_LIBUSB"] = "1"
         try:
             result = subprocess.run(
                 [adb_bin, "devices", "-l"],
@@ -560,7 +861,7 @@ class DeviceManager:
                 except Exception:
                     pass
 
-            # If ADB sees 0 devices, check if a physical Android phone (e.g. Samsung R87Y6002DSX) is plugged into USB
+            # If ADB sees 0 devices, check if a physical Android phone (e.g. Tecno Camon 20 Pro / Samsung) is plugged into USB
             if not devices:
                 usb_hw = DeviceManager.detect_physical_usb_android_devices()
                 for hw in usb_hw:
@@ -604,15 +905,23 @@ class DeviceManager:
                 state = parts[1]
 
                 extras = " ".join(parts[2:])
-                model = "Android Device"
+                raw_model = ""
                 if "model:" in extras:
-                    model = extras.split("model:")[1].split()[0]
+                    raw_model = extras.split("model:")[1].split()[0]
+                elif "device:" in extras:
+                    raw_model = extras.split("device:")[1].split()[0]
+
+                vendor, friendly_model = DeviceManager.resolve_friendly_model_and_vendor(
+                    serial=serial,
+                    raw_model=raw_model,
+                )
 
                 devices.append(
                     {
                         "serial": serial,
                         "state": state,
-                        "model": model,
+                        "model": friendly_model,
+                        "vendor": vendor,
                         "raw": stripped,
                     }
                 )
@@ -621,19 +930,36 @@ class DeviceManager:
     @staticmethod
     def restart_adb_server() -> Tuple[bool, str, List[Dict[str, str]]]:
         """
-        Ensures ADB is installed, releases macOS ptpcamerad USB locks, restarts ADB
-        with `ADB_MDNS_OPENSCREEN=1`, auto-connects any paired wireless debugging phones,
-        and scans for connected phones.
+        Ensures ADB is installed, updates `~/.android/adb_usb.ini` with Tecno/Transsion Vendor IDs,
+        releases macOS ptpcamerad USB locks, restarts ADB with `ADB_MDNS_OPENSCREEN=1` and `ADB_LIBUSB=1`
+        (bypassing macOS Sequoia/Sonoma `usb_osx.cpp:168 e00002be` interface lock), and auto-connects
+        any paired wireless debugging phones.
         """
+        DeviceManager.ensure_adb_usb_ini()
         adb_bin = resolve_adb_binary(auto_download=True)
         if not os.path.isfile(adb_bin):
             downloaded = download_official_adb_if_missing(force=True)
             if downloaded:
                 adb_bin = downloaded
 
+        info = get_os_arch_info()
+        if info["is_macos"] and os.path.isfile(adb_bin) and os.path.isfile("/usr/bin/xattr"):
+            try:
+                subprocess.run(
+                    ["/usr/bin/xattr", "-d", "com.apple.quarantine", adb_bin],
+                    capture_output=True,
+                    timeout=2,
+                )
+            except Exception:
+                pass
+
         try:
             env = os.environ.copy()
             env["ADB_MDNS_OPENSCREEN"] = "1"
+            if info["is_macos"]:
+                # On macOS, ADB_LIBUSB=1 avoids usb_osx.cpp:168 (e00002be) exclusive plug-in failure
+                env["ADB_LIBUSB"] = "1"
+
             subprocess.run(
                 [adb_bin, "kill-server"],
                 capture_output=True,
@@ -660,8 +986,8 @@ class DeviceManager:
                 d for d in devices if not d.get("state", "").startswith("usb_")
             ]
 
-            # If macOS USB interface error (e00002be) occurred and no ADB devices were found, retry with ADB_LIBUSB=0
-            if not real_adb_devices and ("e00002be" in combined_log.lower() or not get_os_arch_info()["is_windows"]):
+            # If macOS still sees 0 USB ADB devices, also test ADB_LIBUSB=0 briefly and revert to ADB_LIBUSB=1 if 0 fails
+            if not real_adb_devices and not info["is_windows"]:
                 for libusb_val in ("0", "1"):
                     subprocess.run(
                         [adb_bin, "kill-server"],
@@ -1021,7 +1347,9 @@ class DeviceManager:
 
             # Fast non-blocking unicast sweep across the local /24 subnet on port 5353
             if full_subnet_sweep and sockets:
-                primary_sock = sockets[0]
+                sweep_socks = [sockets[0]]
+                if len(sockets) > 1 and sockets[-1] not in sweep_socks:
+                    sweep_socks.append(sockets[-1])
                 for lan_ip in lan_ips:
                     parts = lan_ip.split(".")
                     if len(parts) == 4 and parts[0] in ("192", "10", "172"):
@@ -1030,10 +1358,11 @@ class DeviceManager:
                             target_ip = f"{prefix}.{host_id}"
                             if target_ip == lan_ip:
                                 continue
-                            try:
-                                primary_sock.sendto(query_pkt, (target_ip, mcast_port))
-                            except Exception:
-                                pass
+                            for sw_sock in sweep_socks:
+                                try:
+                                    sw_sock.sendto(query_pkt, (target_ip, mcast_port))
+                                except Exception:
+                                    pass
 
             queried_ptrs = set()
             deadline = time.time() + max(timeout, 0.35)
@@ -1276,10 +1605,27 @@ class DeviceManager:
         return combined
 
     @staticmethod
+    def _is_tcp_endpoint_reachable(ip_port: str, timeout: float = 0.55) -> bool:
+        """
+        Fast non-blocking TCP handshake check so stale Bonjour/mDNS cache entries
+        (e.g. a phone's old DHCP IP) are skipped in <0.55s instead of hanging `adb pair`/`adb connect` for 10s.
+        """
+        if not ip_port or ":" not in ip_port:
+            return False
+        host, port_s = ip_port.rsplit(":", 1)
+        try:
+            port = int(port_s)
+            with socket.create_connection((host.strip(), port), timeout=timeout):
+                return True
+        except Exception:
+            return False
+
+    @staticmethod
     def auto_connect_discovered_wireless_devices(timeout: float = 1.2) -> List[str]:
         """
         Discovers any active `_adb-tls-connect._tcp` wireless debugging endpoints on Wi-Fi
-        and runs `adb connect <ip:port>` on them automatically.
+        (plus saved endpoints and ARP neighbor port 5555 endpoints) and runs `adb connect <ip:port>`
+        on reachable endpoints automatically.
         """
         connected_endpoints: List[str] = []
         adb_bin = resolve_adb_binary(auto_download=False)
@@ -1289,13 +1635,25 @@ class DeviceManager:
         services = DeviceManager.discover_mdns_adb_services(timeout=timeout)
         env = os.environ.copy()
         env["ADB_MDNS_OPENSCREEN"] = "1"
+        if get_os_arch_info()["is_macos"]:
+            env["ADB_LIBUSB"] = "1"
+
         candidates = [item.get("ip_port", "") for item in services.get("connect", []) if item.get("ip_port")]
         for saved in DeviceManager.get_saved_devices():
             saved_ipp = saved.get("ip_port", "") or (saved.get("serial", "") if ":" in saved.get("serial", "") else "")
             if saved_ipp and saved_ipp not in candidates:
                 candidates.append(saved_ipp)
+
+        # Also check ARP neighbor IPs for standard TCP ADB port 5555 (fast 0.15s probe)
+        for nip in DeviceManager._get_arp_neighbor_ips()[:12]:
+            cand_5555 = f"{nip}:5555"
+            if cand_5555 not in candidates and DeviceManager._is_tcp_endpoint_reachable(cand_5555, timeout=0.15):
+                candidates.append(cand_5555)
+
         for ip_port in candidates:
             if not ip_port:
+                continue
+            if not DeviceManager._is_tcp_endpoint_reachable(ip_port, timeout=0.45):
                 continue
             try:
                 res = subprocess.run(
@@ -1322,13 +1680,15 @@ class DeviceManager:
         """
         Polls mDNS for a phone scanning our QR code (`WIFI:T:ADB;S:<expected_service_name>;P:<password>;;`).
         When `_adb-tls-pairing._tcp` appears on the Wi-Fi network:
-          1. Runs `adb pair <ip:pair_port> <password>`
+          1. Runs `adb pair <ip:pair_port> <password>` (prioritizing reachable TCP endpoints)
           2. Polls for `<ip:connect_port>` from `_adb-tls-connect._tcp` and runs `adb connect <ip:connect_port>`
           3. Always checks `get_connected_devices()` so `adb` OpenScreen auto-connections are detected immediately.
         """
         adb_bin = resolve_adb_binary(auto_download=True)
         env = os.environ.copy()
         env["ADB_MDNS_OPENSCREEN"] = "1"
+        if get_os_arch_info()["is_macos"]:
+            env["ADB_LIBUSB"] = "1"
 
         services = DeviceManager.discover_mdns_adb_services(
             timeout=1.1, expected_service_name=expected_service_name
@@ -1338,12 +1698,19 @@ class DeviceManager:
         pairing_list = services.get("pairing", [])
         ordered_pairing = sorted(
             pairing_list,
-            key=lambda x: 0 if expected_service_name.lower() in x.get("instance", "").lower() else 1,
+            key=lambda x: (
+                0 if expected_service_name.lower() in x.get("instance", "").lower() else 1,
+                0 if DeviceManager._is_tcp_endpoint_reachable(x.get("ip_port", ""), timeout=0.5) else 1,
+            ),
         )
 
         paired_ip = None
-        for p_item in ordered_pairing:
+        for idx_p, p_item in enumerate(ordered_pairing):
             pair_ip_port = p_item["ip_port"]
+            # Skip unreachable stale Bonjour cache IPs if there are other candidates
+            if len(ordered_pairing) > 1 and not DeviceManager._is_tcp_endpoint_reachable(pair_ip_port, timeout=0.55):
+                logs.append(f"Skipped stale/unreachable pairing cache ({pair_ip_port})")
+                continue
             try:
                 pair_res = subprocess.run(
                     [adb_bin, "pair", pair_ip_port, password],
@@ -1351,7 +1718,7 @@ class DeviceManager:
                     text=True,
                     encoding="utf-8",
                     errors="replace",
-                    timeout=10,
+                    timeout=8,
                     env=env,
                     **subprocess_windowless_kwargs(),
                 )
@@ -1379,9 +1746,12 @@ class DeviceManager:
                 if services.get("connect"):
                     break
 
-        for c_item in services.get("connect", []):
+        connect_list = services.get("connect", [])
+        for c_item in connect_list:
             c_ip_port = c_item["ip_port"]
-            if target_ips and c_item["ip"] not in target_ips and len(services["connect"]) > 1:
+            if target_ips and c_item["ip"] not in target_ips and len(connect_list) > 1:
+                continue
+            if len(connect_list) > 1 and not DeviceManager._is_tcp_endpoint_reachable(c_ip_port, timeout=0.55):
                 continue
             try:
                 conn_res = subprocess.run(
@@ -1390,7 +1760,7 @@ class DeviceManager:
                     text=True,
                     encoding="utf-8",
                     errors="replace",
-                    timeout=8,
+                    timeout=6,
                     env=env,
                     **subprocess_windowless_kwargs(),
                 )

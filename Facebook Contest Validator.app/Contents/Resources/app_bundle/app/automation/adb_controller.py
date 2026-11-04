@@ -45,6 +45,29 @@ class ADBDriver:
             **kwargs,
         )
 
+    def is_device_ready(self) -> bool:
+        """
+        Verifies via `adb -s <serial> get-state` that the device is genuinely online (`device` state),
+        and attempts a fast `adb reconnect offline` if needed.
+        """
+        try:
+            res = self._run_adb(["get-state"], timeout=3.5)
+            state = (res.stdout or "").strip().lower()
+            if state == "device":
+                return True
+            # Try one fast reconnect if offline or transient
+            subprocess.run(
+                [self.adb_bin, "reconnect", "offline"],
+                capture_output=True,
+                text=True,
+                timeout=3.0,
+                **subprocess_windowless_kwargs(),
+            )
+            res2 = self._run_adb(["get-state"], timeout=3.5)
+            return (res2.stdout or "").strip().lower() == "device"
+        except Exception:
+            return False
+
     def get_window_size(self) -> Dict[str, int]:
         if self._window_size:
             return self._window_size
@@ -221,6 +244,10 @@ class ADBManager:
             return False
         try:
             candidate = ADBDriver(device_serial)
+            if not candidate.is_device_ready():
+                logger.warning(f"Device {device_serial} is not in 'device' state yet.")
+                self.driver = None
+                return False
             size = candidate.get_window_size()
             if size and size.get("width"):
                 self.driver = candidate

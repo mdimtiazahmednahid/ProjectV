@@ -70,7 +70,7 @@
 		</data>
 		<key>Resources/app_bundle/app/automation/adb_controller.py</key>
 		<data>
-		sO1/OAeev22eWFPxCuHln4zq9bs=
+		i6mnRmq1SOrgNbIDt/UJnGE9UcY=
 		</data>
 		<key>Resources/app_bundle/app/automation/appium_manager.py</key>
 		<data>
@@ -78,7 +78,7 @@
 		</data>
 		<key>Resources/app_bundle/app/automation/browser_dom_extractor.py</key>
 		<data>
-		w7STMsmkpfsa1ojzN2x3h75i8pw=
+		6Kz9BuchQeOFrqUcGQJYAY5EXSg=
 		</data>
 		<key>Resources/app_bundle/app/automation/collector_engine.py</key>
 		<data>
@@ -86,7 +86,7 @@
 		</data>
 		<key>Resources/app_bundle/app/automation/device_manager.py</key>
 		<data>
-		jp2xS22PyFNCgZvn9nPTBJ4FTks=
+		UkmVttHBvDaL2ENxImrtk/11qA4=
 		</data>
 		<key>Resources/app_bundle/app/automation/facebook_detector.py</key>
 		<data>
@@ -98,7 +98,7 @@
 		</data>
 		<key>Resources/app_bundle/app/automation/profile_extractor.py</key>
 		<data>
-		Nw3cbb+A1evV7i/evvR7SjcK4UQ=
+		HvOlL1cAXMTQJWsl0rsJ72PyClw=
 		</data>
 		<key>Resources/app_bundle/app/automation/scroll_controller.py</key>
 		<data>
@@ -170,7 +170,7 @@
 		</data>
 		<key>Resources/app_bundle/app/exporters/csv_exporter.py</key>
 		<data>
-		O6oOAZjKNlNjw4CYe4Q5uGr0sZg=
+		/WDksFlct4aiAnJ5PguiZ4KjO4I=
 		</data>
 		<key>Resources/app_bundle/app/exporters/json_exporter.py</key>
 		<data>
@@ -182,7 +182,7 @@
 		</data>
 		<key>Resources/app_bundle/app/exporters/xlsx_exporter.py</key>
 		<data>
-		9JMLiLqXQ/+Y1Lk55O4PTO7/jPc=
+		znnr8Mzs1Cw3BXinEK8hLuvwOvg=
 		</data>
 		<key>Resources/app_bundle/app/gui/__init__.py</key>
 		<data>
@@ -230,7 +230,7 @@
 		</data>
 		<key>Resources/app_bundle/app/gui/device_panel.py</key>
 		<data>
-		VgdxsCIo4SegLa/CTnGOy5WSnVQ=
+		GVirFbFA+dP3MqvhGp2timMaeK0=
 		</data>
 		<key>Resources/app_bundle/app/gui/live_lottery_dialog.py</key>
 		<data>
@@ -246,7 +246,7 @@
 		</data>
 		<key>Resources/app_bundle/app/gui/results_panel.py</key>
 		<data>
-		QSsuPq42LzRO5FkzbYZlKjgGdp0=
+		fAYmV7w2fK+dE5zUn8QVhbLZhMM=
 		</data>
 		<key>Resources/app_bundle/app/gui/session_manager_dialog.py</key>
 		<data>
@@ -278,7 +278,7 @@
 		</data>
 		<key>Resources/app_bundle/app/models/share_profile.py</key>
 		<data>
-		HHRJT5k/60gUX820AEZ72MdclZA=
+		iCz2YXekYz2iPlhYHU+E0rVWOV0=
 		</data>
 		<key>Resources/app_bundle/app/resources/AppIcon.ico</key>
 		<data>
@@ -350,7 +350,7 @@
 		</data>
 		<key>Resources/app_bundle/app/utils/contest_validator.py</key>
 		<data>
-		jj36xypWfTDB0sJMvui7crV+stg=
+		i78l5FWY3mxA4Vj3NUvXCrIL310=
 		</data>
 		<key>Resources/app_bundle/app/utils/deduplicator.py</key>
 		<data>
@@ -382,7 +382,7 @@
 		</data>
 		<key>Resources/app_bundle/app/utils/url_normalizer.py</key>
 		<data>
-		soraRH0tX1xxcTaNnGez/K+NgtE=
+		ienr2M//VvI2B3lZHEFdip++eP0=
 		</data>
 		<key>Resources/app_bundle/bin/macos/adb</key>
 		<data>
@@ -406,11 +406,11 @@
 		</data>
 		<key>Resources/app_bundle/browser_extension/bookmarklet.html</key>
 		<data>
-		E1jgsgYCeeiiu/hNbNZZ4w+ZKck=
+		2BeDYWzptZNCWiHInHey8GgKMFc=
 		</data>
 		<key>Resources/app_bundle/browser_extension/content.js</key>
 		<data>
-		ila/ixwMsknyifmfAY5EGq1WdwI=
+		3+4d8QKhDeuZ8T9EHDxxObKYv0A=
 		</data>
 		<key>Resources/app_bundle/browser_extension/manifest.json</key>
 		<data>
@@ -430,11 +430,11 @@
 		</data>
 		<key>Resources/app_bundle/data/autosave.csv</key>
 		<data>
-		y6N+68wiWLFBU9Xai8hw3AYIdE4=
+		H2kH2X8nEUCWo8CeDgDjefppYb4=
 		</data>
 		<key>Resources/app_bundle/data/autosave_contest.csv</key>
 		<data>
-		3cDGKHFE9+aa0tN8yOH2JFKvsxE=
+		oZJXSvkUl2xZUAmpalH+wF6u1so=
 		</data>
 		<key>Resources/app_bundle/data/avatars/0000000000000000.png</key>
 		<data>
@@ -1920,9 +1920,13 @@
 		<data>
 		ccvlXzNW2jrx2AwJucI3/H4hOy4=
 		</data>
+		<key>Resources/app_bundle/data/facebook_lottery_tickets_2026-11-05_00-48.html</key>
+		<data>
+		wLOCGsyqIZ9RMezQZrPjgbbTdlg=
+		</data>
 		<key>Resources/app_bundle/data/facebook_shares.sqlite</key>
 		<data>
-		/lCYk7pAsTOg8C+oP1bGWc49t0c=
+		b7g7D6JxrZ/LBRWXxs9Xb7Q5WmU=
 		</data>
 		<key>Resources/app_bundle/data/known_devices.json</key>
 		<data>
@@ -9327,7 +9331,7 @@
 		<dict>
 			<key>hash2</key>
 			<data>
-			p+ZPtzG7oWIky/EUwB+VcmKfylf6jlzJvrMZZ8l5vJM=
+			YPZPUK1s5F78TqmGYxEcsG/Ic7TKlv5XgLSCzCIKGtA=
 			</data>
 		</dict>
 		<key>Resources/app_bundle/app/automation/appium_manager.py</key>
@@ -9341,7 +9345,7 @@
 		<dict>
 			<key>hash2</key>
 			<data>
-			wAanNw5SIHAYCbb+v0fbQZRKkgXnVp3OgQInt4rNN+Y=
+			Z/7ytd7/UyDWBbR6hqrGPbX+KultSrwP2z+oiv9C40w=
 			</data>
 		</dict>
 		<key>Resources/app_bundle/app/automation/collector_engine.py</key>
@@ -9355,7 +9359,7 @@
 		<dict>
 			<key>hash2</key>
 			<data>
-			GlT9eLML8/YA9TZ+Y6CGRINSbVzwsrJPqmfgsXBAjd8=
+			C9cJlAHVidWRxJeX5Vz2GKZ2Uy8roPhQqblX3Grm/nA=
 			</data>
 		</dict>
 		<key>Resources/app_bundle/app/automation/facebook_detector.py</key>
@@ -9376,7 +9380,7 @@
 		<dict>
 			<key>hash2</key>
 			<data>
-			95w30M9FeNBhiiCxOVe6M1ePNl/CmmkGweqOWnBxMSo=
+			2QG9KEtaQavR20E+a1hAVLyNcunILfbTK1WGKsCefDQ=
 			</data>
 		</dict>
 		<key>Resources/app_bundle/app/automation/scroll_controller.py</key>
@@ -9502,7 +9506,7 @@
 		<dict>
 			<key>hash2</key>
 			<data>
-			ngHmm1+rEu2cB5s4lH9rhkr+6xBKnc889CfeqUjzvtM=
+			1kWnlZP3UuomS8gdGgtyrNyI/LuIg7tJcCUx8ClDRxo=
 			</data>
 		</dict>
 		<key>Resources/app_bundle/app/exporters/json_exporter.py</key>
@@ -9523,7 +9527,7 @@
 		<dict>
 			<key>hash2</key>
 			<data>
-			YdfZbW9db0Qz+9/SDS8Jt8VsCPCXrqX0egcIHa4aOhU=
+			OsTmqvRSIGc6lzj5MCYZ52HCaKo0KgGwVxjkxOzosGs=
 			</data>
 		</dict>
 		<key>Resources/app_bundle/app/gui/__init__.py</key>
@@ -9607,7 +9611,7 @@
 		<dict>
 			<key>hash2</key>
 			<data>
-			4l8Qs+dapXKAgIYdQ++kW5hm57gNdCgj5RuYubkTb4A=
+			NU5UhmY6FwiALg82A32yhT2SJwfw0tKXaK0n0iwrkcw=
 			</data>
 		</dict>
 		<key>Resources/app_bundle/app/gui/live_lottery_dialog.py</key>
@@ -9635,7 +9639,7 @@
 		<dict>
 			<key>hash2</key>
 			<data>
-			BIH++X8733xaSJvYIdv/TRH/mJGTnLnGzFuUveQXEN0=
+			XGuE3xdVMeq0HavLrNAARRVQiNaLtEPeAt6TczeCpg0=
 			</data>
 		</dict>
 		<key>Resources/app_bundle/app/gui/session_manager_dialog.py</key>
@@ -9691,7 +9695,7 @@
 		<dict>
 			<key>hash2</key>
 			<data>
-			0XT1HmZDryJEkhBvJweR9PKirr0lWk3I9yugW8R9PeQ=
+			G0sPEUgrfaSpKcKmRC4+8ab/cbb7galW3CMz/UF1Iio=
 			</data>
 		</dict>
 		<key>Resources/app_bundle/app/resources/AppIcon.ico</key>
@@ -9817,7 +9821,7 @@
 		<dict>
 			<key>hash2</key>
 			<data>
-			KmPr7gC4j/kaMwuwmgV5x4K0rWfMsfwsfuuWiPVWk84=
+			F9vpaUvXKJQV0CEr3OqXOYUNmi0/t2H+7WBuH+0w/mM=
 			</data>
 		</dict>
 		<key>Resources/app_bundle/app/utils/deduplicator.py</key>
@@ -9873,7 +9877,7 @@
 		<dict>
 			<key>hash2</key>
 			<data>
-			7Em6vyAmvq5j9B2tucxv/VfQuGlBd+LXE8hB9GRhyP0=
+			tycUIE0iVf7/MXT7RpAIF2ruGI83s0LlT5xItCcB8Ig=
 			</data>
 		</dict>
 		<key>Resources/app_bundle/bin/macos/adb</key>
@@ -9915,14 +9919,14 @@
 		<dict>
 			<key>hash2</key>
 			<data>
-			Koj84c/S/NTEMyBQ4P5vh/1GhFgeuqLlFPhflCpbmLg=
+			Kf51G7q9pBgxztAmy4yQoIqOBV7xGbQjI5QaZafW7J8=
 			</data>
 		</dict>
 		<key>Resources/app_bundle/browser_extension/content.js</key>
 		<dict>
 			<key>hash2</key>
 			<data>
-			ewVD2YtOAXGImZOZX7AIvirIv8U8Gwt7IteqDn7dIyk=
+			4NewwzJSD7T83GIIsy49g3477R4fnpIQHqKP6ilKDWM=
 			</data>
 		</dict>
 		<key>Resources/app_bundle/browser_extension/manifest.json</key>
@@ -9957,14 +9961,14 @@
 		<dict>
 			<key>hash2</key>
 			<data>
-			sXommvOv2K9bs7yB5zj+u+uNbUcV8NrdAeHR0TCgVZM=
+			DkXiXqsfjMCc4nnMjnGDQ+hxrVX7jkWFuQ6Usj2JNJI=
 			</data>
 		</dict>
 		<key>Resources/app_bundle/data/autosave_contest.csv</key>
 		<dict>
 			<key>hash2</key>
 			<data>
-			ilI+ThICjNNJE3R2d1facTKSg5Hyy+i6WL3w/RSE28Y=
+			P0w1gqFBjhWYxcipIfPbarsrrfKf7PUgR+8segNPpW8=
 			</data>
 		</dict>
 		<key>Resources/app_bundle/data/avatars/0000000000000000.png</key>
@@ -12564,11 +12568,18 @@
 			5ATlv6OQrQ0uKkrDTwmSlULiqssMXER3i+JQajdKTn4=
 			</data>
 		</dict>
+		<key>Resources/app_bundle/data/facebook_lottery_tickets_2026-11-05_00-48.html</key>
+		<dict>
+			<key>hash2</key>
+			<data>
+			ati6Dy5Q1AczX261gy56LHuWpzbDm/H8kN+bEMwMO+k=
+			</data>
+		</dict>
 		<key>Resources/app_bundle/data/facebook_shares.sqlite</key>
 		<dict>
 			<key>hash2</key>
 			<data>
-			ZmMhNi1LSwRFQ5Z6ACWxUj/EAPNFfNADHJLILlcOEKs=
+			HCcTG4ccsu3IY66yB94ZsaPVV4M3kA+L1+Ow8TSRjVA=
 			</data>
 		</dict>
 		<key>Resources/app_bundle/data/known_devices.json</key>
