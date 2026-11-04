@@ -1,0 +1,11 @@
+<svg width="800" height="240" viewBox="0 0 800 240" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect x="4" y="4" width="792" height="232" rx="28" fill="#0b1120" stroke="#1e293b" stroke-width="3"/>
+  <g transform="translate(45, 30) scale(1.8)">
+    <path d="M 20.3 62.3 A 32 32 0 0 1 62.3 20.3" stroke="#35c5f0" stroke-width="6.5" stroke-linecap="round"/>
+    <path d="M 79.7 37.7 A 32 32 0 0 1 37.7 79.7" stroke="#35c5f0" stroke-width="6.5" stroke-linecap="round"/>
+    <circle cx="72.6" cy="27.4" r="7.2" stroke="#35c5f0" stroke-width="6" fill="#0b1120"/>
+    <circle cx="27.4" cy="72.6" r="7.2" stroke="#35c5f0" stroke-width="6" fill="#0b1120"/>
+    <circle cx="50" cy="50" r="8.2" stroke="#35c5f0" stroke-width="6" fill="#0b1120"/>
+  </g>
+  <text x="245" y="148" fill="#ffffff" font-family="-apple-system, BlinkMacSystemFont, Helvetica Neue, Arial, sans-serif" font-size="86" font-weight="800" letter-spacing="5">SENTRA</text>
+</svg>
