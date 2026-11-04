@@ -52,7 +52,17 @@ class LotteryPrintExporter:
             for p in target_list:
                 serial_str = f"#{p.serial_number:04d}"
                 safe_name = html.escape(p.display_name)
-                comment_preview = html.escape(p.comment_texts[0][:45] + ("..." if len(p.comment_texts[0]) > 45 else "")) if p.comment_texts else "Verified Action"
+                full_comment_raw = " | ".join(c for c in p.comment_texts if c and c.strip()) if p.comment_texts else ""
+                if full_comment_raw:
+                    short_raw = full_comment_raw[:135] + ("..." if len(full_comment_raw) > 135 else "")
+                    safe_short = f'"{html.escape(short_raw)}"'
+                    safe_full = f'"{html.escape(full_comment_raw)}"'
+                    is_truncated = "1" if len(full_comment_raw) > 135 else "0"
+                else:
+                    safe_short = '"Verified Entry"'
+                    safe_full = '"Verified Entry"'
+                    is_truncated = "0"
+
                 avatar_uri = cls._encode_avatar_data_uri(p.avatar_path or "")
                 initials = html.escape((p.name[:2] if p.name else "FB").upper())
 
@@ -61,10 +71,19 @@ class LotteryPrintExporter:
                 else:
                     avatar_tag = f'<div class="avatar-placeholder">{initials}</div>'
 
-                id_hint = html.escape(p.profile_url or (f"AvatarHash:{p.avatar_hash[:8]}" if p.avatar_hash else "Verified"))
+                raw_url = (p.profile_url or "").strip()
+                id_hint = html.escape(raw_url or (f"AvatarHash:{p.avatar_hash[:8]}" if p.avatar_hash else "Verified"))
+                if raw_url.startswith("http://") or raw_url.startswith("https://"):
+                    safe_href = html.escape(raw_url, quote=True)
+                    footer_html = f'<a class="profile-link" href="{safe_href}" target="_blank" rel="noopener noreferrer">{id_hint}</a>'
+                    table_url_html = f'<a class="profile-link" href="{safe_href}" target="_blank" rel="noopener noreferrer">{id_hint}</a>'
+                else:
+                    footer_html = f'<span class="profile-ref">{id_hint}</span>'
+                    table_url_html = id_hint
+
                 badge_label = "ELIGIBLE 3/3 ✓" if p.is_eligible else f"QUALIFIED ({p.actions_completed}/3) ✓"
                 done_meta = " · ".join(
-                    lbl for flag, lbl in [(p.liked, "👍 Like"), (p.commented, "💬 Comment"), (p.shared, "🔄 Share")] if flag
+                    lbl for flag, lbl in [(p.liked, "Like"), (p.commented, "Comment"), (p.shared, "Share")] if flag
                 ) or "Verified Entry"
 
                 tickets_html.append(f"""
@@ -76,109 +95,160 @@ class LotteryPrintExporter:
                     <div class="ticket-body">
                         {avatar_tag}
                         <div class="ticket-info">
-                            <div class="name">{safe_name}</div>
+                            <div class="name notranslate" translate="no">{safe_name}</div>
                             <div class="meta">{done_meta}</div>
-                            <div class="comment">"{comment_preview}"</div>
+                            <div class="comment notranslate" translate="no" data-short="{html.escape(safe_short, quote=True)}" data-full="{html.escape(safe_full, quote=True)}" data-truncated="{is_truncated}" onclick="toggleCommentText(this)" title="Click to view full comment">{safe_short}</div>
                         </div>
                     </div>
-                    <div class="ticket-footer">{id_hint}</div>
+                    <div class="ticket-footer">{footer_html}</div>
                 </div>
                 """)
 
                 rows_html.append(f"""
                 <tr>
                     <td class="col-serial"><strong>{serial_str}</strong></td>
-                    <td>{safe_name}</td>
-                    <td>{'✅' if p.liked else '❌'}</td>
-                    <td>{'✅' if p.commented else '❌'} ({len(p.comment_texts)})</td>
-                    <td>{'✅' if p.shared else '❌'}</td>
-                    <td>{html.escape(' | '.join(p.comment_texts)[:120])}</td>
-                    <td class="col-url">{id_hint}</td>
+                    <td class="notranslate" translate="no">{safe_name}</td>
+                    <td>{'Yes' if p.liked else 'No'}</td>
+                    <td>{'Yes' if p.commented else 'No'} ({len(p.comment_texts)})</td>
+                    <td>{'Yes' if p.shared else 'No'}</td>
+                    <td class="notranslate" translate="no">{html.escape(full_comment_raw[:140])}</td>
+                    <td class="col-url">{table_url_html}</td>
                 </tr>
                 """)
 
             doc = f"""<!DOCTYPE html>
-<html lang="en">
+<html lang="bn" translate="no" class="notranslate">
 <head>
 <meta charset="UTF-8">
+<meta name="google" content="notranslate">
 <title>Live Contest Lottery Tickets & Verification Sheet</title>
 <style>
     * {{ box-sizing: border-box; }}
     body {{
         font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Noto Sans Bengali", Arial, sans-serif;
         margin: 0;
-        padding: 20px;
+        padding: 18px;
         color: #111;
         background: #f6f8fa;
     }}
     .toolbar {{
         background: #1b8a2f;
         color: #fff;
-        padding: 14px 20px;
+        padding: 12px 16px;
         border-radius: 8px;
         display: flex;
+        flex-wrap: wrap;
         justify-content: space-between;
         align-items: center;
-        margin-bottom: 20px;
+        gap: 12px;
+        margin-bottom: 16px;
+    }}
+    .toolbar-controls {{
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 12px;
+        font-size: 13px;
+    }}
+    .toolbar select {{
+        padding: 6px 10px;
+        border-radius: 5px;
+        border: none;
+        font-weight: 600;
+        font-size: 13px;
+        color: #111;
+        background: #fff;
+        cursor: pointer;
+    }}
+    .toolbar label {{
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+        cursor: pointer;
+        font-weight: 600;
+        user-select: none;
     }}
     .toolbar button {{
         background: #fff;
         color: #1b8a2f;
         border: none;
-        padding: 10px 18px;
-        font-size: 15px;
+        padding: 8px 16px;
+        font-size: 14px;
         font-weight: bold;
         border-radius: 6px;
         cursor: pointer;
     }}
-    h2 {{ margin: 10px 0 6px 0; }}
-    .sub {{ color: #555; font-size: 13px; margin-bottom: 16px; }}
     .ticket-grid {{
         display: grid;
-        grid-template-columns: repeat(3, 1fr);
-        gap: 12px;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 10px;
+        width: 100%;
     }}
     .ticket {{
         background: #fff;
-        border: 2px dashed #222;
         border-radius: 6px;
-        padding: 10px 12px;
+        padding: 9px 11px;
         page-break-inside: avoid;
         break-inside: avoid;
+        overflow: hidden;
+        min-width: 0;
+    }}
+    /* Border Style Customization Classes (Default: Solid Total Border Line) */
+    body.border-solid .ticket {{
+        border: 1.5px solid #222;
+    }}
+    body.border-dashed .ticket {{
+        border: 1.5px dashed #222;
+    }}
+    body.border-none .ticket {{
+        border: none;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.12);
     }}
     .ticket-header {{
         display: flex;
-        justify-content: space-between;
+        justify-content: center;
         align-items: center;
-        border-bottom: 1px solid #ddd;
+        position: relative;
+        border-bottom: 1px solid #e5e7eb;
         padding-bottom: 4px;
-        margin-bottom: 8px;
+        margin-bottom: 7px;
+    }}
+    body.align-left .ticket-header {{
+        justify-content: space-between;
     }}
     .serial {{
         font-size: 18px;
         font-weight: 800;
         color: #0b5ed7;
+        text-align: center;
     }}
     .badge {{
-        font-size: 10px;
+        display: none;
+        font-size: 9px;
         font-weight: 700;
         background: #d1e7dd;
         color: #0f5132;
         padding: 2px 6px;
         border-radius: 4px;
+        margin-left: 8px;
+    }}
+    body.show-badge .badge {{
+        display: inline-block;
     }}
     .ticket-body {{
         display: flex;
-        align-items: center;
-        gap: 10px;
+        align-items: flex-start;
+        gap: 9px;
+        min-width: 0;
     }}
     .avatar, .avatar-placeholder {{
-        width: 44px;
-        height: 44px;
+        width: 40px;
+        height: 40px;
         border-radius: 50%;
         flex-shrink: 0;
         object-fit: cover;
         border: 1px solid #ccc;
+        margin-top: 2px;
     }}
     .avatar-placeholder {{
         background: #e9ecef;
@@ -187,13 +257,15 @@ class LotteryPrintExporter:
         justify-content: center;
         font-weight: bold;
         color: #495057;
-        font-size: 14px;
+        font-size: 13px;
     }}
     .ticket-info {{
         overflow: hidden;
+        flex: 1;
+        min-width: 0;
     }}
     .name {{
-        font-size: 14px;
+        font-size: 13.5px;
         font-weight: 700;
         white-space: nowrap;
         overflow: hidden;
@@ -207,44 +279,71 @@ class LotteryPrintExporter:
     }}
     .comment {{
         font-size: 11px;
-        color: #555;
+        line-height: 1.38;
+        color: #444;
         font-style: italic;
-        margin-top: 2px;
-        white-space: nowrap;
+        margin-top: 3px;
+        display: -webkit-box;
+        -webkit-box-orient: vertical;
+        -webkit-line-clamp: 3;
+        line-clamp: 3;
+        white-space: normal;
+        word-break: break-word;
         overflow: hidden;
         text-overflow: ellipsis;
+        cursor: pointer;
+    }}
+    .comment.expanded {{
+        display: block;
+        -webkit-line-clamp: unset;
+        line-clamp: unset;
+        white-space: normal;
+        word-break: break-word;
+        overflow: visible;
     }}
     .ticket-footer {{
         margin-top: 6px;
         padding-top: 4px;
-        border-top: 1px dotted #eee;
+        border-top: 1px solid #f0f0f0;
         font-size: 9px;
-        color: #666;
+        color: #555;
         white-space: nowrap;
         overflow: hidden;
         text-overflow: ellipsis;
     }}
-    .page-break {{
+    .profile-link {{
+        color: #555;
+        text-decoration: none;
+    }}
+    .profile-link:hover {{
+        color: #0b5ed7;
+        text-decoration: underline;
+    }}
+    .judge-sheet-section {{
+        display: none;
         page-break-before: always;
         break-before: page;
-        margin-top: 32px;
+        margin-top: 28px;
+    }}
+    body.show-judge-sheet .judge-sheet-section {{
+        display: block;
     }}
     table {{
         width: 100%;
         border-collapse: collapse;
         background: #fff;
-        font-size: 12px;
+        font-size: 11.5px;
     }}
     th, td {{
         border: 1px solid #ccc;
-        padding: 6px 8px;
+        padding: 5px 7px;
         text-align: left;
     }}
     th {{
         background: #e9ecef;
     }}
     .col-serial {{
-        width: 70px;
+        width: 65px;
         color: #0b5ed7;
     }}
     .col-url {{
@@ -254,29 +353,79 @@ class LotteryPrintExporter:
         overflow: hidden;
         text-overflow: ellipsis;
     }}
+    @page {{
+        margin: 8mm;
+    }}
     @media print {{
-        body {{ background: #fff; padding: 0; }}
-        .toolbar {{ display: none !important; }}
+        body {{
+            background: #fff;
+            padding: 0;
+            margin: 0;
+        }}
+        .no-print, .toolbar {{
+            display: none !important;
+        }}
+        .ticket-grid {{
+            grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+            gap: 8px !important;
+        }}
+        body.border-none .ticket {{
+            box-shadow: none !important;
+        }}
     }}
 </style>
+<script>
+    function setBorderStyle(styleVal) {{
+        document.body.classList.remove("border-solid", "border-dashed", "border-none");
+        document.body.classList.add("border-" + styleVal);
+    }}
+    function toggleCenterSerial(checked) {{
+        if (checked) {{
+            document.body.classList.remove("align-left");
+        }} else {{
+            document.body.classList.add("align-left");
+        }}
+    }}
+    function toggleStatusBadge(checked) {{
+        document.body.classList.toggle("show-badge", checked);
+    }}
+    function toggleJudgeSheet(checked) {{
+        document.body.classList.toggle("show-judge-sheet", checked);
+    }}
+    function toggleCommentText(el) {{
+        if (!el) return;
+        const isExpanded = el.classList.toggle("expanded");
+        el.textContent = isExpanded ? (el.getAttribute("data-full") || el.textContent) : (el.getAttribute("data-short") || el.textContent);
+    }}
+</script>
 </head>
-<body>
-    <div class="toolbar">
+<body class="border-solid">
+    <div class="toolbar no-print">
         <div>
-            <strong>Facebook Contest Live Lottery Slips</strong> — Total Printable Tickets: <strong>{len(target_list)}</strong> (Generated: {generated_at})
+            <strong>Contest Lottery Slips ({len(target_list)} Tickets)</strong>
+            <span style="font-size:12px;opacity:0.9;margin-left:8px;">({generated_at})</span>
         </div>
-        <button onclick="window.print()">🖨️ Print Tickets / Save as PDF</button>
+        <div class="toolbar-controls">
+            <label>Border:
+                <select onchange="setBorderStyle(this.value)">
+                    <option value="solid" selected>Total Border Line (Solid)</option>
+                    <option value="dashed">--- Dashed Border (---)</option>
+                    <option value="none">No Border</option>
+                </select>
+            </label>
+            <label><input type="checkbox" checked onchange="toggleCenterSerial(this.checked)"> Center ID (#0001)</label>
+            <label><input type="checkbox" onchange="toggleStatusBadge(this.checked)"> Show Status Badge</label>
+            <label><input type="checkbox" onchange="toggleJudgeSheet(this.checked)"> Include Verification Table</label>
+            <button onclick="window.print()">🖨️ Print</button>
+        </div>
     </div>
 
-    <h2>Part 1: Cut-Out Live Lottery Slips ({len(target_list)} Tickets)</h2>
-    <div class="sub">Cut along the dashed lines to fold into your live lottery box. Each slip has a unique Serial Number (#0001–#{len(target_list):04d}), Profile Photo, and Name.</div>
     <div class="ticket-grid">
         {''.join(tickets_html)}
     </div>
 
-    <div class="page-break">
-        <h2>Part 2: Master Judge Verification Sheet ({len(target_list)} Contestants)</h2>
-        <div class="sub">Use this sheet during the live lottery draw to verify the drawn Serial Number (#) against the user's comment and profile.</div>
+    <div class="judge-sheet-section">
+        <h3 style="margin:0 0 8px 0;">Verification Sheet ({len(target_list)} Contestants)</h3>
         <table>
             <thead>
                 <tr>
@@ -286,7 +435,7 @@ class LotteryPrintExporter:
                     <th>Commented</th>
                     <th>Shared</th>
                     <th>Comments Text</th>
-                    <th>Identity / Profile Reference</th>
+                    <th>Profile Reference</th>
                 </tr>
             </thead>
             <tbody>

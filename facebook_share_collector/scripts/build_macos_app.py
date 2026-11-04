@@ -286,12 +286,13 @@ exec "{venv_py_link}" "{main_script}"
         f.write(cmd_content)
     os.chmod(cmd_path, os.stat(cmd_path).st_mode | stat.S_IXUSR | stat.S_IXGRP | stat.S_IXOTH)
 
-    # 2. Build self-contained macOS Intel (x86_64) .app bundle
+    # 2. Build self-contained macOS Intel (x86_64) .app bundle (stage in non-.app dir first so macOS AppManagement doesn't lock file writes mid-build)
     app_bundle = os.path.join(WORKSPACE_ROOT, "Facebook Contest Validator.app")
-    if os.path.exists(app_bundle):
-        shutil.rmtree(app_bundle)
+    staging_bundle = os.path.join(WORKSPACE_ROOT, "_Facebook_Contest_Validator_stage")
+    if os.path.exists(staging_bundle):
+        shutil.rmtree(staging_bundle, ignore_errors=True)
 
-    contents_dir = os.path.join(app_bundle, "Contents")
+    contents_dir = os.path.join(staging_bundle, "Contents")
     macos_dir = os.path.join(contents_dir, "MacOS")
     resources_dir = os.path.join(contents_dir, "Resources")
     app_payload_dir = os.path.join(resources_dir, "app_bundle")
@@ -351,6 +352,16 @@ exec "{venv_py_link}" "{main_script}"
 
     # Bundle slim site-packages
     _bundle_slim_site_packages(site_pkg_dir)
+
+    if os.path.exists(app_bundle):
+        try:
+            shutil.rmtree(app_bundle)
+        except OSError:
+            old_trash = os.path.join(WORKSPACE_ROOT, "_old_app_bundle")
+            shutil.rmtree(old_trash, ignore_errors=True)
+            os.rename(app_bundle, old_trash)
+            shutil.rmtree(old_trash, ignore_errors=True)
+    os.rename(staging_bundle, app_bundle)
 
     # Ad-hoc code sign the x86_64 .app bundle for macOS Gatekeeper / LaunchServices
     subprocess.run(["/usr/bin/codesign", "--force", "--deep", "--sign", "-", app_bundle], check=False)

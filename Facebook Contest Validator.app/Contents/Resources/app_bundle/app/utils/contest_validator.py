@@ -48,11 +48,15 @@ class IncrementalContestAggregator:
             return ""
         noise_exact = {
             "loved by author", "liked by author", "by author", "see original", "see translation",
-            "hide translation", "·", "•", "· follow", "• follow", "follow",
+            "hide translation", "rate this translation", "automatically translated",
+            "মূলটি দেখুন", "মূল লেখাটি দেখুন", "অনুবাদ দেখুন", "অনুবাদ লুকান", "আরও দেখুন",
+            "·", "•", "· follow", "• follow", "follow",
             "create your avatar", "top fan", "author", "edited", "giphy"
         }
         noise_starts = (
-            "reply to ", "like ", "downvote ", "upvote ", "reacted:", "love button"
+            "reply to ", "like ", "downvote ", "upvote ", "reacted:", "love button",
+            "see original", "see translation", "hide translation", "rate this translation",
+            "translated from "
         )
         noise_contains = (
             "comment button", "show reaction tray", "downvote ", "upvote ",
@@ -247,7 +251,27 @@ class IncrementalContestAggregator:
                 participant.commented = True
                 self._comments_count += 1
             if clean_text and clean_text not in participant.comment_texts:
-                participant.comment_texts.append(clean_text)
+                incoming_has_non_ascii = any(ord(ch) > 127 for ch in clean_text)
+                replaced_existing = False
+                for idx_c, old_c in enumerate(list(participant.comment_texts)):
+                    old_prefix = old_c.rstrip(".… ").strip()
+                    if old_prefix and len(old_prefix) >= 6 and clean_text.startswith(old_prefix) and len(clean_text) > len(old_c):
+                        participant.comment_texts[idx_c] = clean_text
+                        replaced_existing = True
+                        break
+                    if incoming_has_non_ascii and all(ord(ch) < 128 for ch in old_c):
+                        participant.comment_texts[idx_c] = clean_text
+                        replaced_existing = True
+                        break
+                if not replaced_existing:
+                    # Also skip if clean_text is just a shorter truncated prefix of an already-stored full comment
+                    clean_prefix = clean_text.rstrip(".… ").strip()
+                    is_shorter_prefix = any(
+                        clean_prefix and len(clean_prefix) >= 6 and old_c.startswith(clean_prefix) and len(old_c) > len(clean_text)
+                        for old_c in participant.comment_texts
+                    )
+                    if not is_shorter_prefix:
+                        participant.comment_texts.append(clean_text)
         else:
             if not participant.shared:
                 participant.shared = True

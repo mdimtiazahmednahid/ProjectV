@@ -54,10 +54,10 @@ class LotteryPrintExporter:
                 safe_name = html.escape(p.display_name)
                 full_comment_raw = " | ".join(c for c in p.comment_texts if c and c.strip()) if p.comment_texts else ""
                 if full_comment_raw:
-                    short_raw = full_comment_raw[:45] + ("..." if len(full_comment_raw) > 45 else "")
+                    short_raw = full_comment_raw[:135] + ("..." if len(full_comment_raw) > 135 else "")
                     safe_short = f'"{html.escape(short_raw)}"'
                     safe_full = f'"{html.escape(full_comment_raw)}"'
-                    is_truncated = "1" if len(full_comment_raw) > 45 else "0"
+                    is_truncated = "1" if len(full_comment_raw) > 135 else "0"
                 else:
                     safe_short = '"Verified Entry"'
                     safe_full = '"Verified Entry"'
@@ -95,9 +95,9 @@ class LotteryPrintExporter:
                     <div class="ticket-body">
                         {avatar_tag}
                         <div class="ticket-info">
-                            <div class="name">{safe_name}</div>
+                            <div class="name notranslate" translate="no">{safe_name}</div>
                             <div class="meta">{done_meta}</div>
-                            <div class="comment" data-short="{html.escape(safe_short, quote=True)}" data-full="{html.escape(safe_full, quote=True)}" data-truncated="{is_truncated}" onclick="toggleCommentText(this)" title="Click to view full comment">{safe_short}</div>
+                            <div class="comment notranslate" translate="no" data-short="{html.escape(safe_short, quote=True)}" data-full="{html.escape(safe_full, quote=True)}" data-truncated="{is_truncated}" onclick="toggleCommentText(this)" title="Click to view full comment">{safe_short}</div>
                         </div>
                     </div>
                     <div class="ticket-footer">{footer_html}</div>
@@ -107,19 +107,20 @@ class LotteryPrintExporter:
                 rows_html.append(f"""
                 <tr>
                     <td class="col-serial"><strong>{serial_str}</strong></td>
-                    <td>{safe_name}</td>
+                    <td class="notranslate" translate="no">{safe_name}</td>
                     <td>{'Yes' if p.liked else 'No'}</td>
                     <td>{'Yes' if p.commented else 'No'} ({len(p.comment_texts)})</td>
                     <td>{'Yes' if p.shared else 'No'}</td>
-                    <td>{html.escape(full_comment_raw[:140])}</td>
+                    <td class="notranslate" translate="no">{html.escape(full_comment_raw[:140])}</td>
                     <td class="col-url">{table_url_html}</td>
                 </tr>
                 """)
 
             doc = f"""<!DOCTYPE html>
-<html lang="en">
+<html lang="bn" translate="no" class="notranslate">
 <head>
 <meta charset="UTF-8">
+<meta name="google" content="notranslate">
 <title>Live Contest Lottery Tickets & Verification Sheet</title>
 <style>
     * {{ box-sizing: border-box; }}
@@ -236,7 +237,7 @@ class LotteryPrintExporter:
     }}
     .ticket-body {{
         display: flex;
-        align-items: center;
+        align-items: flex-start;
         gap: 9px;
         min-width: 0;
     }}
@@ -247,6 +248,7 @@ class LotteryPrintExporter:
         flex-shrink: 0;
         object-fit: cover;
         border: 1px solid #ccc;
+        margin-top: 2px;
     }}
     .avatar-placeholder {{
         background: #e9ecef;
@@ -277,15 +279,24 @@ class LotteryPrintExporter:
     }}
     .comment {{
         font-size: 11px;
+        line-height: 1.38;
         color: #444;
         font-style: italic;
-        margin-top: 2px;
-        white-space: nowrap;
+        margin-top: 3px;
+        display: -webkit-box;
+        -webkit-box-orient: vertical;
+        -webkit-line-clamp: 3;
+        line-clamp: 3;
+        white-space: normal;
+        word-break: break-word;
         overflow: hidden;
         text-overflow: ellipsis;
         cursor: pointer;
     }}
     .comment.expanded {{
+        display: block;
+        -webkit-line-clamp: unset;
+        line-clamp: unset;
         white-space: normal;
         word-break: break-word;
         overflow: visible;

@@ -141,6 +141,44 @@ class ProfileExtractor:
         return [chosen_c], chosen_b, chosen_kind
 
     @staticmethod
+    def find_see_original_tap_coords(xml_source: str) -> List[Tuple[int, int]]:
+        """
+        Finds all visible 'See original' ('মূলটি দেখুন') or 'Hide translation' ('অনুবাদ লুকান')
+        buttons on the Android screen so CollectorEngine can tap them to restore exact original comment text
+        before extracting comments. Never taps 'See translation'.
+        """
+        coords: List[Tuple[int, int]] = []
+        if not xml_source:
+            return coords
+        try:
+            root = ET.fromstring(xml_source)
+        except Exception:
+            return coords
+
+        for el in root.iter():
+            t = (el.attrib.get("text") or "").strip().lower()
+            c = (el.attrib.get("content-desc") or "").strip().lower()
+            label = t or c
+            if not label:
+                continue
+            if label.startswith("see translation") or label == "অনুবাদ দেখুন":
+                continue
+            if (
+                label == "see original"
+                or label.startswith("see original ")
+                or label.startswith("see original(")
+                or label in ("মূলটি দেখুন", "মূল লেখাটি দেখুন", "hide translation", "অনুবাদ লুকান")
+            ):
+                b = parse_bounds(el.attrib.get("bounds", ""))
+                if b:
+                    x, y, w, h = b
+                    if w > 18 and h > 12 and 140 < y < 2200:
+                        pt = (x + w // 2, y + h // 2)
+                        if pt not in coords:
+                            coords.append(pt)
+        return coords
+
+    @staticmethod
     def find_expand_comments_tap_coords(xml_source: str) -> Optional[Tuple[int, int]]:
         """
         Finds the screen center `(x, y)` of a 'View more comments' / 'View previous comments' /
@@ -224,7 +262,8 @@ class ProfileExtractor:
             "add friend", "cancel request", "message", "invite", "invited",
             "see more", "back", "close", "search", "menu", "profile photo",
             "profile picture", "see translation", "hide translation", "see original",
-            "rate this translation", "media", "photo", "video", "reel",
+            "rate this translation", "automatically translated", "মূলটি দেখুন", "মূল লেখাটি দেখুন",
+            "অনুবাদ দেখুন", "অনুবাদ লুকান", "আরও দেখুন", "media", "photo", "video", "reel",
             "create your avatar", "reactions", "comments", "shares",
             "people who reacted", "people who shared this", "most relevant",
             "all comments", "newest", "top fan", "author", "admin", "moderator",
@@ -238,7 +277,8 @@ class ProfileExtractor:
             "like button", "love button", "comment button", "share button",
             "people who shared this", "people who reacted", "send in messenger",
             "write a comment", "write a reply", "comment as ", "view ", "hide ",
-            "see previous", "see more", "most relevant", "all comments",
+            "see previous", "see more", "see original", "see translation", "translated from ",
+            "most relevant", "all comments",
             "replied to ", "reply to ", "react to ", "reacted:", "double tap",
             "like ", "downvote ", "upvote ", "more options for ", "shared with:",
             "pinned post", "profile photo of", "profile picture of",

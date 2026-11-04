@@ -1207,6 +1207,76 @@ def test_three_field_chained_toggle_bar_actions_and_keywords():
         assert "WRONG ANSWER" not in ev.reason_badge
 
 
+def test_original_comment_preserved_without_english_translation(tmp_path):
+    """
+    Verifies that:
+    1. When an initial auto-translated English comment is followed by the original Bangla comment
+       (after clicking 'See original' / 'মূলটি দেখুন'), IncrementalContestAggregator replaces
+       the English translation with the exact original Bangla comment.
+    2. Android ProfileExtractor.find_see_original_tap_coords detects 'See original' and 'মূলটি দেখুন'
+       buttons while ignoring 'See translation'.
+    3. LotteryPrintExporter outputs translate='no' and class='notranslate' so browsers never
+       translate original comments into English.
+    """
+    from app.utils.contest_validator import IncrementalContestAggregator
+    from app.exporters.lottery_print_exporter import LotteryPrintExporter
+
+    agg = IncrementalContestAggregator()
+    # Pass 1: Auto-translated English text before 'See original' resolved
+    agg.add_profile(
+        ShareProfile(
+            name="Mst Ambea Akhter",
+            profile_url="https://www.facebook.com/profile.php?id=100078091213712",
+            content="Peanuts are very nutritious food",
+            action_type="comment",
+            source="facebook_browser_extension",
+            confidence=0.98,
+            session_id="s_orig",
+        )
+    )
+    # Pass 2: Original Bangla comment after 'See original' resolved
+    original_bangla = "খাই চিনা বাদাম (Peanuts) এটা অত্যন্ত পুষ্টিকর এবং সুস্বাদু খাবার"
+    agg.add_profile(
+        ShareProfile(
+            name="Mst Ambea Akhter",
+            profile_url="https://www.facebook.com/profile.php?id=100078091213712",
+            content=original_bangla,
+            action_type="comment",
+            source="facebook_browser_extension",
+            confidence=0.98,
+            session_id="s_orig",
+        )
+    )
+    participants = agg.get_sorted_participants()
+    assert len(participants) == 1
+    assert participants[0].comment_texts == [original_bangla]
+
+    # Verify Android 'See original' tap coordinate finder
+    xml_with_see_original = """<?xml version="1.0" encoding="UTF-8"?>
+    <hierarchy rotation="0">
+      <androidx.recyclerview.widget.RecyclerView bounds="[0,200][1080,2100]" scrollable="true">
+        <android.view.ViewGroup bounds="[0,250][1080,500]">
+          <android.widget.TextView text="See original" bounds="[140,420][340,470]" />
+          <android.widget.TextView text="মূলটি দেখুন" bounds="[140,520][340,570]" />
+          <android.widget.TextView text="See translation" bounds="[140,620][340,670]" />
+        </android.view.ViewGroup>
+      </androidx.recyclerview.widget.RecyclerView>
+    </hierarchy>
+    """
+    coords = ProfileExtractor.find_see_original_tap_coords(xml_with_see_original)
+    assert coords == [(240, 445), (240, 545)]
+
+    # Verify HTML exporter preserves exact Bangla comment and blocks browser auto-translation
+    out_html = tmp_path / "tickets.html"
+    assert LotteryPrintExporter.export_printable_tickets(participants, str(out_html)) is True
+    html_text = out_html.read_text(encoding="utf-8")
+    assert 'translate="no"' in html_text
+    assert 'content="notranslate"' in html_text
+    assert original_bangla in html_text
+    assert "Peanuts are very nutritious food" not in html_text
+
+
+
 
 
 

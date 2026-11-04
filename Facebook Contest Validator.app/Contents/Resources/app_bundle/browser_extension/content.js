@@ -10,6 +10,26 @@
   }
   window.__FB_CONTEST_SCRAPER_LOADED__ = true;
 
+  function disableBrowserPageTranslation() {
+    try {
+      if (document.documentElement) {
+        document.documentElement.setAttribute("translate", "no");
+        document.documentElement.classList.add("notranslate");
+      }
+      if (document.body) {
+        document.body.setAttribute("translate", "no");
+        document.body.classList.add("notranslate");
+      }
+      if (document.head && !document.head.querySelector('meta[name="google"][content="notranslate"]')) {
+        const meta = document.createElement("meta");
+        meta.name = "google";
+        meta.content = "notranslate";
+        document.head.appendChild(meta);
+      }
+    } catch (e) {}
+  }
+  disableBrowserPageTranslation();
+
   const BATCH_PREFIX = "FB_CONTEST_BATCH_V1:";
   const BATCH_FLUSH_SIZE = 1;
 
@@ -586,14 +606,85 @@
     return false;
   }
 
+  function clickSeeOriginalAndSeeMore(root) {
+    if (!root) return { clickedOriginal: 0, clickedSeeMore: 0 };
+    let clickedOriginal = 0;
+    let clickedSeeMore = 0;
+    const buttons = root.querySelectorAll('div[role="button"], span[role="button"], a[role="button"], span[dir="auto"]');
+    for (const btn of buttons) {
+      if (isInsideIgnoredChrome(btn)) continue;
+      const txt = cleanText(btn.innerText || btn.textContent).toLowerCase();
+      const aria = cleanText(btn.getAttribute("aria-label") || "").toLowerCase();
+      const label = txt || aria;
+      if (!label) continue;
+
+      /* Strictly NEVER click "See translation" ("অনুবাদ দেখুন") */
+      if (label.startsWith("see translation") || label === "অনুবাদ দেখুন") {
+        continue;
+      }
+
+      const isSeeOriginal =
+        label === "see original" ||
+        label.startsWith("see original ") ||
+        label.startsWith("see original(") ||
+        label === "মূলটি দেখুন" ||
+        label === "মূল লেখাটি দেখুন" ||
+        label === "hide translation" ||
+        label === "অনুবাদ লুকান";
+
+      const isSeeMore = /^see\s+more$/i.test(label) || label === "আরও দেখুন";
+
+      if (isSeeOriginal && btn.dataset.fbOriginalClicked !== "1") {
+        const targetClickEl = btn.closest('div[role="button"], span[role="button"], a[role="button"]') || btn;
+        const rect = targetClickEl.getBoundingClientRect();
+        if (rect.width > 3 && rect.height > 3) {
+          try {
+            targetClickEl.click();
+            btn.dataset.fbOriginalClicked = "1";
+            clickedOriginal += 1;
+          } catch (e) {}
+        }
+      } else if (isSeeMore && btn.dataset.fbExpandClicked !== "1") {
+        const targetClickEl = btn.closest('div[role="button"], span[role="button"], a[role="button"]') || btn;
+        const rect = targetClickEl.getBoundingClientRect();
+        if (rect.width > 3 && rect.height > 3) {
+          try {
+            targetClickEl.click();
+            btn.dataset.fbExpandClicked = "1";
+            clickedSeeMore += 1;
+          } catch (e) {}
+        }
+      }
+    }
+    return { clickedOriginal, clickedSeeMore };
+  }
+
+  async function ensureOriginalCommentsRevealed(root) {
+    if (!root) return false;
+    const pass1 = clickSeeOriginalAndSeeMore(root);
+    if (pass1.clickedOriginal > 0 || pass1.clickedSeeMore > 0) {
+      await sleep(520);
+      const pass2 = clickSeeOriginalAndSeeMore(root);
+      if (pass2.clickedOriginal > 0 || pass2.clickedSeeMore > 0) {
+        await sleep(420);
+      }
+      return true;
+    }
+    return false;
+  }
+
   function autoExpandComments(root) {
     let clickedExpand = false;
+    const rev = clickSeeOriginalAndSeeMore(root);
+    if (rev.clickedOriginal > 0 || rev.clickedSeeMore > 0) {
+      clickedExpand = true;
+    }
     const buttons = root.querySelectorAll('div[role="button"], span[role="button"], span[dir="auto"]');
     for (const btn of buttons) {
       if (isInsideIgnoredChrome(btn)) continue;
       if (btn.dataset.fbExpandClicked === "1") continue;
       const txt = cleanText(btn.innerText || btn.textContent).toLowerCase();
-      const isSeeMore = /^see\s+more$/i.test(txt) || txt === "আরও দেখুন";
+      if (txt.startsWith("see translation") || txt === "অনুবাদ দেখুন") continue;
       const isPaginationExpand =
         txt.startsWith("view more comments") ||
         txt.startsWith("view previous comments") ||
@@ -609,7 +700,7 @@
         txt.includes("পূর্ববর্তী মন্তব্য") ||
         txt.includes("উত্তর দেখুন");
 
-      if (isSeeMore || isPaginationExpand) {
+      if (isPaginationExpand) {
         const targetClickEl = btn.closest('div[role="button"], span[role="button"]') || btn;
         const rect = targetClickEl.getBoundingClientRect();
         if (rect.width > 5 && rect.height > 5) {
@@ -618,11 +709,8 @@
               targetClickEl.scrollIntoView({ block: "center", behavior: "instant" });
             }
             targetClickEl.click();
-            if (isSeeMore) {
-              btn.dataset.fbExpandClicked = "1";
-            }
             clickedExpand = true;
-            if (isPaginationExpand) break;
+            break;
           } catch (e) {}
         }
       }
@@ -640,6 +728,12 @@
       low.startsWith("see translation") ||
       low.startsWith("hide translation") ||
       low.startsWith("rate this translation") ||
+      low.startsWith("translated from ") ||
+      low.startsWith("automatically translated") ||
+      low === "মূলটি দেখুন" ||
+      low === "মূল লেখাটি দেখুন" ||
+      low === "অনুবাদ দেখুন" ||
+      low === "অনুবাদ লুকান" ||
       low.startsWith("comment as ") ||
       low.startsWith("write a ") ||
       low.startsWith("replied to ") ||
@@ -738,6 +832,48 @@
     }
 
     const avatarUrl = extractAvatarUrlFromContainer(rowEl);
+
+    /* 2b. Ensure "See original" ("মূলটি দেখুন") and "See more" ("আরও দেখুন") inside this row are clicked BEFORE reading comment text */
+    let hasActiveSeeOriginal = false;
+    const rowBtns = rowEl.querySelectorAll('div[role="button"], span[role="button"], a[role="button"], span[dir="auto"]');
+    for (const rb of rowBtns) {
+      const rbTxt = cleanText(rb.innerText || rb.textContent).toLowerCase();
+      const rbAria = cleanText(rb.getAttribute("aria-label") || "").toLowerCase();
+      const rbLabel = rbTxt || rbAria;
+      if (!rbLabel) continue;
+      if (rbLabel.startsWith("see translation") || rbLabel === "অনুবাদ দেখুন") continue;
+      if (
+        rbLabel === "see original" ||
+        rbLabel.startsWith("see original ") ||
+        rbLabel.startsWith("see original(") ||
+        rbLabel === "মূলটি দেখুন" ||
+        rbLabel === "মূল লেখাটি দেখুন" ||
+        rbLabel === "hide translation" ||
+        rbLabel === "অনুবাদ লুকান"
+      ) {
+        hasActiveSeeOriginal = true;
+        try {
+          const clickTarget = rb.closest('div[role="button"], span[role="button"], a[role="button"]') || rb;
+          clickTarget.click();
+          rb.dataset.fbOriginalClicked = "1";
+        } catch (e) {}
+      } else if ((/^see\s+more$/i.test(rbLabel) || rbLabel === "আরও দেখুন") && rb.dataset.fbExpandClicked !== "1") {
+        try {
+          const clickTarget = rb.closest('div[role="button"], span[role="button"], a[role="button"]') || rb;
+          clickTarget.click();
+          rb.dataset.fbExpandClicked = "1";
+        } catch (e) {}
+      }
+    }
+
+    if (hasActiveSeeOriginal) {
+      const waits = Number(rowEl.dataset.fbWaitOriginalCount || "0") + 1;
+      rowEl.dataset.fbWaitOriginalCount = String(waits);
+      if (waits <= 2) {
+        /* Wait for Facebook React DOM to replace the English translation with the exact original comment on the next pass */
+        return null;
+      }
+    }
 
     /* 3. Extract comment body text from dir="auto" blocks */
     const textBlocks = Array.from(rowEl.querySelectorAll('div[dir="auto"], span[dir="auto"]'));
@@ -1043,6 +1179,21 @@
     for (const item of items) {
       const idKey = (item.url || item.name || "").toLowerCase();
       if (!idKey) continue;
+      if (actionType === "comment" && item.content) {
+        const hasNonAscii = /[^\x00-\x7F]/.test(item.content);
+        /* If an earlier pass captured a truncated prefix or an ASCII-only translation for this same author, replace it with the original/expanded comment */
+        for (const [existingKey, existingItem] of Array.from(targetMap.entries())) {
+          if (!existingKey.startsWith(`${idKey}|`)) continue;
+          const oldContent = (existingItem.content || "").trim();
+          if (!oldContent || oldContent === item.content) continue;
+          const oldPrefix = oldContent.replace(/[.…\s]+$/, "").trim();
+          const isExpandedOfOld = oldPrefix.length >= 8 && item.content.startsWith(oldPrefix) && item.content.length > oldContent.length;
+          const isOriginalReplacingTranslated = hasNonAscii && !/[^\x00-\x7F]/.test(oldContent);
+          if (isExpandedOfOld || isOriginalReplacingTranslated) {
+            targetMap.delete(existingKey);
+          }
+        }
+      }
       const key =
         actionType === "comment"
           ? `${idKey}|${item.content}`
@@ -1186,6 +1337,9 @@
         const currMax = Math.max(0, candidate.scrollHeight - candidate.clientHeight);
         candidate.scrollTop = Math.min(currMax, candidate.scrollTop + perStep);
         if (i === Math.floor(steps / 2)) {
+          if (actionType === "comment") {
+            await ensureOriginalCommentsRevealed(targetWin.root);
+          }
           harvestVisibleIntoStore(actionType, targetWin);
         }
         await sleep(stepDelay + randomInt(0, 12));
@@ -1203,6 +1357,9 @@
         if (!isRunning) break;
         window.scrollBy(0, perStep);
         if (i === Math.floor(steps / 2)) {
+          if (actionType === "comment") {
+            await ensureOriginalCommentsRevealed(targetWin.root);
+          }
           harvestVisibleIntoStore(actionType, targetWin);
         }
         await sleep(stepDelay + randomInt(0, 12));
@@ -1343,6 +1500,10 @@
       await trySwitchToAllComments(targetWin.root);
     }
 
+    if (activeAction === "comment") {
+      await ensureOriginalCommentsRevealed(targetWin.root);
+    }
+
     let newCount = harvestVisibleIntoStore(activeAction, targetWin);
     if (scrollCount === 0 && newCount > 0) {
       flushUnsentBatch(true);
@@ -1350,8 +1511,9 @@
 
     if (activeAction === "comment") {
       if (autoExpandComments(targetWin.root)) {
-        updateUIStatus("Clicked 'View more comments' — waiting naturally for load...");
+        updateUIStatus("Clicked 'View more comments' / 'See original' — waiting naturally for load...");
         await sleep(randomInt(1600, 2300));
+        await ensureOriginalCommentsRevealed(targetWin.root);
         newCount += harvestVisibleIntoStore(activeAction, targetWin);
       }
     }
@@ -1365,6 +1527,10 @@
       settleWait += randomInt(1900, 2700);
     }
     await sleep(settleWait);
+
+    if (activeAction === "comment") {
+      await ensureOriginalCommentsRevealed(targetWin.root);
+    }
 
     newCount += harvestVisibleIntoStore(activeAction, targetWin);
 

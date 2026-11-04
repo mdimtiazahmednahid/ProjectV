@@ -120,6 +120,19 @@ class CollectorEngine(QThread):
                 # 3. Extract
                 new_this_pass = 0
                 if xml_source and xml_source != last_xml_source:
+                    if self.action_type == "comment" and hasattr(driver, "tap"):
+                        see_orig_coords = ProfileExtractor.find_see_original_tap_coords(xml_source)
+                        if see_orig_coords:
+                            logger.info(f"Tapping {len(see_orig_coords)} 'See original' button(s) to restore original comment text...")
+                            for ox, oy in see_orig_coords[:5]:
+                                try:
+                                    driver.tap(ox, oy)
+                                    time.sleep(0.35)
+                                except Exception:
+                                    pass
+                            time.sleep(0.55)
+                            xml_source = UIInspector.get_page_source(driver) or xml_source
+
                     screenshot_png = None
                     if getattr(self, "enable_avatar_fingerprint", True):
                         try:
