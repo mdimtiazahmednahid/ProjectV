@@ -49,6 +49,7 @@
   let lockedScrollEl = null;
   let lockedWindowRoot = null;
   let switchedToAllComments = false;
+  let visitedReactionTabs = new Set();
   let speedProfile = "human";
 
   const SPEED_CONFIGS = {
@@ -174,7 +175,7 @@
     ) {
       return null;
     }
-    const letters = s.match(/\p{L}/gu) || [];
+    const letters = s.match(/[\p{L}\p{M}\u0980-\u09FF]/gu) || [];
     return letters.length >= 2 ? s : null;
   }
 
@@ -205,7 +206,7 @@
     const hasCommentId = parsed.searchParams.has("comment_id") || parsed.searchParams.has("reply_comment_id");
 
     /* Case 1a: /profile.php?id=1000... (Always a user profile, even if Facebook appended &comment_id=...) */
-    if (cleanLowerPath === "/profile.php") {
+    if (cleanLowerPath === "/profile.php" || cleanLowerPath === "/user.php") {
       const uid = parsed.searchParams.get("id");
       if (uid && /^\d+$/.test(uid)) {
         return `https://www.facebook.com/profile.php?id=${uid}`;
@@ -237,6 +238,36 @@
       return `https://www.facebook.com/people/${mPeople[1]}/${idOrToken}`;
     }
 
+    /* Case 2b: /p/<Name-or-Slug>-<uid> or /p/<slug> (Facebook professional / numeric-slug profiles) */
+    const mPProfile = path.match(/^\/p\/([^/?#]+)/i);
+    if (mPProfile) {
+      const rawSlug = decodeURIComponent(mPProfile[1]).trim();
+      if (/^\d{5,}$/.test(rawSlug)) {
+        return `https://www.facebook.com/profile.php?id=${rawSlug}`;
+      }
+      const mTailUid = rawSlug.match(/-(\d{8,})$/);
+      if (mTailUid) {
+        return `https://www.facebook.com/profile.php?id=${mTailUid[1]}`;
+      }
+      return `https://www.facebook.com/p/${rawSlug}`;
+    }
+
+    /* Case 2c: /profile/<uid_or_username> or /user/<uid_or_username> */
+    const mDirectProf = path.match(/^\/(?:profile|user)\/([^/?#]+)/i);
+    if (mDirectProf) {
+      const tok = decodeURIComponent(mDirectProf[1]).trim();
+      if (/^\d{5,}$/.test(tok)) {
+        return `https://www.facebook.com/profile.php?id=${tok}`;
+      }
+      return `https://www.facebook.com/${tok}`;
+    }
+
+    /* Case 2d: /pages/<Name>/<uid> or /pages/category/<cat>/<Name>/<uid> */
+    const mPages = path.match(/^\/pages\/(?:category\/[^/]+\/)?([^/]+)\/(\d{5,})/i);
+    if (mPages) {
+      return `https://www.facebook.com/profile.php?id=${mPages[2]}`;
+    }
+
     /* Case 3: /groups/<gid>/user/<uid> */
     const mGroupUser = path.match(/^\/groups\/[^/]+\/user\/([^/?#]+)/i);
     if (mGroupUser) {
@@ -253,7 +284,12 @@
 
     if (segments.length >= 2) {
       const secondSeg = segments[1].toLowerCase();
-      if (["posts", "videos", "photos", "about"].includes(secondSeg)) {
+      if (
+        [
+          "posts", "videos", "photos", "about", "reels",
+          "friends", "followers", "following", "map", "mentions"
+        ].includes(secondSeg)
+      ) {
         if (hasCommentId) return null;
         segments = [segments[0]];
       } else {
@@ -264,6 +300,9 @@
     const username = decodeURIComponent(segments[0]).trim();
     if (!username || username.endsWith(".php")) return null;
     if (IGNORE_LABELS.has(username.toLowerCase())) return null;
+    if (/^\d{5,}$/.test(username)) {
+      return `https://www.facebook.com/profile.php?id=${username}`;
+    }
 
     return `https://www.facebook.com/${username}`;
   }
@@ -520,29 +559,62 @@
     const commentDialog = [...dialogs].reverse().find((d) => d.kind === "comment");
     const searchRoot = commentDialog ? commentDialog.el : document.body;
 
-    const clickables = Array.from(
-      searchRoot.querySelectorAll('div[role="button"], span[role="button"], a[role="link"]')
-    );
-
     if (actionType === "like") {
+      /* 1. Check reaction summary toolbars first (e.g. role="toolbar" aria-label="See who reacted to this" / "কে প্রতিক্রিয়া জানিয়েছেন দেখুন") */
+      const toolbars = Array.from(searchRoot.querySelectorAll('[role="toolbar"]'));
+      for (const tb of toolbars) {
+        if (isInsideIgnoredChrome(tb)) continue;
+        const tbAria = cleanText(tb.getAttribute("aria-label") || "").toLowerCase();
+        if (
+          tbAria.includes("reacted") ||
+          tbAria.includes("reaction") ||
+          tbAria.includes("প্রতিক্রিয়া") ||
+          tbAria.includes("প্রতিক্রিয়া")
+        ) {
+          const btn = tb.querySelector('div[role="button"], span[role="button"]') || tb;
+          try {
+            btn.click();
+            return true;
+          } catch (e) {}
+        }
+      }
+
+      /* 2. Check all clickable buttons/links for reaction counts or aria labels */
+      const clickables = Array.from(
+        searchRoot.querySelectorAll('div[role="button"], span[role="button"], a[role="link"], span[aria-label]')
+      );
       for (const el of clickables) {
         if (isInsideIgnoredChrome(el)) continue;
         const aria = cleanText(el.getAttribute("aria-label") || "").toLowerCase();
         const txt = cleanText(el.innerText || el.textContent).toLowerCase();
         if (
           aria.startsWith("all reactions:") ||
+          aria.startsWith("see who reacted") ||
           aria.includes("people who reacted") ||
           aria.startsWith("like:") ||
           aria.startsWith("love:") ||
-          /^\d+[kmb,.]*\s+reactions?$/i.test(txt)
+          aria.startsWith("care:") ||
+          aria.startsWith("haha:") ||
+          aria.startsWith("wow:") ||
+          aria.startsWith("sad:") ||
+          aria.startsWith("angry:") ||
+          aria.includes("প্রতিক্রিয়া") ||
+          aria.includes("প্রতিক্রিয়া") ||
+          /^\d+[kmb,.]*\s+reactions?$/i.test(txt) ||
+          /^(?:you\s+and\s+|.+?\s+and\s+)\d+[kmb,.]*\s+others?$/i.test(txt) ||
+          /^\d+[kmb,.]*টি\s+প্রতিক্রি[য়য়]া$/i.test(txt)
         ) {
           try {
-            el.click();
+            const target = el.closest('div[role="button"], span[role="button"], a[role="link"]') || el;
+            target.click();
             return true;
           } catch (e) {}
         }
       }
     } else if (actionType === "share") {
+      const clickables = Array.from(
+        searchRoot.querySelectorAll('div[role="button"], span[role="button"], a[role="link"]')
+      );
       for (const el of clickables) {
         if (isInsideIgnoredChrome(el)) continue;
         const aria = cleanText(el.getAttribute("aria-label") || "").toLowerCase();
@@ -550,7 +622,9 @@
         if (
           /^\d+[kmb,.]*\s+shares?$/i.test(txt) ||
           /^\d+[kmb,.]*\s+shares?$/i.test(aria) ||
-          aria.includes("people who shared")
+          aria.includes("people who shared") ||
+          txt.includes("টি শেয়ার") ||
+          txt.includes("টি শেয়ার")
         ) {
           try {
             el.click();
@@ -569,18 +643,18 @@
     if (actionType === "like") {
       for (let i = dialogs.length - 1; i >= 0; i--) {
         if (dialogs[i].kind === "like") {
-          return { root: dialogs[i].el, kind: "like_dialog", label: "👍 Likes Popup Modal" };
+          return { root: dialogs[i].el, kind: "like_dialog", label: "👍 Reactions Popup Modal" };
         }
       }
       for (let i = dialogs.length - 1; i >= 0; i--) {
         if (dialogs[i].kind === "unknown") {
-          return { root: dialogs[i].el, kind: "like_dialog", label: "👍 Likes Popup Modal" };
+          return { root: dialogs[i].el, kind: "like_dialog", label: "👍 Reactions Popup Modal" };
         }
       }
-      if (dialogs.length > 0) {
-        return { root: dialogs[dialogs.length - 1].el, kind: "like_dialog", label: "👍 Active Dialog Modal" };
+      if (/\/ufi\/reaction\//i.test(window.location.href)) {
+        return { root: mainEl, kind: "like_page", label: "👍 Reactions Page View" };
       }
-      return { root: mainEl, kind: "like_page", label: "👍 Page View" };
+      return null;
     }
 
     if (actionType === "share") {
@@ -594,10 +668,10 @@
           return { root: dialogs[i].el, kind: "share_dialog", label: "🔄 Shares Popup Modal" };
         }
       }
-      if (dialogs.length > 0) {
-        return { root: dialogs[dialogs.length - 1].el, kind: "share_dialog", label: "🔄 Active Dialog Modal" };
+      if (/\/shares\/view/i.test(window.location.href)) {
+        return { root: mainEl, kind: "share_page", label: "🔄 Shares Page View" };
       }
-      return { root: mainEl, kind: "share_page", label: "🔄 Page View" };
+      return null;
     }
 
     if (actionType === "comment") {
@@ -616,6 +690,15 @@
         };
       }
       if (dialogs.length > 0) {
+        const topKind = dialogs[dialogs.length - 1].kind;
+        if (topKind === "like" || topKind === "share") {
+          return {
+            root: null,
+            kind: "blocked",
+            label: "⚠️ Blocked by Popup",
+            blockedByPopup: topKind
+          };
+        }
         return {
           root: dialogs[dialogs.length - 1].el,
           kind: "comment_dialog",
@@ -1121,22 +1204,354 @@
     return found;
   }
 
+  function normalizeReactionType(rawVal) {
+    if (!rawVal) return "";
+    const s = cleanText(String(rawVal));
+    if (!s || /^\d+[kmb,.]*$/i.test(s)) return "";
+    const low = s.toLowerCase().replace(/^[.,!?:;()[\]{}"'·•\s]+|[.,!?:;()[\]{}"'·•\s]+$/g, "");
+    if (!low || low === "all" || low.startsWith("all ") || low === "সব") return "";
+
+    if (
+      low === "like" ||
+      low === "liked" ||
+      low === "👍" ||
+      low.startsWith("👍") ||
+      low === "লাইক" ||
+      /^like\b/i.test(low) ||
+      /\bliked$/i.test(low)
+    ) {
+      return "Like";
+    }
+    if (
+      low === "love" ||
+      low === "loved" ||
+      low === "❤️" ||
+      low === "❤" ||
+      low.startsWith("❤️") ||
+      low.startsWith("❤") ||
+      low === "লাভ" ||
+      low === "ভালোবাসা" ||
+      /^love\b/i.test(low) ||
+      /\bloved$/i.test(low)
+    ) {
+      return "Love";
+    }
+    if (
+      low === "care" ||
+      low === "cared" ||
+      low === "🥰" ||
+      low === "🤗" ||
+      low === "কেয়ার" ||
+      low === "কেয়ার" ||
+      low === "যত্ন" ||
+      /^care\b/i.test(low) ||
+      /\bcared$/i.test(low)
+    ) {
+      return "Care";
+    }
+    if (
+      low === "haha" ||
+      low === "😆" ||
+      low === "😂" ||
+      low === "🤣" ||
+      low === "হাহা" ||
+      /^haha\b/i.test(low) ||
+      /\bhaha$/i.test(low)
+    ) {
+      return "Haha";
+    }
+    if (
+      low === "wow" ||
+      low === "😮" ||
+      low === "😲" ||
+      low === "ওয়াও" ||
+      low === "ওয়াও" ||
+      low === "অবাক" ||
+      /^wow\b/i.test(low) ||
+      /\bwow$/i.test(low)
+    ) {
+      return "Wow";
+    }
+    if (
+      low === "sad" ||
+      low === "😢" ||
+      low === "😭" ||
+      low === "স্যাড" ||
+      low === "দুঃখিত" ||
+      /^sad\b/i.test(low) ||
+      /\bsad$/i.test(low)
+    ) {
+      return "Sad";
+    }
+    if (
+      low === "angry" ||
+      low === "😡" ||
+      low === "😠" ||
+      low === "অ্যাংরি" ||
+      low === "রাগান্বিত" ||
+      low === "রাগ" ||
+      /^angry\b/i.test(low) ||
+      /\bangry$/i.test(low)
+    ) {
+      return "Angry";
+    }
+
+    const pairs = [
+      ["reacted with love", "Love"],
+      ["reacted with care", "Care"],
+      ["reacted with haha", "Haha"],
+      ["reacted with wow", "Wow"],
+      ["reacted with sad", "Sad"],
+      ["reacted with angry", "Angry"],
+      ["reacted with like", "Like"],
+      ["love:", "Love"],
+      ["care:", "Care"],
+      ["haha:", "Haha"],
+      ["wow:", "Wow"],
+      ["sad:", "Sad"],
+      ["angry:", "Angry"],
+      ["like:", "Like"],
+      ["লাভ:", "Love"],
+      ["কেয়ার:", "Care"],
+      ["কেয়ার:", "Care"],
+      ["হাহা:", "Haha"],
+      ["ওয়াও:", "Wow"],
+      ["ওয়াও:", "Wow"],
+      ["স্যাড:", "Sad"],
+      ["অ্যাংরি:", "Angry"],
+      ["লাইক:", "Like"]
+    ];
+    for (const [sub, canonical] of pairs) {
+      if (low.includes(sub)) return canonical;
+    }
+    return "";
+  }
+
+  function inferReactionFromSvgOrUrl(src) {
+    if (!src) return "";
+    const low = src.toLowerCase();
+    if (low.startsWith("data:image/svg+xml")) {
+      let decoded = low;
+      try {
+        decoded = decodeURIComponent(low);
+      } catch (e) {}
+      if (
+        decoded.includes("#1877f2") ||
+        decoded.includes("#0866ff") ||
+        decoded.includes("#2078f4") ||
+        decoded.includes("#0571ed") ||
+        decoded.includes("#4267b2")
+      ) {
+        return "Like";
+      }
+      if (
+        decoded.includes("#f33e58") ||
+        decoded.includes("#e41e3f") ||
+        decoded.includes("#fb3c44") ||
+        decoded.includes("#fa383e") ||
+        decoded.includes("#ff2d55")
+      ) {
+        return "Love";
+      }
+      if (decoded.includes("#e9710f") || decoded.includes("#dd6b20")) {
+        return "Angry";
+      }
+    }
+    return "";
+  }
+
+  function buildReactionIconUrlMap(likeDialog) {
+    const iconMap = new Map();
+    const scopes = [likeDialog, document.body].filter(Boolean);
+    for (const scope of scopes) {
+      /* 1. Check all elements with aria-label (e.g. "Like: 80 people", "Love, 25", role="tab") */
+      const labeled = scope.querySelectorAll('[aria-label], [role="tab"]');
+      for (const el of labeled) {
+        const aria = cleanText(el.getAttribute("aria-label") || el.innerText || "");
+        const rType = normalizeReactionType(aria);
+        if (!rType) continue;
+        const imgs = el.querySelectorAll("img[src], svg image");
+        for (const im of imgs) {
+          const s = im.getAttribute("src") || im.getAttribute("xlink:href") || im.getAttribute("href") || "";
+          if (s) iconMap.set(s, rType);
+        }
+      }
+      /* 2. Check all <img alt="..."> with explicit reaction alt text */
+      const altImgs = scope.querySelectorAll("img[alt][src]");
+      for (const im of altImgs) {
+        const rType = normalizeReactionType(im.getAttribute("alt"));
+        const s = im.getAttribute("src") || "";
+        if (rType && s) {
+          iconMap.set(s, rType);
+        }
+      }
+    }
+    return iconMap;
+  }
+
+  function detectActiveTabReactionType(likeDialog, iconMap) {
+    if (!likeDialog) return "";
+    const tabs = likeDialog.querySelectorAll('[role="tab"]');
+    for (const tab of tabs) {
+      const isSelected =
+        tab.getAttribute("aria-selected") === "true" ||
+        tab.getAttribute(" tabindex") === "0" ||
+        tab.getAttribute("tabindex") === "0";
+      if (!isSelected) continue;
+      const aria = cleanText(tab.getAttribute("aria-label") || tab.innerText || "");
+      if (/^all\b|^সব\b/i.test(aria)) return "";
+      const direct = normalizeReactionType(aria);
+      if (direct) return direct;
+      const imgs = tab.querySelectorAll("img[src], svg image");
+      for (const im of imgs) {
+        const altType = normalizeReactionType(im.getAttribute("alt") || im.getAttribute("aria-label") || "");
+        if (altType) return altType;
+        const src = im.getAttribute("src") || im.getAttribute("xlink:href") || im.getAttribute("href") || "";
+        if (src && iconMap && iconMap.has(src)) {
+          return iconMap.get(src);
+        }
+        const svgHint = inferReactionFromSvgOrUrl(src);
+        if (svgHint) return svgHint;
+      }
+    }
+    return "";
+  }
+
   function findRowForAnchor(a, root) {
+    if (!a) return root;
+    const primaryUrl = cleanProfileUrl(a.getAttribute("href") || a.href || "");
     let curr = a.parentElement;
-    for (let d = 0; d < 5 && curr && curr !== root && curr !== document.body; d++) {
-      if (curr.querySelector("svg image, img")) return curr;
+    let bestRow = curr || a;
+
+    for (let d = 0; d < 10 && curr && curr !== root && curr !== document.body; d++) {
+      if (curr.getAttribute("role") === "dialog" || curr.querySelector('[role="tablist"]')) {
+        break;
+      }
+      /* Stop if curr spans two different people's profile links */
+      if (primaryUrl) {
+        let hasOtherPerson = false;
+        const otherLinks = curr.querySelectorAll("a[href]");
+        for (const oa of otherLinks) {
+          if (oa === a) continue;
+          const oaUrl = cleanProfileUrl(oa.getAttribute("href") || oa.href || "");
+          if (oaUrl && oaUrl.toLowerCase() !== primaryUrl.toLowerCase()) {
+            hasOtherPerson = true;
+            break;
+          }
+        }
+        if (hasOtherPerson) break;
+      }
+      /* Also stop if curr contains 2+ row action buttons ("Add friend", "Follow", "Message") */
+      const btns = curr.querySelectorAll('div[role="button"], span[role="button"]');
+      let rowActionBtnCount = 0;
+      for (const b of btns) {
+        const bt = cleanText(b.innerText || b.getAttribute("aria-label") || "").toLowerCase();
+        if (
+          bt === "add friend" ||
+          bt === "follow" ||
+          bt === "following" ||
+          bt === "message" ||
+          bt === "friends" ||
+          bt === "cancel request"
+        ) {
+          rowActionBtnCount += 1;
+        }
+      }
+      if (rowActionBtnCount > 1) break;
+
+      bestRow = curr;
       curr = curr.parentElement;
     }
-    return a.parentElement || a;
+    return bestRow;
+  }
+
+  function extractNameFromRowContainer(rowEl) {
+    if (!rowEl) return null;
+    const candidates = [];
+    const nodes = rowEl.querySelectorAll(
+      'a[href], a[role="link"], div[role="link"], span[role="link"], h2, h3, h4, strong, span[dir="auto"], div[dir="auto"], svg[aria-label], img[alt]'
+    );
+    for (const n of nodes) {
+      if (n.closest('div[role="button"], span[role="button"]')) {
+        const bTxt = cleanText(n.innerText || n.textContent || "").toLowerCase();
+        if (IGNORE_LABELS.has(bTxt)) continue;
+      }
+      const aria = n.getAttribute("aria-label") || n.getAttribute("alt") || "";
+      if (aria && !normalizeReactionType(aria)) {
+        candidates.push(aria);
+      }
+      const txt = n.innerText || n.textContent || "";
+      if (txt) {
+        candidates.push(txt.split(/\r?\n/)[0]);
+      }
+    }
+    for (const c of candidates) {
+      const cleaned = cleanPersonName(c);
+      if (cleaned) return cleaned;
+    }
+    return null;
+  }
+
+  function detectReactionTypeInRow(rowEl, avatarUrl, iconMap, activeTabReaction) {
+    if (!rowEl) return activeTabReaction || "";
+
+    /* Layer 1: Check explicit img[alt], svg[aria-label], or [aria-label] inside rowEl */
+    const mediaAndAria = rowEl.querySelectorAll("img[alt], svg[aria-label], [aria-label], [title]");
+    for (const el of mediaAndAria) {
+      for (const attr of ["alt", "aria-label", "title"]) {
+        const val = el.getAttribute(attr);
+        if (!val) continue;
+        /* Check both direct reaction label ("Love") and suffix ("Md Rahim Loved" / "Profile picture of X, Love") */
+        const direct = normalizeReactionType(val);
+        if (direct) return direct;
+        const mSuffix = val.match(/(?:\s*[,·•]\s*|\s+)(Liked|Loved|Cared|Haha|Wow|Sad|Angry)\.?$/i);
+        if (mSuffix) {
+          const sufNorm = normalizeReactionType(mSuffix[1]);
+          if (sufNorm) return sufNorm;
+        }
+      }
+    }
+
+    /* Layer 2: Check raw text lines inside rowEl for trailing reaction suffix ("Md Rahim · Loved") */
+    const rawRowText = cleanText(rowEl.innerText || rowEl.textContent || "");
+    if (rawRowText) {
+      const mRowSuf = rawRowText.match(/\b(Liked|Loved|Cared|Haha|Wow|Sad|Angry)\b/i);
+      if (mRowSuf) {
+        const rNorm = normalizeReactionType(mRowSuf[1]);
+        if (rNorm) return rNorm;
+      }
+    }
+
+    /* Layer 3 & 4: Match badge <img src> or <svg image> against tab/UFI iconMap and SVG color signatures */
+    const imgs = rowEl.querySelectorAll("img[src], svg image, image");
+    for (const im of imgs) {
+      const src = im.getAttribute("src") || im.getAttribute("xlink:href") || im.getAttribute("href") || "";
+      if (!src || src === avatarUrl) continue;
+      if (iconMap && iconMap.has(src)) {
+        return iconMap.get(src);
+      }
+      const svgHint = inferReactionFromSvgOrUrl(src);
+      if (svgHint) return svgHint;
+    }
+
+    /* Layer 5: Active reaction tab fallback (when scraping a specific reaction tab like Love/Like/Care) */
+    return activeTabReaction || "";
   }
 
   function extractLikesFromDialog(likeDialog) {
     const found = [];
+    if (!likeDialog) return found;
     triggerHoverHydration(likeDialog);
+
+    const iconMap = buildReactionIconUrlMap(likeDialog);
+    const activeTabReaction = detectActiveTabReactionType(likeDialog, iconMap);
+
     const links = Array.from(likeDialog.querySelectorAll("a[href]"));
     const urlToRecord = new Map();
     const orderedUrls = [];
+    const coveredRows = new Set();
 
+    /* Engine A: Anchor + Sibling Row Name & Reaction Badge Recovery */
     for (const a of links) {
       if (isInsideIgnoredChrome(a)) continue;
       if (a.closest('[role="tab"], [role="tablist"]')) continue;
@@ -1144,13 +1559,39 @@
       const cUrl = cleanProfileUrl(a.getAttribute("href") || a.href);
       if (!cUrl) continue;
 
-      const name = extractNameFromAnchor(a);
       const rowEl = findRowForAnchor(a, likeDialog);
+      if (rowEl && rowEl !== likeDialog) {
+        coveredRows.add(rowEl);
+      }
+
+      /* Extract name from anchor first; if anchor is an avatar-only link, recover name from rowEl! */
+      let name = extractNameFromAnchor(a);
+      if (!name && rowEl && rowEl !== likeDialog) {
+        name = extractNameFromRowContainer(rowEl);
+      }
+
+      /* Also check if raw anchor text/aria had a reaction suffix before cleanPersonName stripped it */
+      let rawAnchorReaction = "";
+      for (const rawCand of [a.getAttribute("aria-label"), a.innerText, a.textContent]) {
+        if (!rawCand) continue;
+        const mSuf = String(rawCand).match(/(?:\s*[,·•]\s*|\s+)(Liked|Loved|Cared|Haha|Wow|Sad|Angry)\.?$/i);
+        if (mSuf) {
+          rawAnchorReaction = normalizeReactionType(mSuf[1]);
+          if (rawAnchorReaction) break;
+        }
+      }
+
       const avatarUrl = extractAvatarUrlFromContainer(rowEl);
+      const reactionType =
+        rawAnchorReaction || detectReactionTypeInRow(rowEl, avatarUrl, iconMap, activeTabReaction);
 
       if (!urlToRecord.has(cUrl)) {
         orderedUrls.push(cUrl);
-        urlToRecord.set(cUrl, { name: name || "", avatar_url: avatarUrl });
+        urlToRecord.set(cUrl, {
+          name: name || "",
+          avatar_url: avatarUrl || "",
+          reaction_type: reactionType || ""
+        });
       } else {
         const existing = urlToRecord.get(cUrl);
         if (name && (!existing.name || (a.innerText || "").trim().length > 0)) {
@@ -1159,10 +1600,12 @@
         if (avatarUrl && !existing.avatar_url) {
           existing.avatar_url = avatarUrl;
         }
+        if (reactionType && !existing.reaction_type) {
+          existing.reaction_type = reactionType;
+        }
       }
-      if (name) {
-        a.dataset.fbScraped = "1";
-        lastExtractedElements.push(a);
+      if (name || rowEl) {
+        lastExtractedElements.push(rowEl || a);
       }
     }
 
@@ -1173,12 +1616,104 @@
           name: rec.name,
           url: u,
           avatar_url: rec.avatar_url || "",
-          content: "",
+          reaction_type: rec.reaction_type || "",
+          content: rec.reaction_type || "",
           action_type: "like"
         });
       }
     }
+
+    /* Engine B: Unhydrated / Locked / Deactivated Profile Row Recovery (rows with no <a href>) */
+    const seenNamesLower = new Set(found.map((it) => it.name.toLowerCase()));
+    const rowCandidates = Array.from(
+      likeDialog.querySelectorAll('[role="listitem"], div[dir="auto"], span[dir="auto"]')
+    );
+    for (const node of rowCandidates) {
+      if (isInsideIgnoredChrome(node)) continue;
+      if (node.closest('[role="tab"], [role="tablist"], [role="heading"], h1, h2, h3')) continue;
+
+      let alreadyCovered = false;
+      for (const cr of coveredRows) {
+        if (cr.contains(node)) {
+          alreadyCovered = true;
+          break;
+        }
+      }
+      if (alreadyCovered) continue;
+
+      const rowEl = findRowForAnchor(node, likeDialog);
+      if (!rowEl || rowEl === likeDialog || coveredRows.has(rowEl)) continue;
+      /* Ensure this row actually looks like a reactor row (has an avatar image/svg) */
+      if (!rowEl.querySelector("svg image, image, img")) continue;
+
+      const name = extractNameFromRowContainer(rowEl);
+      if (!name || seenNamesLower.has(name.toLowerCase())) continue;
+
+      coveredRows.add(rowEl);
+      seenNamesLower.add(name.toLowerCase());
+      const avatarUrl = extractAvatarUrlFromContainer(rowEl);
+      const reactionType = detectReactionTypeInRow(rowEl, avatarUrl, iconMap, activeTabReaction);
+      lastExtractedElements.push(rowEl);
+
+      found.push({
+        name: name,
+        url: "",
+        avatar_url: avatarUrl || "",
+        reaction_type: reactionType || "",
+        content: reactionType || "",
+        action_type: "like"
+      });
+    }
+
     return found;
+  }
+
+  async function tryStepToNextReactionTab(likeDialog) {
+    if (!likeDialog) return false;
+    const tabs = Array.from(likeDialog.querySelectorAll('[role="tab"]'));
+    if (tabs.length <= 1) return false;
+
+    const iconMap = buildReactionIconUrlMap(likeDialog);
+
+    /* Record currently selected tab as visited */
+    for (let i = 0; i < tabs.length; i++) {
+      const t = tabs[i];
+      if (t.getAttribute("aria-selected") === "true") {
+        visitedReactionTabs.add(i);
+      }
+    }
+
+    /* Check if any collected likes are missing a specific reaction_type, or if we haven't visited all tabs */
+    for (let i = 0; i < tabs.length; i++) {
+      if (visitedReactionTabs.has(i)) continue;
+      const tab = tabs[i];
+      const aria = cleanText(tab.getAttribute("aria-label") || tab.innerText || "").toLowerCase();
+      if (aria === "more" || aria === "আরও") continue;
+
+      visitedReactionTabs.add(i);
+      const tabReaction =
+        normalizeReactionType(aria) ||
+        (() => {
+          const im = tab.querySelector("img[src], svg image");
+          if (!im) return "";
+          const src = im.getAttribute("src") || im.getAttribute("xlink:href") || "";
+          return (
+            normalizeReactionType(im.getAttribute("alt") || "") ||
+            (src && iconMap.get(src)) ||
+            inferReactionFromSvgOrUrl(src) ||
+            `Tab #${i + 1}`
+          );
+        })();
+
+      try {
+        updateUIStatus(`Switching to Reaction Tab (${tabReaction || aria || i + 1}) to capture all reactions...`);
+        tab.click();
+        lockedScrollEl = null;
+        await sleep(1600);
+        return true;
+      } catch (e) {}
+    }
+    return false;
   }
 
   function findNestedCommentContainersInShareDialog(shareDialog) {
@@ -1587,6 +2122,11 @@
         }
         if (item.shared_post_url && !existing.shared_post_url) {
           existing.shared_post_url = item.shared_post_url;
+          updated = true;
+        }
+        if (actionType === "like" && item.reaction_type && !existing.reaction_type) {
+          existing.reaction_type = item.reaction_type;
+          existing.content = item.reaction_type;
           updated = true;
         }
         if (
@@ -2009,6 +2549,17 @@
 
     const maxEmpty = scrolled ? cfg.maxEmptyScrolls : 6;
     if (emptyScrolls >= maxEmpty) {
+      if (activeAction === "like" && targetWin && targetWin.root) {
+        const steppedTab = await tryStepToNextReactionTab(targetWin.root);
+        if (steppedTab) {
+          emptyScrolls = 0;
+          harvestVisibleIntoStore(activeAction, targetWin);
+          flushUnsentBatch(false);
+          updateUICounters();
+          stepTimeoutId = setTimeout(runHumanScrapeLoop, randomInt(250, 500));
+          return;
+        }
+      }
       stopScraping(`✅ Finished ${activeAction.toUpperCase()}S (${targetMap.size} total)! Click '📋 Copy All Now' if needed.`);
       return;
     }
@@ -2026,6 +2577,9 @@
     lockedWindowRoot = null;
     if (actionType === "comment") {
       switchedToAllComments = false;
+    }
+    if (actionType === "like") {
+      visitedReactionTabs.clear();
     }
     updateUIStatus(`Detecting ${actionType.toUpperCase()} window...`);
     updateUICounters();

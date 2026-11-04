@@ -1787,6 +1787,117 @@ def test_device_comments_and_scalable_rolling_clipboard():
     assert popped[-1] == f"batch_{LocalBridgeServer.MAX_QUEUE_BATCHES + 24}"
 
 
+def test_who_reacts_what_and_universal_profile_formats():
+    from app.utils.url_normalizer import normalize_url, extract_canonical_identity_key
+
+    # 1. Verify /p/<Name>-<uid>, /profile/<uid>, /user/<uid>, and /pages/<Name>/<uid> URL formats
+    assert clean_facebook_profile_url("https://www.facebook.com/p/Shuvo-Kumar-Shill-100089123456789/?__cft__[0]=AZ") == "https://www.facebook.com/profile.php?id=100089123456789"
+    assert clean_facebook_profile_url("/p/Milon-Vila-61554433221100/") == "https://www.facebook.com/profile.php?id=61554433221100"
+    assert clean_facebook_profile_url("https://www.facebook.com/pages/Healthy-Food-BD/10007766554433/") == "https://www.facebook.com/profile.php?id=10007766554433"
+    assert clean_facebook_profile_url("https://www.facebook.com/profile/10006655443322/") == "https://www.facebook.com/profile.php?id=10006655443322"
+    assert extract_canonical_identity_key("https://www.facebook.com/p/Shuvo-Kumar-Shill-100089123456789/") == "uid:100089123456789"
+    assert normalize_url("https://www.facebook.com/p/Shuvo-Kumar-Shill-100089123456789/") == "https://www.facebook.com/profile.php?id=100089123456789"
+
+    # 2. BrowserDOMExtractor: short Bangla vowel-mark names ("মৌ"), locked/URL-less profiles, and specific reaction types
+    dom_likes = BrowserDOMExtractor.parse_dom_items(
+        [
+            {
+                "name": "মৌ",
+                "url": "https://www.facebook.com/p/Mou-Akter-100089123456789/",
+                "reaction_type": "Love",
+                "content": "Love",
+            },
+            {
+                "name": "Locked Profile User",
+                "url": None,
+                "avatar_url": None,
+                "reaction_type": "Care",
+                "content": "Care",
+            },
+        ],
+        session_id="s_react",
+        action_type="like",
+    )
+    assert len(dom_likes) == 2
+    assert dom_likes[0].name == "মৌ"
+    assert dom_likes[0].profile_url == "https://www.facebook.com/profile.php?id=100089123456789"
+    assert dom_likes[0].reactions == "Love"
+    assert dom_likes[1].name == "Locked Profile User"
+    assert dom_likes[1].reactions == "Care"
+
+    # 3. Android XML: ViewPager wrapping RecyclerView + reaction suffixes ("Loved", "Cared", "Haha") + active reaction tab
+    android_reactions_xml = """<?xml version="1.0" encoding="UTF-8"?>
+    <hierarchy rotation="0">
+      <android.widget.FrameLayout bounds="[0,0][1080,2400]">
+        <android.view.ViewGroup text="People who reacted" bounds="[40,120][600,200]" />
+        <android.view.ViewGroup content-desc="All 350" selected="true" bounds="[40,210][200,290]" />
+        <androidx.viewpager.widget.ViewPager scrollable="true" bounds="[0,300][1080,2350]">
+          <android.widget.FrameLayout bounds="[0,300][1080,2350]">
+            <androidx.recyclerview.widget.RecyclerView scrollable="true" bounds="[0,300][1080,2350]">
+              <android.view.ViewGroup bounds="[0,320][1080,480]">
+                <android.widget.Button content-desc="মৌ profile picture" bounds="[36,340][136,440]" />
+                <android.view.ViewGroup content-desc="মৌ Loved" clickable="true" bounds="[160,350][600,430]" />
+              </android.view.ViewGroup>
+              <android.view.ViewGroup bounds="[0,490][1080,650]">
+                <android.widget.Button content-desc="Shuvo Kumar Shill profile picture" bounds="[36,510][136,610]" />
+                <android.widget.TextView text="Shuvo Kumar Shill" clickable="true" bounds="[160,520][600,580]" />
+                <android.widget.ImageView content-desc="Reacted: Care" bounds="[96,570][136,610]" />
+              </android.view.ViewGroup>
+              <android.view.ViewGroup bounds="[0,660][1080,820]">
+                <android.widget.Button content-desc="Milon Vila profile picture" bounds="[36,680][136,780]" />
+                <android.view.ViewGroup content-desc="Milon Vila Haha" clickable="true" bounds="[160,690][600,770]" />
+              </android.view.ViewGroup>
+            </androidx.recyclerview.widget.RecyclerView>
+          </android.widget.FrameLayout>
+          <android.widget.FrameLayout bounds="[1080,300][2160,2350]" />
+        </androidx.viewpager.widget.ViewPager>
+      </android.widget.FrameLayout>
+    </hierarchy>
+    """
+    extractor = ProfileExtractor(min_confidence=0.6)
+    android_likes = extractor.extract(android_reactions_xml, session_id="s_and_react", action_type="like")
+    assert extractor.last_detected_window_type == "like"
+    assert len(android_likes) == 3
+    by_user = {p.name: p for p in android_likes}
+    assert by_user["মৌ"].reactions == "Love"
+    assert by_user["Shuvo Kumar Shill"].reactions == "Care"
+    assert by_user["Milon Vila"].reactions == "Haha"
+
+    # 4. ContestValidator aggregates reaction_types and produces rich reaction_badge ("✅ ❤️ Love", "✅ 🥰 Care", etc.)
+    all_profiles = dom_likes + android_likes + [
+        ShareProfile(
+            name="মৌ",
+            profile_url="https://www.facebook.com/profile.php?id=100089123456789",
+            source="web",
+            confidence=0.95,
+            session_id="s_react",
+            action_type="comment",
+            content="সঠিক উত্তর : থাই চিনা বাদাম",
+        ),
+        ShareProfile(
+            name="মৌ",
+            profile_url="https://www.facebook.com/p/Mou-Akter-100089123456789/",
+            source="web",
+            confidence=0.95,
+            session_id="s_react",
+            action_type="share",
+            content="থাই চিনা বাদাম #VejalNai",
+        ),
+    ]
+    participants = ContestValidator.validate_participants(all_profiles)
+    mou = next(p for p in participants if p.name == "মৌ")
+    assert mou.is_eligible is True
+    assert mou.reaction_types == ["Love"]
+    assert mou.reaction_badge == "✅ ❤️ Love"
+    assert mou.combined_reactions == "Love"
+
+    shuvo = next(p for p in participants if p.name == "Shuvo Kumar Shill")
+    assert shuvo.liked is True
+    assert shuvo.reaction_types == ["Care"]
+    assert shuvo.reaction_badge == "✅ 🥰 Care"
+
+
+
 
 
 

@@ -84,7 +84,7 @@ class XLSXExporter:
             ws.title = "Contest Validation"
 
             headers = [
-                'Serial #', 'Name', 'Eligible', 'Actions Completed', 'Liked', 'Commented', 'Shared',
+                'Serial #', 'Name', 'Eligible', 'Actions Completed', 'Liked', 'Reaction Type', 'Commented', 'Shared',
                 'Status', 'Comments Text', 'Share Content', 'Profile URL', 'Shared Post URL', 'Avatar Hash', 'First Seen'
             ]
             for col, header in enumerate(headers, 1):
@@ -97,20 +97,22 @@ class XLSXExporter:
             for row, p in enumerate(participants, 2):
                 is_qual = getattr(p, "_eval_is_qualified", p.is_eligible)
                 status_str = getattr(p, "_eval_status_badge", None) or p.status_label
+                liked_val = f"Yes ({p.combined_reactions})" if (p.liked and getattr(p, "reaction_types", None)) else ('Yes' if p.liked else 'No')
                 ws.cell(row=row, column=1, value=p.serial_code)
                 ws.cell(row=row, column=2, value=p.display_name)
                 ws.cell(row=row, column=3, value='YES' if is_qual else 'NO')
                 ws.cell(row=row, column=4, value=f"{p.actions_completed}/3")
-                ws.cell(row=row, column=5, value='Yes' if p.liked else 'No')
-                ws.cell(row=row, column=6, value='Yes' if p.commented else 'No')
-                ws.cell(row=row, column=7, value='Yes' if p.shared else 'No')
-                ws.cell(row=row, column=8, value=status_str)
-                ws.cell(row=row, column=9, value=" | ".join(p.comment_texts))
-                ws.cell(row=row, column=10, value=" | ".join(p.share_contents))
-                ws.cell(row=row, column=11, value=p.profile_url or "")
-                ws.cell(row=row, column=12, value=" | ".join(getattr(p, "shared_post_urls", [])))
-                ws.cell(row=row, column=13, value=p.avatar_hash or "")
-                ws.cell(row=row, column=14, value=p.first_seen_at)
+                ws.cell(row=row, column=5, value=liked_val)
+                ws.cell(row=row, column=6, value=p.combined_reactions if getattr(p, "reaction_types", None) else ("Reacted" if p.liked else ""))
+                ws.cell(row=row, column=7, value='Yes' if p.commented else 'No')
+                ws.cell(row=row, column=8, value='Yes' if p.shared else 'No')
+                ws.cell(row=row, column=9, value=status_str)
+                ws.cell(row=row, column=10, value=" | ".join(p.comment_texts))
+                ws.cell(row=row, column=11, value=" | ".join(p.share_contents))
+                ws.cell(row=row, column=12, value=p.profile_url or "")
+                ws.cell(row=row, column=13, value=" | ".join(getattr(p, "shared_post_urls", [])))
+                ws.cell(row=row, column=14, value=p.avatar_hash or "")
+                ws.cell(row=row, column=15, value=p.first_seen_at)
 
             ws.auto_filter.ref = ws.dimensions
             ws.column_dimensions['A'].width = 28

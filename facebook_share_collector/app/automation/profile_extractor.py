@@ -424,36 +424,71 @@ class ProfileExtractor:
             cand = self.INLINE_ACTION_META_RE.sub("", cand).strip()
             return cand
 
+        def _extract_reaction_from_str(raw_str: str) -> Optional[str]:
+            if not raw_str:
+                return None
+            s = raw_str.strip()
+            m_suf = self.REACTION_SUFFIX_RE.search(s)
+            if m_suf:
+                norm_r = normalize_reaction_type(m_suf.group(0).strip())
+                if norm_r:
+                    return norm_r
+            low = s.lower()
+            if low in ("like", "liked", "love", "loved", "care", "cared", "haha", "wow", "sad", "angry", "লাইক", "ভালোবাসা", "কেয়ার", "কেয়ার", "হাহা", "ওয়াও", "ওয়াও", "দুঃখিত", "রাগান্বিত"):
+                return normalize_reaction_type(low)
+            m_badge = re.search(
+                r"(?:^|\b)(?:reacted(?:\s+with)?\s*[:\-]?\s*|(?:reaction|badge)\s*[:\-]?\s*)(like|liked|love|loved|care|cared|haha|wow|sad|angry)(?:\b|$)",
+                low,
+                re.IGNORECASE,
+            )
+            if m_badge:
+                return normalize_reaction_type(m_badge.group(1))
+            return None
+
+        # Detect if a specific reaction filter tab (e.g. "Love 45", "Care 12") is currently selected in the dialog
+        active_tab_reaction: Optional[str] = None
+        if action_type == "like":
+            for el in root.iter():
+                if el.attrib.get("selected") == "true" or el.attrib.get("checked") == "true":
+                    tab_label = ((el.attrib.get("content-desc") or "") + " " + (el.attrib.get("text") or "")).strip()
+                    if tab_label and not re.match(r"^(?:all|সব)\b", tab_label, re.IGNORECASE):
+                        r_tab = normalize_reaction_type(tab_label)
+                        if r_tab:
+                            active_tab_reaction = r_tab
+                            break
+
         for container in list_containers:
             rows = container.findall("./*")
             # If ScrollView or wrapped RecyclerView has a single child wrapper holding the rows, unwrap it
             while len(rows) == 1 and len(rows[0].findall("./*")) >= 2:
                 rows = rows[0].findall("./*")
 
-            # If a child ViewGroup wraps multiple distinct comments (e.g. a comments section wrapper inside a ScrollView), unwrap it
-            if action_type == "comment":
-                expanded_rows = []
-                for r in rows:
-                    children = r.findall("./*")
-                    if len(children) >= 2:
-                        pic_or_reply_children = 0
-                        for ch in children:
-                            ch_blob = " ".join(
-                                ((el.attrib.get("content-desc") or "") + " " + (el.attrib.get("text") or "")).lower()
-                                for el in ch.iter()
-                            )
-                            if (
-                                "profile picture" in ch_blob
-                                or "profile photo" in ch_blob
-                                or "reply to " in ch_blob
-                                or "\n" in ch_blob
-                            ):
-                                pic_or_reply_children += 1
-                        if pic_or_reply_children >= 2:
-                            expanded_rows.extend(children)
+            # Unwrap any child ViewGroup that wraps multiple distinct user row ViewGroups (works for like, comment, and share)
+            expanded_rows = []
+            for r in rows:
+                children = r.findall("./*")
+                if len(children) >= 2:
+                    person_like_children = 0
+                    for ch in children:
+                        if len(ch.findall("./*")) == 0:
                             continue
-                    expanded_rows.append(r)
-                rows = expanded_rows
+                        ch_blob = " ".join(
+                            ((el.attrib.get("content-desc") or "") + " " + (el.attrib.get("text") or "")).lower()
+                            for el in ch.iter()
+                        )
+                        if (
+                            "profile picture" in ch_blob
+                            or "profile photo" in ch_blob
+                            or "reply to " in ch_blob
+                            or "\n" in ch_blob
+                            or bool(self.REACTION_SUFFIX_RE.search(ch_blob))
+                        ):
+                            person_like_children += 1
+                    if person_like_children >= 2:
+                        expanded_rows.extend(children)
+                        continue
+                expanded_rows.append(r)
+            rows = expanded_rows
 
             for item in rows:
                 all_strings = []
@@ -461,6 +496,7 @@ class ProfileExtractor:
                 has_multiline_block = False
                 non_noise_text_nodes = []
                 action_author_hint = None
+                row_reaction_type: Optional[str] = None
 
                 for el in item.iter():
                     if el.attrib.get("heading") == "true" or el.attrib.get("clickable") == "true":
@@ -471,6 +507,8 @@ class ProfileExtractor:
                         v = (el.attrib.get(attr) or "").strip()
                         if v:
                             all_strings.append(v)
+                            if not row_reaction_type:
+                                row_reaction_type = _extract_reaction_from_str(v)
                             if "\n" in v:
                                 has_multiline_block = True
                             if not action_author_hint:
@@ -651,6 +689,17 @@ class ProfileExtractor:
                                 if cleaned_block and cleaned_block not in content_parts:
                                     content_parts.append(cleaned_block)
 
+                if not name and action_author_hint:
+                    name = action_author_hint
+                    confidence = max(confidence, 0.75)
+
+                if action_type == "like":
+                    effective_reaction = row_reaction_type or active_tab_reaction
+                    if effective_reaction:
+                        reactions = effective_reaction
+                        if not content_parts:
+                            content_parts = [effective_reaction]
+
                 if name and confidence >= self.min_confidence:
                     # On Android Likes/Comments (Litho single-ViewGroup rows), infer left-side circular avatar bounds if ImageView was omitted
                     if not avatar_bounds:
@@ -699,7 +748,7 @@ class ProfileExtractor:
                 if not existing.avatar_path and p.avatar_path:
                     existing.avatar_path = p.avatar_path
                     existing.avatar_hash = p.avatar_hash
-                if p.reactions and not existing.reactions:
+                if p.reactions and (not existing.reactions or existing.reactions in ("Reacted", "Like")):
                     existing.reactions = p.reactions
                 if p.comments and not existing.comments:
                     existing.comments = p.comments

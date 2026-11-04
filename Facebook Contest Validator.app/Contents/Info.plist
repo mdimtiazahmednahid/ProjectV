@@ -9,7 +9,7 @@
 	<key>CFBundleIconFile</key>
 	<string>AppIcon</string>
 	<key>CFBundleIdentifier</key>
-	<string>com.contestvalidator.facebook</string>
+	<string>com.sentra.intelligence</string>
 	<key>CFBundleName</key>
 	<string>Sentra</string>
 	<key>CFBundlePackageType</key>

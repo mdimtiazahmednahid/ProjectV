@@ -6,7 +6,7 @@ import re
 from html.parser import HTMLParser
 from urllib.parse import urlparse, parse_qs, unquote, quote
 from typing import List, Optional, Dict, Any, Tuple
-from app.models.share_profile import ShareProfile
+from app.models.share_profile import ShareProfile, normalize_reaction_type
 from app.utils.text_normalizer import normalize_text
 
 logger = logging.getLogger(__name__)
@@ -112,13 +112,40 @@ def clean_facebook_profile_url(raw_url: str) -> Optional[str]:
             return f"https://www.facebook.com/profile.php?id={uid}"
         return f"https://www.facebook.com/{uid}"
 
+    # Case 3b: /p/<Name-or-Slug>-<uid> or /p/<slug> (Facebook professional / numeric-slug profiles)
+    m_p_profile = re.match(r"^/p/([^/?#]+)", path, re.IGNORECASE)
+    if m_p_profile:
+        slug = unquote(m_p_profile.group(1)).strip()
+        if slug.isdigit() and len(slug) >= 5:
+            return f"https://www.facebook.com/profile.php?id={slug}"
+        m_tail_uid = re.search(r"-(\d{8,})$", slug)
+        if m_tail_uid:
+            return f"https://www.facebook.com/profile.php?id={m_tail_uid.group(1)}"
+        return f"https://www.facebook.com/p/{slug}"
+
+    # Case 3c: /profile/<uid_or_username> or /user/<uid_or_username>
+    m_direct_prof = re.match(r"^/(?:profile|user)/([^/?#]+)", path, re.IGNORECASE)
+    if m_direct_prof:
+        tok = unquote(m_direct_prof.group(1)).strip()
+        if tok.isdigit() and len(tok) >= 5:
+            return f"https://www.facebook.com/profile.php?id={tok}"
+        return f"https://www.facebook.com/{tok}"
+
+    # Case 3d: /pages/<Name>/<uid> or /pages/category/<cat>/<Name>/<uid>
+    m_pages = re.match(r"^/pages/(?:category/[^/]+/)?([^/]+)/(\d{5,})", path, re.IGNORECASE)
+    if m_pages:
+        return f"https://www.facebook.com/profile.php?id={m_pages.group(2)}"
+
     # Case 4: /<username> or /<username>/posts/... (sharer card links)
     segments = [seg for seg in path.split("/") if seg]
     if not segments:
         return None
 
     if len(segments) >= 2:
-        if segments[1].lower() in ("posts", "videos", "photos", "about"):
+        if segments[1].lower() in (
+            "posts", "videos", "photos", "about", "reels",
+            "friends", "followers", "following", "map", "mentions"
+        ):
             if has_comment_id:
                 return None
             segments = [segments[0]]
@@ -136,6 +163,9 @@ def clean_facebook_profile_url(raw_url: str) -> Optional[str]:
 
     if username.endswith(".php"):
         return None
+
+    if username.isdigit() and len(username) >= 5:
+        return f"https://www.facebook.com/profile.php?id={username}"
 
     return f"https://www.facebook.com/{username}"
 
@@ -231,7 +261,8 @@ def _is_valid_person_name(name: str) -> bool:
         return False
     if low.startswith(("view more", "view previous", "reply to ", "like ", "shared with", "people who", "profile photo of", "profile picture of")):
         return False
-    if sum(1 for ch in cleaned if ch.isalpha()) < 2:
+    letter_or_indic_count = sum(1 for ch in cleaned if ch.isalpha() or ("\u0980" <= ch <= "\u09FF"))
+    if letter_or_indic_count < 2:
         return False
     return True
 
@@ -291,6 +322,7 @@ class _FacebookDOMTreeParser(HTMLParser):
                 "href": attr_dict.get("href", ""),
                 "aria_label": aria_label,
                 "title": attr_dict.get("title", "").strip(),
+                "reaction_type": normalize_reaction_type(aria_label),
                 "text_parts": [],
                 "in_dialog": bool(self.dialog_depths),
             }
@@ -305,8 +337,12 @@ class _FacebookDOMTreeParser(HTMLParser):
         if tag_low in ("img", "svg"):
             alt_text = (attr_dict.get("alt") or aria_label or "").strip()
             if alt_text:
-                if self.current_link is not None and not self.current_link["aria_label"]:
-                    self.current_link["aria_label"] = alt_text
+                react_norm = normalize_reaction_type(alt_text)
+                if self.current_link is not None:
+                    if react_norm and not self.current_link.get("reaction_type"):
+                        self.current_link["reaction_type"] = react_norm
+                    elif not react_norm and not self.current_link["aria_label"]:
+                        self.current_link["aria_label"] = alt_text
                 if self.article_stack and len(alt_text) <= 16 and "profile" not in alt_text.lower():
                     self.article_stack[-1]["emojis"].append(alt_text)
 
@@ -333,6 +369,7 @@ class _FacebookDOMTreeParser(HTMLParser):
                 "text": text,
                 "aria_label": normalize_text(link_obj["aria_label"]),
                 "title": normalize_text(link_obj["title"]),
+                "reaction_type": link_obj.get("reaction_type") or "",
                 "in_dialog": link_obj["in_dialog"],
             }
             if link_obj["in_dialog"]:
@@ -425,6 +462,7 @@ class BackgroundHTMLExtractor:
     def _resolve_links(cls, links: List[Dict[str, Any]]) -> List[Dict[str, str]]:
         results: List[Dict[str, str]] = []
         url_to_name: Dict[str, str] = {}
+        url_to_reaction: Dict[str, str] = {}
         ordered_urls: List[str] = []
 
         for lnk in links:
@@ -439,9 +477,18 @@ class BackgroundHTMLExtractor:
                 lnk.get("title", ""),
             ]
             chosen_name = ""
+            react_hint = lnk.get("reaction_type") or ""
             for cand in candidates:
                 if not cand:
                     continue
+                if not react_hint:
+                    m_rsuf = re.search(
+                        r"(?:\s*[,·•]\s*|\s+)(Liked|Loved|Cared|Haha|Wow|Sad|Angry)\.?$",
+                        cand,
+                        flags=re.IGNORECASE,
+                    )
+                    if m_rsuf:
+                        react_hint = normalize_reaction_type(m_rsuf.group(1))
                 # Strip "'s profile picture" or "Profile picture of ..."
                 cand_clean = re.sub(
                     r"(?:'s\s+profile\s+picture|\s+profile\s+picture.*|^profile\s+picture\s+of\s+)",
@@ -456,13 +503,23 @@ class BackgroundHTMLExtractor:
             if clean_url not in url_to_name:
                 ordered_urls.append(clean_url)
                 url_to_name[clean_url] = chosen_name
-            elif not url_to_name[clean_url] and chosen_name:
-                url_to_name[clean_url] = chosen_name
+                url_to_reaction[clean_url] = react_hint
+            else:
+                if not url_to_name[clean_url] and chosen_name:
+                    url_to_name[clean_url] = chosen_name
+                if not url_to_reaction.get(clean_url) and react_hint:
+                    url_to_reaction[clean_url] = react_hint
 
         for url in ordered_urls:
             name = url_to_name.get(url, "")
             if name:
-                results.append({"name": name, "url": url, "content": ""})
+                r_type = url_to_reaction.get(url, "")
+                results.append({
+                    "name": name,
+                    "url": url,
+                    "content": r_type,
+                    "reaction_type": r_type,
+                })
         return results
 
     @classmethod
@@ -632,12 +689,18 @@ class BrowserDOMExtractor:
                 raw_name,
                 flags=re.IGNORECASE,
             ).strip()
-            raw_name = re.sub(
-                r"\s+(?:Liked|Loved|Cared|Haha|Wow|Sad|Angry)$",
-                "",
+
+            # Capture trailing reaction suffix on name (e.g. "Md Rahim Liked" or "Md Rahim, Loved") before stripping it
+            name_reaction_hint = ""
+            m_react_suffix = re.search(
+                r"(?:\s*[,·•]\s*|\s+)(Liked|Loved|Cared|Haha|Wow|Sad|Angry)\.?$",
                 raw_name,
                 flags=re.IGNORECASE,
-            ).strip()
+            )
+            if m_react_suffix:
+                name_reaction_hint = normalize_reaction_type(m_react_suffix.group(1))
+                raw_name = raw_name[: m_react_suffix.start()].strip()
+
             raw_url = item.get("url") or ""
             raw_shared_post_url = item.get("shared_post_url") or ""
             avatar_url = (item.get("avatar_url") or "").strip()
@@ -646,15 +709,21 @@ class BrowserDOMExtractor:
             if item_action not in ("like", "comment", "share"):
                 item_action = "share"
 
+            reaction_type = (
+                normalize_reaction_type(item.get("reaction_type"))
+                or normalize_reaction_type(item.get("reactions"))
+                or (normalize_reaction_type(content) if item_action == "like" else "")
+                or name_reaction_hint
+            )
+            if item_action == "like" and reaction_type and not content:
+                content = reaction_type
+
             clean_url = clean_facebook_profile_url(raw_url)
             clean_post_url = (
                 clean_facebook_post_url(raw_shared_post_url)
                 or (clean_facebook_post_url(raw_url) if item_action == "share" else None)
             )
             if not raw_name:
-                continue
-            # For comments (or items with avatar_url/content), allow keeping the record even if Facebook didn't hydrate an href
-            if not clean_url and item_action != "comment" and not avatar_url:
                 continue
 
             if not _is_valid_person_name(raw_name):
@@ -678,6 +747,7 @@ class BrowserDOMExtractor:
                     share_url=avatar_url if avatar_url.startswith("http") else None,
                     shared_post_url=clean_post_url,
                     content=content,
+                    reactions=reaction_type or None,
                     action_type=item_action,
                     confidence=1.0 if clean_url else 0.9,
                     source="facebook_browser_extension",

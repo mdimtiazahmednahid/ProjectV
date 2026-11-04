@@ -1,6 +1,6 @@
 import re
 from typing import List, Dict, Optional
-from app.models.share_profile import ShareProfile, ContestParticipant
+from app.models.share_profile import ShareProfile, ContestParticipant, normalize_reaction_type
 from app.utils.text_normalizer import normalize_text
 from app.utils.url_normalizer import (
     normalize_url,
@@ -226,7 +226,7 @@ class IncrementalContestAggregator:
             or norm_name.startswith("reply to ")
             or norm_name.startswith("like ")
             or norm_name.startswith("downvote ")
-            or (not profile_url and sum(1 for ch in clean_name if ch.isalpha()) < 2)
+            or (not profile_url and sum(1 for ch in clean_name if ch.isalpha() or ("\u0980" <= ch <= "\u09FF")) < 2)
         ):
             return True
         return False
@@ -234,6 +234,10 @@ class IncrementalContestAggregator:
     def add_profile(self, p: ShareProfile) -> Optional[ContestParticipant]:
         if not p.name and not p.profile_url:
             return None
+
+        raw_name_str = normalize_text(p.name or "")
+        m_name_react = re.search(r"\s+(Liked|Loved|Cared|Haha|Wow|Sad|Angry)$", raw_name_str, re.IGNORECASE)
+        name_reaction_hint = normalize_reaction_type(m_name_react.group(1)) if m_name_react else None
 
         clean_name = self._clean_author_name(p.name) or p.profile_url or "Unknown"
         norm_name = clean_name.lower()
@@ -340,6 +344,13 @@ class IncrementalContestAggregator:
             if not participant.liked:
                 participant.liked = True
                 self._likes_count += 1
+            r_type = (
+                normalize_reaction_type(getattr(p, "reactions", None))
+                or normalize_reaction_type(getattr(p, "content", None))
+                or name_reaction_hint
+            )
+            if r_type and r_type not in participant.reaction_types:
+                participant.reaction_types.append(r_type)
         elif action == "comment":
             if not participant.commented:
                 participant.commented = True

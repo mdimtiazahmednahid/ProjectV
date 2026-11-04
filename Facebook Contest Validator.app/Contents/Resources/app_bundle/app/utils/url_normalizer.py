@@ -50,13 +50,37 @@ def normalize_url(url: str) -> str:
                 return f"https://{netloc}/profile.php?id={uid}"
             return f"https://{netloc}/{uid}"
 
+        # 3b. /p/<Name-or-Slug>-<uid> or /p/<slug> (Facebook professional / numeric-slug profiles)
+        m_p_profile = re.match(r"^/p/([^/?#]+)", path, re.IGNORECASE)
+        if m_p_profile:
+            slug = m_p_profile.group(1).strip()
+            if slug.isdigit() and len(slug) >= 5:
+                return f"https://{netloc}/profile.php?id={slug}"
+            m_tail_uid = re.search(r"-(\d{8,})$", slug)
+            if m_tail_uid:
+                return f"https://{netloc}/profile.php?id={m_tail_uid.group(1)}"
+            return f"https://{netloc}/p/{slug}"
+
+        # 3c. /profile/<uid_or_username> or /user/<uid_or_username>
+        m_direct_prof = re.match(r"^/(?:profile|user)/([^/?#]+)", path, re.IGNORECASE)
+        if m_direct_prof:
+            tok = m_direct_prof.group(1).strip()
+            if tok.isdigit() and len(tok) >= 5:
+                return f"https://{netloc}/profile.php?id={tok}"
+            return f"https://{netloc}/{tok}"
+
+        # 3d. /pages/<Name>/<uid> or /pages/category/<cat>/<Name>/<uid>
+        m_pages = re.match(r"^/pages/(?:category/[^/]+/)?([^/]+)/(\d{5,})", path, re.IGNORECASE)
+        if m_pages:
+            return f"https://{netloc}/profile.php?id={m_pages.group(2)}"
+
         # 4. Pure numeric path /100078091213712 -> /profile.php?id=100078091213712
         segments = [seg for seg in path.split("/") if seg]
         if len(segments) == 1 and segments[0].isdigit() and len(segments[0]) >= 5:
             return f"https://{netloc}/profile.php?id={segments[0]}"
 
         # 5. /<username>/posts/... or /<username>/videos/... or /<username>/about -> /<username>
-        if len(segments) >= 2 and segments[0].lower() not in ("people", "groups", "pages", "profile.php"):
+        if len(segments) >= 2 and segments[0].lower() not in ("people", "groups", "pages", "profile.php", "p"):
             sub = segments[1].lower()
             if sub in ("posts", "videos", "about", "friends", "photos", "reels", "map", "mentions", "followers", "following"):
                 if segments[0].isdigit():
@@ -71,7 +95,7 @@ def normalize_url(url: str) -> str:
 def extract_canonical_identity_key(url: Optional[str]) -> Optional[str]:
     """
     Extracts an immutable canonical Facebook identity token from any profile URL variant:
-      - 'uid:100078091213712' for /profile.php?id=..., /people/Name/1000..., /groups/.../user/1000..., /1000...
+      - 'uid:100078091213712' for /profile.php?id=..., /people/Name/1000..., /groups/.../user/1000..., /1000..., /p/Name-1000...
       - 'pfbid:pfbid02xyz...' for /people/Name/pfbid02xyz... (immune to display-name slug changes across days!)
       - 'user:username' for https://www.facebook.com/<username> (case-insensitive)
     """
@@ -92,6 +116,15 @@ def extract_canonical_identity_key(url: Optional[str]) -> Optional[str]:
             if token.isdigit():
                 return f"uid:{token}"
             return f"pfbid:{token.lower()}"
+        m_p = re.match(r"^/p/([^/?#]+)", path, re.IGNORECASE)
+        if m_p:
+            slug = m_p.group(1).strip()
+            if slug.isdigit():
+                return f"uid:{slug}"
+            m_tail = re.search(r"-(\d{8,})$", slug)
+            if m_tail:
+                return f"uid:{m_tail.group(1)}"
+            return f"p:{slug.lower()}"
         segments = [seg for seg in path.split("/") if seg]
         if len(segments) == 1:
             tok = segments[0].strip()

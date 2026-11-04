@@ -5,7 +5,7 @@ from PySide6.QtWidgets import (
 )
 from PySide6.QtCore import Qt, Signal, QTimer, QUrl
 from PySide6.QtGui import QColor, QBrush, QFont, QIcon, QDesktopServices, QAction
-from app.models.share_profile import ShareProfile
+from app.models.share_profile import ShareProfile, format_reaction_with_emoji, normalize_reaction_type
 from app.utils.contest_validator import IncrementalContestAggregator
 from app.utils.advanced_filter_engine import (
     AdvancedFilterConfig,
@@ -959,6 +959,9 @@ class ResultsPanel(QWidget):
             master.liked = master.liked or other.liked
             master.commented = master.commented or other.commented
             master.shared = master.shared or other.shared
+            for rt in getattr(other, "reaction_types", []):
+                if rt and rt not in master.reaction_types:
+                    master.reaction_types.append(rt)
             for c in other.comment_texts:
                 if c not in master.comment_texts:
                     master.comment_texts.append(c)
@@ -1027,6 +1030,9 @@ class ResultsPanel(QWidget):
                 primary.liked = primary.liked or p.liked
                 primary.commented = primary.commented or p.commented
                 primary.shared = primary.shared or p.shared
+                for rt in getattr(p, "reaction_types", []):
+                    if rt and rt not in primary.reaction_types:
+                        primary.reaction_types.append(rt)
                 for c in p.comment_texts:
                     if c not in primary.comment_texts:
                         primary.comment_texts.append(c)
@@ -1123,6 +1129,18 @@ class ResultsPanel(QWidget):
         raw_key = (norm_name, act_type, id_key or "", content_snip)
         existing = self._raw_dedupe_map.get(raw_key)
 
+        # For 'like', deduplicate by person regardless of whether the first pass had a reaction label or not, and upgrade the reaction in-place!
+        if existing is None and act_type == "like":
+            empty_like_key = (norm_name, "like", id_key or "", "")
+            existing = self._raw_dedupe_map.get(empty_like_key)
+            if existing is None:
+                for k, v in self._raw_dedupe_map.items():
+                    if k[0] == norm_name and k[1] == "like" and (k[2] == (id_key or "") or not k[2] or not id_key):
+                        existing = v
+                        break
+            if existing is not None:
+                self._raw_dedupe_map[raw_key] = existing
+
         # For 'share', if an earlier pass captured the sharer without caption (or truncated) and a later pass has full caption/post link, upgrade in-place!
         if existing is None and act_type == "share":
             empty_share_key = (norm_name, "share", id_key or "", "")
@@ -1140,7 +1158,7 @@ class ResultsPanel(QWidget):
         # Conversely, if already ingested WITH URL on an earlier day and now seen without URL, reuse existing!
         if existing is None and not id_key:
             for k, v in self._raw_dedupe_map.items():
-                if k[0] == norm_name and k[1] == act_type and (k[3] == content_snip or act_type == "share") and k[2]:
+                if k[0] == norm_name and k[1] == act_type and (k[3] == content_snip or act_type in ("share", "like")) and k[2]:
                     existing = v
                     break
 
@@ -1154,7 +1172,12 @@ class ResultsPanel(QWidget):
                 existing.avatar_path = profile.avatar_path
             if getattr(profile, "last_seen_at", None):
                 existing.last_seen_at = profile.last_seen_at
-            if profile.content and (not existing.content or len(profile.content) > len(existing.content)):
+            if act_type == "like":
+                r_inc = normalize_reaction_type(profile.reactions) or normalize_reaction_type(profile.content)
+                if r_inc:
+                    existing.reactions = r_inc
+                    existing.content = r_inc
+            elif profile.content and (not existing.content or len(profile.content) > len(existing.content)):
                 existing.content = profile.content
         else:
             self._raw_dedupe_map[raw_key] = profile
@@ -1309,6 +1332,7 @@ class ResultsPanel(QWidget):
                         or (p.profile_url and query in p.profile_url.lower())
                         or (p.primary_shared_post_url and query in p.primary_shared_post_url.lower())
                         or (p.combined_notes and query in p.combined_notes.lower())
+                        or (p.combined_reactions and query in p.combined_reactions.lower())
                     ]
                 displayed_slice = displayed[: self.MAX_TABLE_DISPLAY_ROWS]
                 self.table.setRowCount(len(displayed_slice))
@@ -1344,7 +1368,9 @@ class ResultsPanel(QWidget):
                     if icon:
                         name_item.setIcon(icon)
 
-                    liked_item = QTableWidgetItem("✅ Reaction" if p.liked else "❌ Reaction")
+                    liked_item = QTableWidgetItem(p.reaction_badge)
+                    if p.reaction_types:
+                        liked_item.setToolTip(f"Reacted: {p.combined_reactions}")
                     commented_item = QTableWidgetItem(
                         f"✅ Comment ({len(p.comment_texts)})" if p.commented else "❌ Comment"
                     )
@@ -1463,7 +1489,14 @@ class ResultsPanel(QWidget):
                     content_item = QTableWidgetItem(content_preview)
                     content_item.setToolTip(profile.content or "")
 
-                    react_item = QTableWidgetItem(profile.reactions or "0")
+                    raw_react_str = profile.reactions or "0"
+                    if getattr(profile, "action_type", "share") == "like":
+                        r_fmt = format_reaction_with_emoji(profile.reactions or profile.content)
+                        if r_fmt:
+                            raw_react_str = r_fmt
+                        elif raw_react_str == "0":
+                            raw_react_str = "Reacted"
+                    react_item = QTableWidgetItem(raw_react_str)
                     comm_item = QTableWidgetItem(profile.comments or "0")
                     conf_item = QTableWidgetItem(f"{profile.confidence:.2f}")
                     seen_item = QTableWidgetItem(profile.first_seen_at.split('.')[0].replace('T', ' '))
