@@ -198,17 +198,17 @@ class WirelessAdbDialog(QDialog):
         self._regenerate_qr_code()
 
     def _regenerate_qr_code(self):
-        rand_id = "".join(random.choices(string.ascii_lowercase + string.digits, k=6))
-        self.qr_service_name = f"studio-{rand_id}"
-        self.qr_password = "".join(random.choices(string.digits, k=8))
+        rand_id = "".join(random.choices(string.ascii_lowercase + string.digits, k=4))
+        self.qr_service_name = f"adb-{rand_id}"
+        self.qr_password = "".join(random.choices(string.digits, k=6))
         qr_payload = f"WIFI:T:ADB;S:{self.qr_service_name};P:{self.qr_password};;"
 
-        pixmap = render_qr_pixmap(qr_payload, target_size_px=200, quiet_zone=4)
+        pixmap = render_qr_pixmap(qr_payload, target_size_px=260, quiet_zone=4)
         self.qr_image_label.setPixmap(pixmap)
         self.qr_creds_label.setText(
             f"QR Service: {self.qr_service_name}  |  Passcode: {self.qr_password}"
         )
-        self.qr_status_label.setText("📡 Listening for phone QR scan on Wi-Fi (mDNS)...")
+        self.qr_status_label.setText("📡 Listening for phone QR scan on Wi-Fi (mDNS + LAN Auto-Scan)...")
         self.qr_status_label.setStyleSheet(
             "color: #fbbf24; font-weight: bold; font-size: 12px; padding: 6px; "
             "background-color: #1e293b; border-radius: 6px; border: 1px solid #475569;"
@@ -412,6 +412,12 @@ class DevicePanel(QGroupBox):
                     serial,
                 )
                 pending_states.append("offline")
+            elif state in ("usb_debugging_off", "usb_adb_locked"):
+                self.device_combo.addItem(
+                    f"🔌 {model} ({serial}) — USB Plugged In (Turn ON 'USB Debugging' on Phone or use Wi-Fi QR)",
+                    f"usb_hw:{serial}:{model}",
+                )
+                pending_states.append((state, serial, model))
             else:
                 self.device_combo.addItem(f"⏳ {serial} ({state})", serial)
                 pending_states.append(state)
@@ -454,9 +460,16 @@ class DevicePanel(QGroupBox):
             elif "unauthorized" in pending_states:
                 self.status_label.setText("Status: TAP 'ALLOW USB DEBUGGING' ON PHONE SCREEN")
                 self.status_label.setStyleSheet("color: #fb923c; font-weight: bold;")
+            elif any(isinstance(p, tuple) for p in pending_states):
+                hw_tuple = next(p for p in pending_states if isinstance(p, tuple))
+                _hw_state, hw_serial, hw_model = hw_tuple
+                self.status_label.setText(
+                    f"Status: {hw_model} ({hw_serial}) PLUGGED IN — Turn ON 'USB Debugging' on Phone or click '📶 Wi-Fi Phone (QR Scan)'"
+                )
+                self.status_label.setStyleSheet("color: #fb923c; font-weight: bold;")
             else:
                 self.status_label.setText(
-                    f"Status: DEVICE {pending_states[0].upper()} — Click '🔄 Fix / Install ADB'"
+                    f"Status: DEVICE {str(pending_states[0]).upper()} — Click '🔄 Fix / Install ADB'"
                 )
                 self.status_label.setStyleSheet("color: #fb923c; font-weight: bold;")
 
@@ -466,6 +479,14 @@ class DevicePanel(QGroupBox):
         ok, log_msg, devices = DeviceManager.restart_adb_server()
         self._last_device_signature = None
         self.refresh_devices(manual=True)
+
+        ready_devices = [d for d in devices if d.get("state") in ("device", "unauthorized")]
+        hw_only_devices = [d for d in devices if d.get("state") in ("usb_debugging_off", "usb_adb_locked")]
+
+        if hw_only_devices and not ready_devices:
+            hw = hw_only_devices[0]
+            self._show_usb_debugging_prompt(hw.get("serial", ""), hw.get("model", "Android Phone"))
+            return
 
         if not devices:
             info = get_os_arch_info()
