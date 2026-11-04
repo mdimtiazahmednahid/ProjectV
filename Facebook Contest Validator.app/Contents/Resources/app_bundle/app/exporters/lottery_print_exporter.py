@@ -135,7 +135,7 @@ class LotteryPrintExporter:
 
                 missing_actions = []
                 if not p.liked:
-                    missing_actions.append("No Like")
+                    missing_actions.append("No Reaction")
                 if not p.commented:
                     missing_actions.append("No Comment")
                 if not p.shared:
@@ -165,8 +165,8 @@ class LotteryPrintExporter:
                 share_sign = "✅" if p.shared else "❌"
 
                 done_meta = (
-                    f'<span class="act-item act-like {like_cls}" onclick="toggleSingleAction(this)" title="Click to toggle Like status">'
-                    f'<span class="act-icon">{like_sign} </span>Like</span>'
+                    f'<span class="act-item act-like {like_cls}" onclick="toggleSingleAction(this)" title="Click to toggle Reaction status">'
+                    f'<span class="act-icon">{like_sign} </span>Reaction</span>'
                     f'<span class="act-sep"> · </span>'
                     f'<span class="act-item act-comment {comment_cls}" onclick="toggleSingleAction(this)" title="Click to toggle Comment status">'
                     f'<span class="act-icon">{comment_sign} </span>Comment</span>'
@@ -197,9 +197,9 @@ class LotteryPrintExporter:
                 <tr data-status="{status_attr}" data-serial-all="{serial_all_str}" data-serial-qual="{serial_qual_str}" data-serial-disq="{serial_disq_str}">
                     <td class="col-serial"><strong class="row-serial">{initial_serial_str}</strong></td>
                     <td class="notranslate" translate="no">{safe_name}</td>
-                    <td>{'✅ Yes' if p.liked else '❌ No'}</td>
-                    <td>{'✅ Yes' if p.commented else '❌ No'} ({len(p.comment_texts)})</td>
-                    <td>{'✅ Yes' if p.shared else '❌ No'}</td>
+                    <td>{'✅ Reaction' if p.liked else '❌ Reaction'}</td>
+                    <td>{'✅ Comment' if p.commented else '❌ Comment'} ({len(p.comment_texts)})</td>
+                    <td>{'✅ Share' if p.shared else '❌ Share'}</td>
                     <td>{badge_label}</td>
                     <td class="notranslate" translate="no">{html.escape(full_comment_raw[:140])}</td>
                     <td class="col-url">{table_url_html}</td>
@@ -398,7 +398,7 @@ class LotteryPrintExporter:
         text-overflow: ellipsis;
     }}
     .meta {{
-        font-size: 10px;
+        font-size: 9.6px;
         font-weight: 600;
         margin-top: 2px;
         display: flex;
@@ -406,7 +406,7 @@ class LotteryPrintExporter:
         white-space: nowrap;
         align-items: center;
         gap: 1px;
-        letter-spacing: -0.1px;
+        letter-spacing: -0.15px;
         overflow: hidden;
     }}
     .act-item {{
@@ -580,7 +580,7 @@ class LotteryPrintExporter:
         text-overflow: ellipsis;
     }}
     @page {{
-        margin: 7mm;
+        margin: 6mm;
     }}
     @media print {{
         body {{
@@ -593,28 +593,28 @@ class LotteryPrintExporter:
         }}
         .ticket-grid {{
             grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
-            gap: 7px !important;
-        }}
-        .ticket {{
-            padding: 7px 8px !important;
-        }}
-        .ticket-body {{
             gap: 6px !important;
         }}
+        .ticket {{
+            padding: 6px 7px !important;
+        }}
+        .ticket-body {{
+            gap: 5px !important;
+        }}
         .avatar, .avatar-placeholder {{
-            width: 32px !important;
-            height: 32px !important;
-            font-size: 11px !important;
+            width: 30px !important;
+            height: 30px !important;
+            font-size: 10.5px !important;
         }}
         .name {{
-            font-size: 12px !important;
+            font-size: 11.5px !important;
         }}
         .meta {{
-            font-size: 8.8px !important;
+            font-size: 8.3px !important;
             flex-wrap: nowrap !important;
             white-space: nowrap !important;
             gap: 1px !important;
-            letter-spacing: -0.15px !important;
+            letter-spacing: -0.2px !important;
         }}
         .act-sep {{
             margin: 0 1px !important;
@@ -761,13 +761,13 @@ class LotteryPrintExporter:
             </label>
             <label>Actions:
                 <select onchange="setActionStyle(this.value)">
-                    <option value="all-icons" selected>✅ / ❌ All 3 (Like · Comment · Share)</option>
+                    <option value="all-icons" selected>✅ / ❌ All 3 (Reaction · Comment · Share)</option>
                     <option value="done-icons">✅ Completed Only</option>
                     <option value="done-text">Plain Text (Completed)</option>
                     <option value="hide">Hide Actions</option>
                 </select>
             </label>
-            <label><input type="checkbox" checked onchange="toggleActionItemVisibility('like', this.checked)"> Like</label>
+            <label><input type="checkbox" checked onchange="toggleActionItemVisibility('like', this.checked)"> Reaction</label>
             <label><input type="checkbox" checked onchange="toggleActionItemVisibility('comment', this.checked)"> Comment</label>
             <label><input type="checkbox" checked onchange="toggleActionItemVisibility('share', this.checked)"> Share</label>
             <label>Comment Lines:
@@ -797,9 +797,9 @@ class LotteryPrintExporter:
                 <tr>
                     <th>Serial #</th>
                     <th>Contestant Name</th>
-                    <th>Liked</th>
-                    <th>Commented</th>
-                    <th>Shared</th>
+                    <th>Reaction</th>
+                    <th>Comment</th>
+                    <th>Share</th>
                     <th>Contest Status / Reason</th>
                     <th>Comments Text</th>
                     <th>Profile Reference</th>

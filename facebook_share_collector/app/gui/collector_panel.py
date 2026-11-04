@@ -23,7 +23,7 @@ class CollectorPanel(QGroupBox):
         stats_layout = QHBoxLayout()
         self.lbl_status = QLabel("Status: IDLE")
         self.lbl_profiles = QLabel("Total Raw: 0")
-        self.lbl_likes = QLabel("Likes 👍: 0")
+        self.lbl_likes = QLabel("Reactions 👍: 0")
         self.lbl_comments = QLabel("Comments 💬: 0")
         self.lbl_shares = QLabel("Shares 🔄: 0")
         self.lbl_eligible = QLabel("Eligible (All 3 ✅): 0")
@@ -73,7 +73,7 @@ class CollectorPanel(QGroupBox):
         self.btn_inspect = QPushButton("Inspect UI")
         self.btn_inspect.clicked.connect(self.inspect_requested.emit)
         
-        self.btn_collect_likes = QPushButton("1. Collect Likes 👍")
+        self.btn_collect_likes = QPushButton("1. Collect Reactions 👍")
         self.btn_collect_likes.clicked.connect(lambda: self.start_action_requested.emit("like"))
         self.btn_collect_likes.setEnabled(False)
 
@@ -151,7 +151,7 @@ class CollectorPanel(QGroupBox):
         self.lbl_new.setText(f"New this pass: {new_this_pass}")
 
     def update_contest_counts(self, counts: dict):
-        self.lbl_likes.setText(f"Likes 👍: {counts.get('likes', 0)}")
+        self.lbl_likes.setText(f"Reactions 👍: {counts.get('likes', 0)}")
         self.lbl_comments.setText(f"Comments 💬: {counts.get('comments', 0)}")
         self.lbl_shares.setText(f"Shares 🔄: {counts.get('shares', 0)}")
         self.lbl_eligible.setText(f"Eligible (All 3 ✅): {counts.get('eligible', 0)}")

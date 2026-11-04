@@ -116,15 +116,15 @@ def test_printable_lottery_tickets_export():
         assert "setBorderStyle(this.value)" in html_text
         assert "setIdPosition(this.value)" in html_text
         assert "setCommentLines(this.value)" in html_text
-        # 2. Action row stays on a single row (flex-wrap: nowrap; white-space: nowrap) and shows ✅ / ❌ status per action
+        # 2. Action row stays on a single row (flex-wrap: nowrap; white-space: nowrap) and shows ✅ / ❌ status per action (Reaction · Comment · Share)
         assert "flex-wrap: nowrap" in html_text
-        assert '<span class="act-icon">✅ </span>Like' in html_text
-        assert '<span class="act-icon">❌ </span>Like' in html_text
+        assert '<span class="act-icon">✅ </span>Reaction' in html_text
+        assert '<span class="act-icon">❌ </span>Reaction' in html_text
         assert '<span class="act-icon">✅ </span>Comment' in html_text
         assert '<span class="act-icon">✅ </span>Share' in html_text
         assert 'data-status="qualified"' in html_text
         assert 'data-status="disqualified"' in html_text
-        assert "DISQUALIFIED (No Like) ✗" in html_text
+        assert "DISQUALIFIED (No Reaction) ✗" in html_text
         assert "👍" not in html_text and "💬" not in html_text and "🔄" not in html_text
         # 3. Long comment has click-to-expand toggleCommentText(this) with full comment in data-full
         assert 'onclick="toggleCommentText(this)"' in html_text

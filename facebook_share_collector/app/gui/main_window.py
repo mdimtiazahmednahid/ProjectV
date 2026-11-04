@@ -522,10 +522,11 @@ class MainWindow(QMainWindow):
 
     def _do_auto_save(self):
         try:
+            from app.database.repository import ensure_writable_data_dir
             self._flush_db_buffer()
-            os.makedirs("data", exist_ok=True)
-            path = os.path.join("data", "autosave.csv")
-            contest_path = os.path.join("data", "autosave_contest.csv")
+            data_dir = ensure_writable_data_dir("data")
+            path = os.path.join(data_dir, "autosave.csv")
+            contest_path = os.path.join(data_dir, "autosave_contest.csv")
             if CSVExporter.export(self.results_panel.profiles, path):
                 logger.info(f"Auto-saved raw profiles to {path}")
             if self.results_panel.participants and CSVExporter.export_contest(self.results_panel.participants, contest_path):

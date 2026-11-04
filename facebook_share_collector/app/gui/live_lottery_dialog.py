@@ -367,11 +367,12 @@ class LiveLotteryDialog(QDialog):
             QMessageBox.information(self, "No Winners Drawn Yet", "Spin to draw at least one winner before exporting.")
             return
         from app.exporters.csv_exporter import CSVExporter
-        os.makedirs("data", exist_ok=True)
+        from app.database.repository import ensure_writable_data_dir
+        data_dir = ensure_writable_data_dir("data")
         path, _ = QFileDialog.getSaveFileName(
             self,
             "Export Drawn Winners (CSV)",
-            os.path.join("data", "drawn_winners.csv"),
+            os.path.join(data_dir, "drawn_winners.csv"),
             "CSV Files (*.csv)"
         )
         if path:
@@ -387,13 +388,14 @@ class LiveLotteryDialog(QDialog):
         """
         if not self._current_winner:
             return
+        from app.database.repository import ensure_writable_data_dir
         safe_name = "".join(ch if ch.isalnum() else "_" for ch in self._current_winner.name).strip("_") or "winner"
         default_name = f"winner_{self._current_winner.serial_code.lstrip('#')}_{safe_name}.png"
-        os.makedirs("data", exist_ok=True)
+        data_dir = ensure_writable_data_dir("data")
         path, _ = QFileDialog.getSaveFileName(
             self,
             "Save Winner Card Image (PNG)",
-            os.path.join("data", default_name),
+            os.path.join(data_dir, default_name),
             "PNG Image (*.png)"
         )
         if path:

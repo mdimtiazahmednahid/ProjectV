@@ -303,12 +303,14 @@ class AdvancedFilterConfig:
     @staticmethod
     def _format_action_val(val: str) -> str:
         mapping = {
-            "like": "👍 Like",
-            "comment": "💬 Comment",
-            "share": "🔄 Share",
-            "not_like": "🚫 NOT Like",
-            "not_comment": "🚫 NOT Comment",
-            "not_share": "🚫 NOT Share",
+            "like": "✅ Reaction",
+            "reaction": "✅ Reaction",
+            "comment": "✅ Comment",
+            "share": "✅ Share",
+            "not_like": "❌ NOT Reaction",
+            "not_reaction": "❌ NOT Reaction",
+            "not_comment": "❌ NOT Comment",
+            "not_share": "❌ NOT Share",
         }
         return mapping.get((val or "").lower().strip(), val)
 
@@ -597,14 +599,14 @@ class AdvancedFilterEngine:
     @staticmethod
     def _eval_single_action_slot(p: ContestParticipant, val: str) -> Tuple[bool, str]:
         v = (val or "").lower().strip()
-        if v == "like":
-            return bool(p.liked), "Like"
+        if v in ("like", "reaction"):
+            return bool(p.liked), "Reaction"
         if v == "comment":
             return bool(p.commented), "Comment"
         if v == "share":
             return bool(p.shared), "Share"
-        if v == "not_like":
-            return not bool(p.liked), "NOT Like"
+        if v in ("not_like", "not_reaction"):
+            return not bool(p.liked), "NOT Reaction"
         if v == "not_comment":
             return not bool(p.commented), "NOT Comment"
         if v == "not_share":
@@ -989,7 +991,7 @@ class AdvancedFilterEngine:
 
         def eval_act_token(tok: str) -> bool:
             t_low = tok.lower().strip()
-            if t_low in ("like", "liked", "👍"):
+            if t_low in ("like", "liked", "reaction", "reacted", "👍"):
                 return bool(p.liked)
             if t_low in ("comment", "commented", "💬"):
                 return bool(p.commented)

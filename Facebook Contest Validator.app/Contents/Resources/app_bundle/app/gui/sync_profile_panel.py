@@ -205,9 +205,9 @@ class SyncProfilePanel(QWidget):
         self.table.setIconSize(QSize(36, 36))
         self.table.setHorizontalHeaderLabels([
             "Avatar & Name",
-            "Liked 👍",
-            "Commented 💬",
-            "Shared 🔄",
+            "Reaction",
+            "Comment",
+            "Share",
             "Score",
             "Data Source",
             "Multi-Layer Validation Status",
@@ -286,15 +286,15 @@ class SyncProfilePanel(QWidget):
                 if icon:
                     name_item.setIcon(icon)
 
-                liked_item = QTableWidgetItem("✅ Yes" if r.liked else "❌ No")
+                liked_item = QTableWidgetItem("✅ Reaction" if r.liked else "❌ Reaction")
                 liked_item.setFlags(liked_item.flags() & ~Qt.ItemIsEditable)
 
-                comm_item = QTableWidgetItem("✅ Yes" if r.commented else "❌ No")
+                comm_item = QTableWidgetItem("✅ Comment" if r.commented else "❌ Comment")
                 if r.comment_preview:
                     comm_item.setToolTip(r.comment_preview)
                 comm_item.setFlags(comm_item.flags() & ~Qt.ItemIsEditable)
 
-                share_item = QTableWidgetItem("✅ Yes" if r.shared else "❌ No")
+                share_item = QTableWidgetItem("✅ Share" if r.shared else "❌ Share")
                 share_item.setFlags(share_item.flags() & ~Qt.ItemIsEditable)
 
                 score_item = QTableWidgetItem(r.actions_score_str)

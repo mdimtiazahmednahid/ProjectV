@@ -82,7 +82,7 @@ class ResultsPanel(QWidget):
             "All Participants (Contest Validation)",
             "Only Eligible / Qualified (Ready to Draw ✅)",
             "Raw Collected Items (All)",
-            "Raw Likes Only 👍",
+            "Raw Reactions Only 👍",
             "Raw Comments Only 💬",
             "Raw Shares Only 🔄",
         ])
@@ -143,9 +143,9 @@ class ResultsPanel(QWidget):
 
         action_field_items = [
             "— Not Selected (Off) —",
-            "👍 Like",
-            "💬 Comment",
-            "🔄 Share",
+            "✅ Reaction",
+            "✅ Comment",
+            "✅ Share",
         ]
         logic_op_items = [
             "AND (&)",
@@ -1274,7 +1274,7 @@ class ResultsPanel(QWidget):
             self.table.setRowCount(0)
             if self._is_contest_view():
                 base_headers = [
-                    "Serial #", "Name & Avatar", "Liked 👍", "Commented 💬", "Shared 🔄",
+                    "Serial #", "Name & Avatar", "Reaction", "Comment", "Share",
                     "Score", "Contest Status", "Comment / Share Text", "Identity / Profile URL"
                 ]
                 rule_headers = [f"🧠 {r.name}" for r in self.custom_rules]
@@ -1326,11 +1326,11 @@ class ResultsPanel(QWidget):
                     if icon:
                         name_item.setIcon(icon)
 
-                    liked_item = QTableWidgetItem("✅ Yes" if p.liked else "❌ No")
+                    liked_item = QTableWidgetItem("✅ Reaction" if p.liked else "❌ Reaction")
                     commented_item = QTableWidgetItem(
-                        f"✅ Yes ({len(p.comment_texts)})" if p.commented else "❌ No"
+                        f"✅ Comment ({len(p.comment_texts)})" if p.commented else "❌ Comment"
                     )
-                    shared_item = QTableWidgetItem("✅ Yes" if p.shared else "❌ No")
+                    shared_item = QTableWidgetItem("✅ Share" if p.shared else "❌ Share")
                     score_item = QTableWidgetItem(f"{p.actions_completed}/3")
                     if is_qual:
                         score_item.setFont(bold_font)
