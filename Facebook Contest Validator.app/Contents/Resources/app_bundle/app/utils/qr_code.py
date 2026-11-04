@@ -1,5 +1,5 @@
 """
-Pure-Python ISO/IEC 18004 QR Code Generator (Versions 1..10, Error Correction Level L/M)
+Pure-Python ISO/IEC 18004 QR Code Generator (Versions 1..10, Error Correction Level L)
 with PySide6 QImage / QPixmap rendering for Android 11+ Wireless Debugging QR Code Pairing:
   Format: WIFI:T:ADB;S:<service_name>;P:<password>;;
 Zero third-party dependencies required — works offline in macOS .app and Windows .exe builds.
@@ -7,20 +7,19 @@ Zero third-party dependencies required — works offline in macOS .app and Windo
 
 from typing import Callable, List
 
-# Capacities (data codewords) and EC codewords per block for Versions 1..10 at EC Level M (0b00)
-# Using EC Level M (15% error recovery) makes phone camera scanning faster and more resilient on screens.
+# Capacities (data codewords) and EC codewords per block for Versions 1..10 at EC Level L (0b01)
 # Format: version -> (total_codewords, ec_codewords_per_block, num_blocks_group1, data_codewords_group1, num_blocks_group2, data_codewords_group2)
-_VERSION_TABLE_M = {
-    1: (26, 10, 1, 16, 0, 0),
-    2: (44, 16, 1, 28, 0, 0),
-    3: (70, 26, 1, 44, 0, 0),
-    4: (100, 18, 2, 32, 0, 0),
-    5: (134, 24, 2, 43, 0, 0),
-    6: (172, 16, 4, 27, 0, 0),
-    7: (196, 18, 4, 31, 0, 0),
-    8: (242, 22, 2, 38, 2, 39),
-    9: (292, 22, 3, 36, 2, 37),
-    10: (346, 26, 4, 43, 1, 44),
+_VERSION_TABLE_L = {
+    1: (26, 7, 1, 19, 0, 0),
+    2: (44, 10, 1, 34, 0, 0),
+    3: (70, 15, 1, 55, 0, 0),
+    4: (100, 20, 1, 80, 0, 0),
+    5: (134, 26, 1, 108, 0, 0),
+    6: (172, 18, 2, 68, 0, 0),
+    7: (196, 20, 2, 78, 0, 0),
+    8: (242, 24, 2, 97, 0, 0),
+    9: (292, 30, 2, 116, 0, 0),
+    10: (346, 18, 2, 68, 2, 69),
 }
 
 _ALIGNMENT_POSITIONS = {
@@ -91,9 +90,9 @@ def _rs_encode(data_bytes: List[int], ec_len: int) -> List[int]:
     return rem
 
 
-def _choose_version_m(payload_len: int) -> int:
+def _choose_version_l(payload_len: int) -> int:
     for ver in range(1, 11):
-        _, _, b1, d1, b2, d2 = _VERSION_TABLE_M[ver]
+        _, _, b1, d1, b2, d2 = _VERSION_TABLE_L[ver]
         total_data_bytes = b1 * d1 + b2 * d2
         header_bytes = 2 if ver <= 9 else 3
         if payload_len + header_bytes <= total_data_bytes:
@@ -102,7 +101,7 @@ def _choose_version_m(payload_len: int) -> int:
 
 
 def _encode_data_codewords(payload: bytes, ver: int) -> List[int]:
-    _, ec_per_block, b1, d1, b2, d2 = _VERSION_TABLE_M[ver]
+    _, ec_per_block, b1, d1, b2, d2 = _VERSION_TABLE_L[ver]
     total_data_codewords = b1 * d1 + b2 * d2
 
     bits: List[int] = []
@@ -199,7 +198,7 @@ def _place_alignment_pattern(matrix: List[List[int]], reserved: List[List[bool]]
 
 
 def _compute_format_bits(ec_level_bits: int, mask_id: int) -> int:
-    # EC Level M = 0b00, Level L = 0b01
+    # EC Level L = 0b01, Level M = 0b00
     data = (ec_level_bits << 3) | mask_id
     rem = data << 10
     for i in range(4, -1, -1):
@@ -209,7 +208,7 @@ def _compute_format_bits(ec_level_bits: int, mask_id: int) -> int:
     return bits
 
 
-def _place_format_bits(matrix: List[List[int]], size: int, mask_id: int, ec_level_bits: int = 0b00):
+def _place_format_bits(matrix: List[List[int]], size: int, mask_id: int, ec_level_bits: int = 0b01):
     # bit 14 is MSB, bit 0 is LSB (ISO/IEC 18004 Figure 25)
     fmt = _compute_format_bits(ec_level_bits, mask_id)
 
@@ -265,16 +264,38 @@ def _penalty_score(matrix: List[List[int]]) -> int:
             if v == matrix[r][c + 1] == matrix[r + 1][c] == matrix[r + 1][c + 1]:
                 score += 3
 
+    # Rule 3: Finder-like 1:1:3:1:1 patterns bounded by 4 light modules
+    pat1 = [1, 0, 1, 1, 1, 0, 1, 0, 0, 0, 0]
+    pat2 = [0, 0, 0, 0, 1, 0, 1, 1, 1, 0, 1]
+    for r in range(size):
+        row = matrix[r]
+        for c in range(size - 10):
+            seg = row[c : c + 11]
+            if seg == pat1 or seg == pat2:
+                score += 40
+    for c in range(size):
+        col_vals = [matrix[r][c] for r in range(size)]
+        for r in range(size - 10):
+            seg = col_vals[r : r + 11]
+            if seg == pat1 or seg == pat2:
+                score += 40
+
+    # Rule 4: Balance of dark and light modules
+    dark = sum(sum(row) for row in matrix)
+    total = size * size
+    k = int(abs(dark * 20 - total * 10) // total)
+    score += k * 10
+
     return score
 
 
 def generate_qr_matrix(text: str) -> List[List[int]]:
     """
     Generates a 2D boolean/int matrix (1 = dark module, 0 = light module) for `text`
-    at Error Correction Level M with optimal mask selection.
+    at Error Correction Level L with optimal 4-rule ISO/IEC 18004 mask selection.
     """
     payload = text.encode("utf-8")
-    ver = _choose_version_m(len(payload))
+    ver = _choose_version_l(len(payload))
     size = 17 + 4 * ver
 
     base_matrix = [[0] * size for _ in range(size)]
@@ -343,7 +364,7 @@ def generate_qr_matrix(text: str) -> List[List[int]]:
             upward = not upward
             col -= 2
 
-        _place_format_bits(candidate, size, mask_id=mask_id, ec_level_bits=0b00)
+        _place_format_bits(candidate, size, mask_id=mask_id, ec_level_bits=0b01)
         sc = _penalty_score(candidate)
         if best_score is None or sc < best_score:
             best_score = sc
@@ -370,7 +391,6 @@ def decode_qr_matrix(matrix: List[List[int]]) -> str:
     mask_id = (unmasked_fmt >> 10) & 0b111
     mask_fn = _MASK_FUNCTIONS[mask_id]
 
-    # Build reserved map
     dummy = [[0] * size for _ in range(size)]
     reserved = [[False] * size for _ in range(size)]
     _place_finder_pattern(dummy, reserved, 0, 0, size)
@@ -418,8 +438,7 @@ def decode_qr_matrix(matrix: List[List[int]]) -> str:
             cw = (cw << 1) | b
         codewords.append(cw)
 
-    _, ec_per_block, b1, d1, b2, d2 = _VERSION_TABLE_M[ver]
-    # De-interleave data blocks (for versions 1..3 b1=1, b2=0)
+    _, ec_per_block, b1, d1, b2, d2 = _VERSION_TABLE_L[ver]
     blocks_data = [[] for _ in range(b1 + b2)]
     idx = 0
     max_d = max(d1, d2)
@@ -435,7 +454,6 @@ def decode_qr_matrix(matrix: List[List[int]]) -> str:
             blocks_ec[b_idx].append(codewords[idx])
             idx += 1
 
-    # Verify RS EC for every block
     data_bytes: List[int] = []
     for b_idx in range(b1 + b2):
         expected_ec = _rs_encode(blocks_data[b_idx], ec_per_block)
@@ -468,7 +486,7 @@ def decode_qr_matrix(matrix: List[List[int]]) -> str:
     return out_bytes.decode("utf-8")
 
 
-def render_qr_pixmap(text: str, target_size_px: int = 220, quiet_zone: int = 4):
+def render_qr_pixmap(text: str, target_size_px: int = 260, quiet_zone: int = 4):
     """
     Renders a crisp black-on-white QR code QPixmap for PySide6 dialogs.
     """
@@ -478,7 +496,7 @@ def render_qr_pixmap(text: str, target_size_px: int = 220, quiet_zone: int = 4):
     matrix = generate_qr_matrix(text)
     n = len(matrix)
     total_modules = n + quiet_zone * 2
-    scale = max(target_size_px // total_modules, 4)
+    scale = max(target_size_px // total_modules, 6)
     img_size = total_modules * scale
 
     img = QImage(img_size, img_size, QImage.Format_RGB32)

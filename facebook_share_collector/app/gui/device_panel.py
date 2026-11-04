@@ -94,7 +94,7 @@ class WirelessAdbDialog(QDialog):
 
     def __init__(self, parent=None):
         super().__init__(parent)
-        self.setWindowTitle("📶 Connect Phone via Wi-Fi (Scan QR Code or Enter IP:Port)")
+        self.setWindowTitle("📶 Sentra — Connect Phone via Wi-Fi (Scan QR Code or Enter IP:Port)")
         self.setMinimumWidth(620)
         self.qr_paired_and_connected = False
         self.connected_serial = ""
@@ -166,6 +166,19 @@ class WirelessAdbDialog(QDialog):
         manual_group = QGroupBox("⌨️ Option 2: Or Connect Manually with IP:Port & 6-Digit Pairing Code")
         manual_layout = QVBoxLayout(manual_group)
         form = QFormLayout()
+
+        # Pre-populate saved Wi-Fi devices selector if any exist
+        self.saved_wifi_combo = QComboBox()
+        self.saved_wifi_combo.addItem("— Select a Previously Connected Phone (Optional) —", "")
+        for sdev in DeviceManager.get_saved_devices():
+            s_ipp = sdev.get("ip_port") or (sdev.get("serial", "") if ":" in sdev.get("serial", "") else "")
+            s_model = sdev.get("model") or "Android Phone"
+            s_ser = sdev.get("serial", "")
+            self.saved_wifi_combo.addItem(f"🕘 {s_model} ({s_ipp or s_ser})", s_ipp or s_ser)
+        self.saved_wifi_combo.currentIndexChanged.connect(self._on_saved_wifi_selected)
+        if self.saved_wifi_combo.count() > 1:
+            form.addRow("Saved Phones:", self.saved_wifi_combo)
+
         self.input_connect_ip = QLineEdit()
         self.input_connect_ip.setPlaceholderText("e.g. 192.168.1.50:41235 (Auto-filled if discovered on Wi-Fi)")
 
@@ -196,6 +209,11 @@ class WirelessAdbDialog(QDialog):
 
         self.qr_worker = None
         self._regenerate_qr_code()
+
+    def _on_saved_wifi_selected(self, idx: int):
+        val = self.saved_wifi_combo.itemData(idx)
+        if val and ":" in str(val):
+            self.input_connect_ip.setText(str(val))
 
     def _regenerate_qr_code(self):
         rand_id = "".join(random.choices(string.ascii_lowercase + string.digits, k=4))
@@ -272,7 +290,7 @@ class DevicePanel(QGroupBox):
     device_connected = Signal(str)
 
     def __init__(self, appium_manager: AppiumManager, adb_manager: ADBManager = None, parent=None):
-        super().__init__("Device & Zero-Setup Connection (Optional if using Browser Extension)", parent)
+        super().__init__("Sentra Device & Zero-Setup Connection (Optional if using Browser Extension)", parent)
         self.appium_manager = appium_manager
         self.adb_manager = adb_manager or ADBManager()
         self.active_manager = self.adb_manager
@@ -392,11 +410,13 @@ class DevicePanel(QGroupBox):
         self.device_combo.clear()
         ready_count = 0
         pending_states = []
+        active_serials = set()
 
         for dev in devices:
             serial = dev["serial"]
             state = dev["state"]
             model = dev["model"]
+            active_serials.add(serial)
             if state == "device":
                 self.device_combo.addItem(f"✅ {model} ({serial})", serial)
                 ready_count += 1
@@ -421,6 +441,21 @@ class DevicePanel(QGroupBox):
             else:
                 self.device_combo.addItem(f"⏳ {serial} ({state})", serial)
                 pending_states.append(state)
+
+        # Append previously saved devices (so user can see & 1-click reconnect remembered phones like Tecno Camon 20 Pro / Samsung)
+        saved_devices = DeviceManager.get_saved_devices()
+        for sdev in saved_devices:
+            s_serial = sdev.get("serial", "")
+            s_model = sdev.get("model") or "Android Phone"
+            s_conn = sdev.get("connection_type", "usb")
+            s_ipp = sdev.get("ip_port", "")
+            if not s_serial or s_serial in active_serials:
+                continue
+            conn_badge = f"Wi-Fi {s_ipp or s_serial}" if s_conn == "wifi" else f"USB {s_serial}"
+            self.device_combo.addItem(
+                f"🕘 Saved: {s_model} ({conn_badge}) — Click 'Connect Device' to Reconnect",
+                f"saved:{s_conn}:{s_serial}:{s_ipp}:{s_model}",
+            )
 
         # Restore previous selection if still present
         if prev_selected:
@@ -467,11 +502,16 @@ class DevicePanel(QGroupBox):
                     f"Status: {hw_model} ({hw_serial}) PLUGGED IN — Turn ON 'USB Debugging' on Phone or click '📶 Wi-Fi Phone (QR Scan)'"
                 )
                 self.status_label.setStyleSheet("color: #fb923c; font-weight: bold;")
-            else:
+            elif pending_states:
                 self.status_label.setText(
                     f"Status: DEVICE {str(pending_states[0]).upper()} — Click '🔄 Fix / Install ADB'"
                 )
                 self.status_label.setStyleSheet("color: #fb923c; font-weight: bold;")
+            else:
+                self.status_label.setText(
+                    "Status: SAVED DEVICE READY — Select phone & click 'Connect Device' or '📶 Wi-Fi Phone (QR Scan)'"
+                )
+                self.status_label.setStyleSheet("color: #93c5fd; font-weight: bold;")
 
     def restart_adb_and_refresh(self):
         self.status_label.setText("Status: PREPARING & RESTARTING ADB DAEMON...")
@@ -568,11 +608,120 @@ class DevicePanel(QGroupBox):
                     "• Or simply use the QR Code scanner at the top of the Wi-Fi Phone window!",
                 )
 
+    def _show_usb_debugging_prompt(self, hw_serial: str, hw_model: str):
+        box = QMessageBox(self)
+        box.setIcon(QMessageBox.Information)
+        box.setWindowTitle(f"🔌 Phone Plugged In: {hw_model} ({hw_serial})")
+        box.setText(
+            f"<b>Sentra detected your phone physically plugged into USB:</b><br>"
+            f"• Model: <b>{hw_model}</b> &nbsp;|&nbsp; Serial: <b>{hw_serial}</b><br><br>"
+            "However, the phone's <b>USB Debugging</b> port is currently turned OFF on the phone."
+        )
+        box.setInformativeText(
+            "How to enable it in 10 seconds (Tecno / Samsung / Xiaomi / All Android):\n\n"
+            "• On Tecno (Camon 20 Pro / Spark / Pova / HiOS): Go to Settings → My Phone → tap 'Build Number' 7 times, "
+            "then go to Settings → System → Developer Options → turn 'USB Debugging' ON (and switch USB popup to 'File Transfer').\n"
+            "• On Samsung (One UI 6+): Go to Settings → Security and privacy → Auto Blocker → turn OFF, "
+            "then Settings → Developer Options → turn 'USB Debugging' ON.\n"
+            "• Tap 'Allow' on the 'Allow USB debugging?' popup on your phone screen.\n\n"
+            "💡 Or click '📶 Connect via Wi-Fi QR Code' below to connect wirelessly!"
+        )
+        btn_qr = box.addButton("📶 Connect via Wi-Fi QR Code", QMessageBox.AcceptRole)
+        btn_retry = box.addButton("🔄 Retry USB Connection", QMessageBox.ActionRole)
+        box.addButton(QMessageBox.Close)
+        box.exec()
+        if box.clickedButton() == btn_qr:
+            self.open_wireless_adb_dialog()
+        elif box.clickedButton() == btn_retry:
+            self._last_device_signature = None
+            self.refresh_devices(manual=True)
+
+    def _reconnect_saved_device(self, saved_token: str):
+        """
+        Attempts to reconnect a previously saved device (`saved:<conn_type>:<serial>:<ip_port>:<model>`).
+        """
+        parts = saved_token.split(":", 4)
+        conn_type = parts[1] if len(parts) > 1 else "usb"
+        s_serial = parts[2] if len(parts) > 2 else ""
+        s_ipp = parts[3] if len(parts) > 3 else ""
+        s_model = parts[4] if len(parts) > 4 else "Android Phone"
+
+        self.status_label.setText(f"Status: RECONNECTING SAVED DEVICE ({s_model})...")
+        self.status_label.setStyleSheet("color: #fbbf24; font-weight: bold;")
+
+        if conn_type == "wifi" or s_ipp or ":" in s_serial:
+            # First scan mDNS for any updated wireless debugging port on the same IP
+            target_ipp = s_ipp or s_serial
+            target_ip = target_ipp.split(":")[0] if ":" in target_ipp else ""
+            services = DeviceManager.discover_mdns_adb_services(timeout=1.0)
+            for c_item in services.get("connect", []):
+                if not target_ip or c_item.get("ip") == target_ip:
+                    target_ipp = c_item["ip_port"]
+                    break
+            ok, _log, devices = DeviceManager.connect_wireless_adb(target_ipp)
+            self._last_device_signature = None
+            self.refresh_devices(manual=True)
+            ready = [d for d in devices if d.get("state") == "device"]
+            if ok and ready:
+                idx = self.device_combo.findData(ready[0]["serial"])
+                if idx >= 0:
+                    self.device_combo.setCurrentIndex(idx)
+                self.connect_appium(silent=True)
+                return
+
+        # Also try a full USB + Wi-Fi refresh
+        DeviceManager.auto_connect_discovered_wireless_devices(timeout=1.0)
+        self._last_device_signature = None
+        self.refresh_devices(manual=True)
+        devices = DeviceManager.get_connected_devices(auto_reconnect=False)
+        ready = [d for d in devices if d.get("state") == "device"]
+        if ready:
+            idx = self.device_combo.findData(ready[0]["serial"])
+            if idx >= 0:
+                self.device_combo.setCurrentIndex(idx)
+            self.connect_appium(silent=True)
+            return
+
+        box = QMessageBox(self)
+        box.setIcon(QMessageBox.Information)
+        box.setWindowTitle(f"🕘 Reconnect Saved Phone: {s_model}")
+        box.setText(
+            f"<b>Saved Device:</b> {s_model} (<code>{s_ipp or s_serial}</code>)<br><br>"
+            "This previously connected phone is currently offline or sleeping."
+        )
+        box.setInformativeText(
+            "To reconnect it right now:\n"
+            "• For USB: Plug in the USB cable, unlock the phone screen, and ensure 'USB Debugging' is ON.\n"
+            "• For Wi-Fi: Make sure 'Wireless Debugging' is ON in Developer Options on your phone, "
+            "or click '📶 Scan Wi-Fi QR Code' below!"
+        )
+        btn_qr = box.addButton("📶 Scan Wi-Fi QR Code", QMessageBox.AcceptRole)
+        btn_forget = box.addButton("🗑 Forget Saved Device", QMessageBox.DestructiveRole)
+        box.addButton(QMessageBox.Close)
+        box.exec()
+        if box.clickedButton() == btn_qr:
+            self.open_wireless_adb_dialog()
+        elif box.clickedButton() == btn_forget:
+            DeviceManager.remove_saved_device(s_serial)
+            self._last_device_signature = None
+            self.refresh_devices(manual=True)
+
     def get_active_manager(self):
         return self.active_manager
 
     def connect_appium(self, silent: bool = False):
         serial = self.device_combo.currentData()
+        if isinstance(serial, str) and serial.startswith("usb_hw:"):
+            parts = serial.split(":", 2)
+            hw_serial = parts[1] if len(parts) > 1 else ""
+            hw_model = parts[2] if len(parts) > 2 else "Android Phone"
+            if not silent:
+                self._show_usb_debugging_prompt(hw_serial, hw_model)
+            return
+        if isinstance(serial, str) and serial.startswith("saved:"):
+            if not silent:
+                self._reconnect_saved_device(serial)
+            return
         if not serial:
             # Try refreshing once (with auto-download of ADB if missing)
             self.refresh_devices(manual=not silent)

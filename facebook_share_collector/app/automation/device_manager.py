@@ -1,3 +1,5 @@
+import datetime
+import json
 import logging
 import os
 import re
@@ -16,38 +18,230 @@ from app.utils.platform_binaries import (
 
 logger = logging.getLogger(__name__)
 
-# Known Android OEM USB Vendor IDs (decimal and hex)
+# Known Android OEM USB Vendor IDs (decimal and hex) — including Tecno / Transsion (Infinix / Itel), Samsung, Xiaomi, etc.
 ANDROID_USB_VENDOR_IDS = {
     0x04E8: "Samsung",
-    0x18D1: "Google",
-    0x2717: "Xiaomi",
+    0x18D1: "Google / Tecno / Android",
+    0x2717: "Xiaomi / Redmi / POCO",
     0x22D9: "Oppo / Realme / OnePlus",
     0x2A70: "OnePlus",
-    0x2D95: "Vivo",
-    0x12D1: "Huawei",
+    0x2D95: "Vivo / iQOO",
+    0x12D1: "Huawei / Honor",
     0x22B8: "Motorola",
     0x0B05: "Asus",
     0x0FCE: "Sony",
     0x1004: "LG",
     0x0BB4: "HTC",
     0x2916: "Android",
-    0x0E8D: "MediaTek / Android",
+    0x0E8D: "Tecno / Infinix / MediaTek",
+    0x1782: "Tecno / Infinix / Unisoc",
+    0x2E04: "Tecno / Infinix / Itel (Transsion)",
+    0x2C7C: "Tecno / Transsion",
+    0x2FB8: "Tecno / Transsion",
     0x05C6: "Qualcomm / Android",
-    0x1782: "Unisoc / Android",
-    0x19D2: "ZTE",
+    0x19D2: "ZTE / Nubia",
     0x2A45: "Meizu",
     0x1D4D: "Pegatron",
-    0x0489: "Foxconn / Android",
+    0x0489: "Foxconn / Nokia / Android",
+    0x1BBB: "Alcatel / TCL",
+    0x2A47: "Nothing / Android",
 }
+
+# Product/Model string signatures for Tecno (Camon 20 Pro, Spark, Pova, Phantom, Pop) & Transsion family
+TECNO_MODEL_KEYWORDS = (
+    "tecno",
+    "techno",
+    "camon",
+    "spark",
+    "pova",
+    "phantom",
+    "transsion",
+    "infinix",
+    "itel",
+    "tecno-",
+    "ck6",
+    "ck7",
+    "ck8",
+    "ck9",
+    "cl6",
+    "cl7",
+    "cl8",
+    "cg8",
+    "ch6",
+    "ch7",
+    "ch9",
+    "kj5",
+    "kl7",
+    "li7",
+    "lh8",
+    "lg7",
+    "bf7",
+)
 
 
 class DeviceManager:
     _last_adb_diagnostic: str = ""
     _mdns_server_ensured: bool = False
+    _model_props_cache: Dict[str, Tuple[str, str]] = {}
 
     @classmethod
     def get_last_diagnostic(cls) -> str:
         return cls._last_adb_diagnostic
+
+    @staticmethod
+    def _known_devices_file_path() -> str:
+        from app.database.repository import ensure_writable_data_dir
+
+        data_dir = ensure_writable_data_dir("data")
+        return os.path.join(data_dir, "known_devices.json")
+
+    @classmethod
+    def get_saved_devices(cls) -> List[Dict[str, str]]:
+        """
+        Loads previously connected phones (USB or Wi-Fi) from `data/known_devices.json`.
+        Each entry contains:
+          `{"serial": str, "model": str, "vendor": str, "connection_type": "usb"|"wifi", "ip_port": str, "last_seen": str}`
+        """
+        path = cls._known_devices_file_path()
+        if not os.path.isfile(path):
+            return []
+        try:
+            with open(path, "r", encoding="utf-8") as f:
+                data = json.load(f)
+            if isinstance(data, list):
+                return [d for d in data if isinstance(d, dict) and d.get("serial")]
+        except Exception:
+            pass
+        return []
+
+    @classmethod
+    def save_known_device(
+        cls,
+        serial: str,
+        model: str = "",
+        vendor: str = "",
+        connection_type: str = "",
+        ip_port: str = "",
+    ) -> None:
+        """
+        Persists a connected device into `data/known_devices.json` so Sentra remembers
+        every previously connected phone across app restarts and can 1-click reconnect.
+        """
+        serial = (serial or "").strip()
+        if not serial or serial.startswith("usb_hw:") or serial.startswith("saved:"):
+            return
+        is_wifi = (
+            connection_type == "wifi"
+            or ":" in serial
+            or "._adb-tls-" in serial
+            or serial.startswith("adb-")
+        )
+        conn_type = connection_type or ("wifi" if is_wifi else "usb")
+        if not ip_port and ":" in serial and re.match(r"^\d{1,3}(?:\.\d{1,3}){3}:\d+$", serial):
+            ip_port = serial
+
+        # Enrich model/brand via getprop if not already cached
+        if serial not in cls._model_props_cache:
+            cls._query_device_brand_and_model(serial)
+        cached_vendor, cached_model = cls._model_props_cache.get(serial, ("", ""))
+
+        final_vendor = vendor or cached_vendor or ("Tecno" if any(k in (model or "").lower() for k in TECNO_MODEL_KEYWORDS) else "Android")
+        final_model = model if (model and model not in ("Android Device", "Android")) else (cached_model or model or "Android Phone")
+
+        now_str = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        existing = cls.get_saved_devices()
+        updated = False
+        for item in existing:
+            if item.get("serial") == serial or (
+                ip_port and item.get("ip_port") and item.get("ip_port").split(":")[0] == ip_port.split(":")[0] and item.get("model") == final_model
+            ):
+                item["serial"] = serial
+                if final_model and final_model != "Android Phone":
+                    item["model"] = final_model
+                if final_vendor:
+                    item["vendor"] = final_vendor
+                item["connection_type"] = conn_type
+                if ip_port:
+                    item["ip_port"] = ip_port
+                item["last_seen"] = now_str
+                updated = True
+                break
+
+        if not updated:
+            existing.insert(
+                0,
+                {
+                    "serial": serial,
+                    "model": final_model,
+                    "vendor": final_vendor,
+                    "connection_type": conn_type,
+                    "ip_port": ip_port,
+                    "last_seen": now_str,
+                },
+            )
+
+        # Keep most recent 25 devices sorted by last_seen descending
+        existing.sort(key=lambda x: x.get("last_seen", ""), reverse=True)
+        existing = existing[:25]
+        try:
+            path = cls._known_devices_file_path()
+            with open(path, "w", encoding="utf-8") as f:
+                json.dump(existing, f, ensure_ascii=False, indent=2)
+        except Exception:
+            pass
+
+    @classmethod
+    def remove_saved_device(cls, serial: str) -> None:
+        existing = [d for d in cls.get_saved_devices() if d.get("serial") != serial]
+        try:
+            path = cls._known_devices_file_path()
+            with open(path, "w", encoding="utf-8") as f:
+                json.dump(existing, f, ensure_ascii=False, indent=2)
+        except Exception:
+            pass
+
+    @classmethod
+    def _query_device_brand_and_model(cls, serial: str) -> Tuple[str, str]:
+        """
+        Queries `ro.product.brand`, `ro.product.manufacturer`, `ro.product.marketname`,
+        and `ro.product.model` over ADB so Tecno (e.g. TECNO Camon 20 Pro `CK7n` / `CK8n`),
+        Samsung, Xiaomi, etc. show their friendly marketing name.
+        """
+        if serial in cls._model_props_cache:
+            return cls._model_props_cache[serial]
+        adb_bin = resolve_adb_binary(auto_download=False)
+        if not os.path.isfile(adb_bin):
+            return ("", "")
+        try:
+            res = subprocess.run(
+                [
+                    adb_bin,
+                    "-s",
+                    serial,
+                    "shell",
+                    "getprop ro.product.brand; getprop ro.product.marketname; getprop ro.product.model",
+                ],
+                capture_output=True,
+                text=True,
+                encoding="utf-8",
+                errors="replace",
+                timeout=2.5,
+                **subprocess_windowless_kwargs(),
+            )
+            lines = [ln.strip() for ln in (res.stdout or "").splitlines() if ln.strip()]
+            brand = lines[0] if len(lines) >= 1 else ""
+            market = lines[1] if len(lines) >= 2 else ""
+            model = lines[2] if len(lines) >= 3 else ""
+            friendly = market or model
+            if brand and friendly and brand.lower() not in friendly.lower():
+                friendly = f"{brand.upper() if brand.lower() == 'tecno' else brand.title()} {friendly}"
+            vendor = "Tecno" if "tecno" in f"{brand} {friendly}".lower() else (brand.title() if brand else "Android")
+            if friendly:
+                cls._model_props_cache[serial] = (vendor, friendly)
+                return (vendor, friendly)
+        except Exception:
+            pass
+        return ("", "")
 
     @staticmethod
     def is_adb_binary_present() -> bool:
@@ -116,13 +310,23 @@ class DeviceManager:
                     vid = int(vid_m.group(1))
                     prod_m = re.search(r'"USB Product Name"\s*=\s*"([^"]+)"', blk)
                     prod_name = prod_m.group(1).strip() if prod_m else ""
-                    if vid not in ANDROID_USB_VENDOR_IDS and "android" not in prod_name.lower():
+                    vend_m = re.search(r'"(?:USB Vendor Name|kUSBVendorString)"\s*=\s*"([^"]+)"', blk)
+                    vend_str = vend_m.group(1).strip() if vend_m else ""
+                    combined_usb_str = f"{prod_name} {vend_str}".lower()
+                    is_tecno_family = any(kw in combined_usb_str for kw in TECNO_MODEL_KEYWORDS)
+                    if (
+                        vid not in ANDROID_USB_VENDOR_IDS
+                        and "android" not in combined_usb_str
+                        and not is_tecno_family
+                    ):
                         continue
 
                     ser_m = re.search(r'"(?:USB Serial Number|kUSBSerialNumberString)"\s*=\s*"([^"]+)"', blk)
                     serial = ser_m.group(1).strip() if ser_m else f"usb-{vid}"
-                    vendor_name = ANDROID_USB_VENDOR_IDS.get(vid, "Android")
+                    vendor_name = "Tecno" if is_tecno_family else ANDROID_USB_VENDOR_IDS.get(vid, "Android")
                     model_name = prod_name or f"{vendor_name} Phone"
+                    if is_tecno_family and "tecno" not in model_name.lower():
+                        model_name = f"TECNO {model_name}".strip()
 
                     # Check if ADB USB Interface (Class 255, SubClass 66, Protocol 1) is active in descriptor
                     has_adb = bool(
@@ -154,21 +358,40 @@ class DeviceManager:
                     timeout=5,
                     **subprocess_windowless_kwargs(),
                 )
-                for line in (res.stdout or "").splitlines():
+                blocks = re.split(r"(?=Instance ID:)", res.stdout or "")
+                for blk in blocks:
+                    blk_lower = blk.lower()
+                    matched_vendor = None
+                    matched_ser = ""
+                    matched_model = ""
+                    desc_m = re.search(r"Device Description:\s*(.+)", blk)
+                    if desc_m:
+                        matched_model = desc_m.group(1).strip()
+                    inst_m = re.search(r"Instance ID:\s*(.+)", blk)
+                    inst_line = inst_m.group(1).strip() if inst_m else ""
                     for vid, vname in ANDROID_USB_VENDOR_IDS.items():
                         tag = f"VID_{vid:04X}"
-                        if tag in line.upper():
-                            parts = line.split("\\")
-                            ser = parts[-1].strip() if len(parts) >= 3 else tag
-                            if not any(d["serial"] == ser for d in found):
-                                found.append(
-                                    {
-                                        "serial": ser,
-                                        "model": f"{vname} Android",
-                                        "vendor": vname,
-                                        "has_adb_interface": "false",
-                                    }
-                                )
+                        if tag in inst_line.upper():
+                            matched_vendor = vname
+                            parts = inst_line.split("\\")
+                            matched_ser = parts[-1].strip() if len(parts) >= 3 else tag
+                            break
+                    if not matched_vendor and any(kw in blk_lower for kw in TECNO_MODEL_KEYWORDS):
+                        matched_vendor = "Tecno"
+                        parts = inst_line.split("\\")
+                        matched_ser = parts[-1].strip() if len(parts) >= 3 else "TECNO-USB"
+                    if matched_vendor and matched_ser:
+                        if any(kw in blk_lower for kw in TECNO_MODEL_KEYWORDS):
+                            matched_vendor = "Tecno"
+                        if not any(d["serial"] == matched_ser for d in found):
+                            found.append(
+                                {
+                                    "serial": matched_ser,
+                                    "model": matched_model or f"{matched_vendor} Android",
+                                    "vendor": matched_vendor,
+                                    "has_adb_interface": "false",
+                                }
+                            )
             except Exception:
                 pass
         return found
@@ -282,6 +505,18 @@ class DeviceManager:
             devices = DeviceManager._parse_devices_output(result.stdout)
             if any(d.get("state") == "device" for d in devices):
                 DeviceManager._last_adb_diagnostic = ""
+                for d in devices:
+                    if d.get("state") == "device":
+                        v, friendly = DeviceManager._query_device_brand_and_model(d["serial"])
+                        if friendly:
+                            d["model"] = friendly
+                        if v:
+                            d["vendor"] = v
+                        DeviceManager.save_known_device(
+                            serial=d["serial"],
+                            model=d.get("model", ""),
+                            vendor=d.get("vendor", ""),
+                        )
 
             # If any device is offline or no ready device found when auto_reconnect is requested, try adb reconnect
             has_offline = any(d["state"] == "offline" for d in devices)
@@ -310,6 +545,18 @@ class DeviceManager:
                         **subprocess_windowless_kwargs(),
                     )
                     devices = DeviceManager._parse_devices_output(result2.stdout)
+                    for d in devices:
+                        if d.get("state") == "device":
+                            v, friendly = DeviceManager._query_device_brand_and_model(d["serial"])
+                            if friendly:
+                                d["model"] = friendly
+                            if v:
+                                d["vendor"] = v
+                            DeviceManager.save_known_device(
+                                serial=d["serial"],
+                                model=d.get("model", ""),
+                                vendor=d.get("vendor", ""),
+                            )
                 except Exception:
                     pass
 
@@ -1042,8 +1289,12 @@ class DeviceManager:
         services = DeviceManager.discover_mdns_adb_services(timeout=timeout)
         env = os.environ.copy()
         env["ADB_MDNS_OPENSCREEN"] = "1"
-        for item in services.get("connect", []):
-            ip_port = item.get("ip_port", "")
+        candidates = [item.get("ip_port", "") for item in services.get("connect", []) if item.get("ip_port")]
+        for saved in DeviceManager.get_saved_devices():
+            saved_ipp = saved.get("ip_port", "") or (saved.get("serial", "") if ":" in saved.get("serial", "") else "")
+            if saved_ipp and saved_ipp not in candidates:
+                candidates.append(saved_ipp)
+        for ip_port in candidates:
             if not ip_port:
                 continue
             try:
@@ -1051,7 +1302,7 @@ class DeviceManager:
                     [adb_bin, "connect", ip_port],
                     capture_output=True,
                     text=True,
-                    timeout=5,
+                    timeout=3,
                     env=env,
                     **subprocess_windowless_kwargs(),
                 )

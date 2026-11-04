@@ -36,9 +36,9 @@ def _prepare_writable_runtime_dir() -> str:
 
     if sys.platform == "win32":
         base_appdata = os.environ.get("LOCALAPPDATA") or os.path.expanduser("~")
-        user_data_dir = os.path.join(base_appdata, "FacebookContestValidator")
+        user_data_dir = os.path.join(base_appdata, "Sentra")
     else:
-        user_data_dir = os.path.expanduser("~/Library/Application Support/FacebookContestValidator")
+        user_data_dir = os.path.expanduser("~/Library/Application Support/Sentra")
 
     os.makedirs(os.path.join(user_data_dir, "data", "avatars"), exist_ok=True)
     os.makedirs(os.path.join(user_data_dir, "logs"), exist_ok=True)
@@ -129,7 +129,7 @@ def main():
     setup_logger()
     logger = logging.getLogger(__name__)
     _install_global_exception_guard(logger)
-    logger.info("Starting Sentra — Public Data Intelligence & Contest Validator...")
+    logger.info("Starting Sentra — Every signal has a story...")
 
     if sys.platform == "win32":
         try:

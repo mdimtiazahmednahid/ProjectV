@@ -362,9 +362,9 @@ exec "{venv_py_link}" "{main_script}"
     _generate_app_icns(icns_path)
 
     info_plist = {
-        "CFBundleName": "Facebook Contest Validator",
-        "CFBundleDisplayName": "Facebook Contest Validator",
-        "CFBundleIdentifier": "com.contestvalidator.facebook",
+        "CFBundleName": "Sentra",
+        "CFBundleDisplayName": "Sentra",
+        "CFBundleIdentifier": "com.sentra.intelligence",
         "CFBundleVersion": "2.0.0",
         "CFBundleShortVersionString": "2.0.0",
         "CFBundlePackageType": "APPL",

@@ -14,7 +14,7 @@ class CollectorPanel(QGroupBox):
     open_bookmarklet_requested = Signal()
 
     def __init__(self, parent=None):
-        super().__init__("Step-by-Step Contest Collector Controls", parent)
+        super().__init__("Sentra Step-by-Step Signal Collector Controls", parent)
         
         self.layout = QVBoxLayout()
         self.setLayout(self.layout)

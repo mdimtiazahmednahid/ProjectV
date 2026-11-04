@@ -97,7 +97,7 @@ class ResultsPanel(QWidget):
         self.btn_find_device = QPushButton("Find on Device")
         self.btn_find_device.clicked.connect(self._trigger_device_search)
 
-        self.btn_toggle_adv = QPushButton("🎯 FairDraw Advanced Filters & Action Toggles")
+        self.btn_toggle_adv = QPushButton("🎯 Sentra Advanced Filters & Action Toggles")
         self.btn_toggle_adv.setCheckable(True)
         self.btn_toggle_adv.setChecked(True)
         self.btn_toggle_adv.setStyleSheet(
@@ -115,7 +115,7 @@ class ResultsPanel(QWidget):
         search_layout.addWidget(self.btn_toggle_adv)
 
         # =========================================================================
-        # FairDraw (DrawSystem) Advanced Filter & Action Toggle Bar
+        # Sentra Advanced Filter & Action Toggle Bar
         # =========================================================================
         self.adv_frame = QFrame()
         self.adv_frame.setStyleSheet(
@@ -229,7 +229,7 @@ class ResultsPanel(QWidget):
 
         self.chk_one_entry_per_user = QCheckBox("1 Entry/Person")
         self.chk_one_entry_per_user.setToolTip(
-            "FairDraw Rule: Ensure each unique person name gets at most 1 winning lottery serial."
+            "Sentra Rule: Ensure each unique person name gets at most 1 winning lottery serial."
         )
         self.chk_one_entry_per_user.toggled.connect(self._on_filter_criteria_changed)
 
@@ -403,7 +403,7 @@ class ResultsPanel(QWidget):
 
         self.btn_custom_rules = QPushButton("🧠 +Custom Rule (0)")
         self.btn_custom_rules.setToolTip(
-            "Open FairDraw Global Analyzer Rule Builder to add custom TRUE/FALSE rule columns & filters."
+            "Open Sentra Global Analyzer Rule Builder to add custom TRUE/FALSE rule columns & filters."
         )
         self.btn_custom_rules.setStyleSheet(
             "background-color: #065f46; color: #a7f3d0; font-size: 11px; font-weight: bold; padding: 4px 8px; border-radius: 4px;"
@@ -419,7 +419,7 @@ class ResultsPanel(QWidget):
 
         self.btn_merge_selected = QPushButton("🔗 Merge Selected")
         self.btn_merge_selected.setToolTip(
-            "FairDraw Bulk Merge: Combine selected rows into a single participant (merging their Likes, Comments, and Shares)."
+            "Sentra Bulk Merge: Combine selected rows into a single participant (merging their Reactions, Comments, and Shares)."
         )
         self.btn_merge_selected.setStyleSheet(
             "background-color: #1d4ed8; color: #ffffff; font-size: 11px; font-weight: bold; padding: 4px 8px; border-radius: 4px;"
@@ -502,7 +502,7 @@ class ResultsPanel(QWidget):
         # =========================================================================
         self.table = QTableWidget(0, 9)
         self.table.setHorizontalHeaderLabels([
-            "Serial #", "Name & Avatar", "Liked 👍", "Commented 💬", "Shared 🔄",
+            "Serial #", "Name & Avatar", "Reaction 👍", "Commented 💬", "Shared 🔄",
             "Score", "Contest Status", "Comment / Share Text", "Identity / Profile URL"
         ])
         self.table.setStyleSheet(
@@ -1478,7 +1478,7 @@ class ResultsPanel(QWidget):
     def _get_default_filename(self, ext, prefix=None):
         timestamp = datetime.datetime.now().strftime("%Y-%m-%d_%H-%M")
         if not prefix:
-            prefix = "facebook_contest_eligible" if self.filter_combo.currentIndex() == 1 else "facebook_contest_results"
+            prefix = "sentra_eligible" if self.filter_combo.currentIndex() == 1 else "sentra_results"
         return f"{prefix}_{timestamp}.{ext}"
 
     def _disqualify_from_live_draw(self, winner):
@@ -1525,10 +1525,10 @@ class ResultsPanel(QWidget):
 
         from app.database.repository import ensure_writable_data_dir
         data_dir = ensure_writable_data_dir("data")
-        filename = self._get_default_filename("html", prefix="facebook_lottery_tickets")
+        filename = self._get_default_filename("html", prefix="sentra_lottery_tickets")
         path, _ = QFileDialog.getSaveFileName(
             self,
-            "Save Printable Lottery Tickets (HTML/PDF)",
+            "Save Sentra Printable Lottery Tickets (HTML/PDF)",
             os.path.join(data_dir, filename),
             "HTML Printable Document (*.html)"
         )

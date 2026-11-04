@@ -174,14 +174,14 @@ def _ensure_venv_with_gui_progress(app_home: str) -> str:
         from tkinter import ttk
 
         root = tk.Tk()
-        root.title("Facebook Contest Validator — First-Time Setup")
+        root.title("Sentra — First-Time Setup")
         root.geometry("480x170")
         root.resizable(False, False)
         root.configure(bg="#0f172a")
 
         lbl_title = tk.Label(
             root,
-            text="Preparing Facebook Contest Validator...",
+            text="Preparing Sentra — Public Data Intelligence Platform...",
             font=("Segoe UI", 12, "bold"),
             fg="#f8fafc",
             bg="#0f172a",
@@ -283,8 +283,8 @@ def main() -> None:
             import ctypes
             ctypes.windll.user32.MessageBoxW(
                 0,
-                f"Failed to start Facebook Contest Validator.\nSee log: {log_file}",
-                "Facebook Contest Validator",
+                f"Failed to start Sentra.\nSee log: {log_file}",
+                "Sentra",
                 0x10,
             )
         except Exception:

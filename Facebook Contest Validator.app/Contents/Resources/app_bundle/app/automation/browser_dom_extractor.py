@@ -667,20 +667,67 @@ class BrowserDOMExtractor:
         js_code = "".join(cleaned_lines).strip()
         bookmarklet_href = "javascript:" + quote(js_code, safe="();,/:@&=+$#-_.!~*'()")
 
+        from app.utils.sentra_brand import (
+            APP_DESCRIPTION,
+            APP_PILLARS,
+            APP_TAGLINE,
+            APP_UPPER,
+            get_sentra_logo_svg,
+        )
+
         page_html = f"""<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>FB Contest Scraper — 1-Click Bookmarklet & Extension Setup</title>
+  <title>SENTRA — 1-Click Browser Bookmarklet & Extension Setup</title>
   <style>
     body {{
       font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-      background: #0f172a;
+      background: #0b1120;
       color: #f8fafc;
       max-width: 780px;
-      margin: 40px auto;
+      margin: 32px auto;
       padding: 24px;
       line-height: 1.6;
+    }}
+    .brand-hero {{
+      background: #0d1526;
+      border: 1px solid #1e293b;
+      border-radius: 14px;
+      padding: 22px 26px;
+      margin-bottom: 24px;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.45);
+    }}
+    .brand-top {{
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 10px;
+    }}
+    .brand-title {{
+      font-size: 24px;
+      font-weight: 800;
+      letter-spacing: 1.5px;
+      color: #ffffff;
+    }}
+    .brand-tagline {{
+      font-size: 18px;
+      font-weight: 700;
+      color: #f8fafc;
+      margin: 4px 0 6px 0;
+    }}
+    .brand-desc {{
+      font-size: 13.5px;
+      color: #94a3b8;
+      margin: 0 0 12px 0;
+    }}
+    .brand-pillars {{
+      font-size: 11.5px;
+      font-weight: 800;
+      letter-spacing: 1.4px;
+      color: #35c5f0;
+      border-top: 1px solid #1e293b;
+      padding-top: 10px;
     }}
     .card {{
       background: #1e293b;
@@ -690,19 +737,19 @@ class BrowserDOMExtractor:
       margin-bottom: 24px;
       box-shadow: 0 10px 25px rgba(0,0,0,0.35);
     }}
-    h1 {{ color: #60a5fa; margin-top: 0; }}
+    h1 {{ color: #35c5f0; margin-top: 0; font-size: 21px; }}
     h2 {{ color: #93c5fd; margin-top: 0; font-size: 18px; }}
     .bookmarklet-btn {{
       display: inline-block;
-      background: linear-gradient(135deg, #2563eb, #7c3aed);
+      background: linear-gradient(135deg, #0284c7, #2563eb);
       color: #ffffff;
       font-weight: 800;
       font-size: 17px;
       text-decoration: none;
       padding: 14px 28px;
       border-radius: 999px;
-      border: 2px dashed #93c5fd;
-      box-shadow: 0 8px 20px rgba(37, 99, 235, 0.45);
+      border: 2px dashed #35c5f0;
+      box-shadow: 0 8px 20px rgba(53, 197, 240, 0.35);
       cursor: grab;
       margin: 12px 0;
     }}
@@ -725,25 +772,35 @@ class BrowserDOMExtractor:
   </style>
 </head>
 <body>
+  <div class="brand-hero">
+    <div class="brand-top">
+      {get_sentra_logo_svg(size=36, stroke_color="#35c5f0")}
+      <span class="brand-title">{APP_UPPER}</span>
+    </div>
+    <div class="brand-tagline">{APP_TAGLINE}</div>
+    <div class="brand-desc">{APP_DESCRIPTION}</div>
+    <div class="brand-pillars">{APP_PILLARS}</div>
+  </div>
+
   <div class="card">
-    <h1>🔖 Option A: 1-Click Browser Bookmark (Zero Installation)</h1>
+    <h1>🔖 Option A: 1-Click Sentra Browser Bookmark (Zero Installation)</h1>
     <p>Works in <strong>Chrome, Safari, Edge, Brave, and Firefox</strong> without installing anything:</p>
     <ol>
       <li>Make sure your browser's <strong>Bookmarks Bar</strong> is visible (<code>Cmd+Shift+B</code> on Mac or <code>Ctrl+Shift+B</code> on Windows).</li>
-      <li><strong>Drag the glowing button below</strong> up onto your Bookmarks Bar:</li>
+      <li><strong>Drag the glowing Sentra button below</strong> up onto your Bookmarks Bar:</li>
     </ol>
     <p style="text-align:center;">
-      <a class="bookmarklet-btn" href="{bookmarklet_href}" title="Drag me to your Bookmarks Bar!">🎯 FB Contest Scraper</a>
-      <button class="copy-btn" onclick="navigator.clipboard.writeText(document.querySelector('.bookmarklet-btn').href);this.textContent='✅ Bookmarklet URL Copied!';">📋 Copy Bookmark URL</button>
+      <a class="bookmarklet-btn" href="{bookmarklet_href}" title="Drag me to your Bookmarks Bar!">🛰️ SENTRA Signal Collector</a>
+      <button class="copy-btn" onclick="navigator.clipboard.writeText(document.querySelector('.bookmarklet-btn').href);this.textContent='✅ Sentra Bookmarklet Copied!';">📋 Copy Bookmark URL</button>
     </p>
     <ol start="3">
-      <li>Open your Facebook contest post in your browser and <strong>click the <code>🎯 FB Contest Scraper</code> bookmark</strong> on your Bookmarks Bar — the floating scraper panel will appear immediately!</li>
-      <li>Click <strong>Step 1 (Likes)</strong>, <strong>Step 2 (Comments)</strong>, and <strong>Step 3 (Shares)</strong> — every batch is automatically sent to your Desktop App via the clipboard!</li>
+      <li>Open your Facebook contest post in your browser and <strong>click the <code>🛰️ SENTRA Signal Collector</code> bookmark</strong> on your Bookmarks Bar — the floating Sentra panel will appear immediately!</li>
+      <li>Click <strong>Step 1 (Reactions)</strong>, <strong>Step 2 (Comments)</strong>, and <strong>Step 3 (Shares)</strong> — every batch is automatically streamed to your Sentra Desktop App!</li>
     </ol>
   </div>
 
   <div class="card">
-    <h2>🧩 Option B: Installable Chrome / Edge Extension (Auto-Loads on Facebook)</h2>
+    <h2>🧩 Option B: Installable Sentra Chrome / Edge Extension (Auto-Loads on Facebook)</h2>
     <ol>
       <li>Open <code>chrome://extensions/</code> in Chrome (or <code>edge://extensions/</code> in Edge).</li>
       <li>Turn on <strong>Developer mode</strong> (top-right) and click <strong>Load unpacked</strong>.</li>

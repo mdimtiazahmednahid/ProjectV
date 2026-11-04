@@ -371,9 +371,33 @@ class IncrementalContestAggregator:
                 participant.shared = True
                 self._shares_count += 1
             if p.content and p.content.strip():
-                clean_share = p.content.strip()
-                if clean_share not in participant.share_contents:
-                    participant.share_contents.append(clean_share)
+                clean_share = self._clean_comment_text(p.content, clean_name) or p.content.strip()
+                if clean_share and clean_share not in participant.share_contents:
+                    incoming_has_non_ascii = any(ord(ch) > 127 for ch in clean_share)
+                    replaced_existing = False
+                    for idx_s, old_s in enumerate(list(participant.share_contents)):
+                        old_prefix = old_s.rstrip(".… ").strip()
+                        if old_prefix and len(old_prefix) >= 6 and clean_share.startswith(old_prefix) and len(clean_share) > len(old_s):
+                            participant.share_contents[idx_s] = clean_share
+                            replaced_existing = True
+                            break
+                        if incoming_has_non_ascii and all(ord(ch) < 128 for ch in old_s):
+                            participant.share_contents[idx_s] = clean_share
+                            replaced_existing = True
+                            break
+                    if not replaced_existing:
+                        clean_prefix = clean_share.rstrip(".… ").strip()
+                        is_shorter_prefix = any(
+                            clean_prefix and len(clean_prefix) >= 6 and old_s.startswith(clean_prefix) and len(old_s) > len(clean_share)
+                            for old_s in participant.share_contents
+                        )
+                        if not is_shorter_prefix:
+                            participant.share_contents.append(clean_share)
+            raw_post_url = getattr(p, "shared_post_url", None)
+            if raw_post_url and raw_post_url.strip():
+                clean_post_url = raw_post_url.strip()
+                if clean_post_url not in participant.shared_post_urls:
+                    participant.shared_post_urls.append(clean_post_url)
 
         if not was_eligible and participant.is_eligible:
             self._eligible_count += 1

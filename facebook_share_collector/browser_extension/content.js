@@ -103,7 +103,8 @@
     "see original", "hide", "report", "copy link", "active", "online status indicator",
     "online status indicator active", "comment", "comments", "shares", "post", "posts",
     "photo", "photos", "video", "videos", "reel", "reels", "story", "stories", "sharer",
-    "write an answer…", "write an answer...", "write a public comment…", "write a public comment..."
+    "write an answer…", "write an answer...", "write a public comment…", "write a public comment...",
+    "show attachment", "hide attachment", "অ্যাটাচমেন্ট দেখুন", "সবচেয়ে প্রাসঙ্গিক", "সব মন্তব্য"
   ]);
 
   const UTILITY_DIALOG_ARIA_RE = /notification|messenger|chat|account|menu|your profile|settings|search facebook|create post|stories|reels/i;
@@ -259,6 +260,80 @@
     if (IGNORE_LABELS.has(username.toLowerCase())) return null;
 
     return `https://www.facebook.com/${username}`;
+  }
+
+  function cleanSharedPostUrl(rawHref) {
+    if (!rawHref) return null;
+    let href = rawHref.trim();
+    if (href.startsWith("#") || href.startsWith("javascript:")) return null;
+    if (href.startsWith("/")) {
+      href = "https://www.facebook.com" + href;
+    }
+    if (!href.toLowerCase().includes("facebook.com")) return null;
+
+    let parsed;
+    try {
+      parsed = new URL(href);
+    } catch (e) {
+      return null;
+    }
+
+    if (parsed.searchParams.has("comment_id") || parsed.searchParams.has("reply_comment_id")) {
+      return null;
+    }
+
+    const path = parsed.pathname || "/";
+    const cleanLowerPath = path.toLowerCase().replace(/\/+$/, "");
+
+    /* 1. /permalink.php?story_fbid=...&id=... or /story.php?story_fbid=...&id=... */
+    if (cleanLowerPath === "/permalink.php" || cleanLowerPath === "/story.php") {
+      const storyFbid = parsed.searchParams.get("story_fbid");
+      const uid = parsed.searchParams.get("id");
+      if (storyFbid && uid) {
+        return `https://www.facebook.com/permalink.php?story_fbid=${encodeURIComponent(storyFbid)}&id=${encodeURIComponent(uid)}`;
+      }
+      if (storyFbid) {
+        return `https://www.facebook.com/permalink.php?story_fbid=${encodeURIComponent(storyFbid)}`;
+      }
+      return null;
+    }
+
+    /* 2. /<username>/(posts|videos|activity)/<post_id_or_pfbid> */
+    const mUserPost = path.match(/^\/([^/]+)\/(posts|videos|activity)\/([^/?#]+)/i);
+    if (mUserPost) {
+      return `https://www.facebook.com/${mUserPost[1]}/${mUserPost[2]}/${mUserPost[3]}`;
+    }
+
+    /* 3. /groups/<gid>/(posts|permalink)/<post_id> */
+    const mGroupPost = path.match(/^\/groups\/([^/]+)\/(posts|permalink)\/([^/?#]+)/i);
+    if (mGroupPost) {
+      return `https://www.facebook.com/groups/${mGroupPost[1]}/${mGroupPost[2]}/${mGroupPost[3]}`;
+    }
+
+    /* 4. /share/p/<token> or /share/v/<token> or /share/<token> */
+    const mShare = path.match(/^\/share\/(?:([pv])\/)?([^/?#]+)/i);
+    if (mShare) {
+      const kindSeg = mShare[1] ? `${mShare[1]}/` : "";
+      return `https://www.facebook.com/share/${kindSeg}${mShare[2]}`;
+    }
+
+    /* 5. /photo.php?fbid=... or /photo/?fbid=... */
+    if (cleanLowerPath === "/photo.php" || cleanLowerPath === "/photo") {
+      const fbid = parsed.searchParams.get("fbid");
+      if (fbid) {
+        return `https://www.facebook.com/photo.php?fbid=${encodeURIComponent(fbid)}`;
+      }
+    }
+
+    /* 6. /watch/?v=... */
+    if (cleanLowerPath === "/watch") {
+      const v = parsed.searchParams.get("v");
+      if (v) {
+        return `https://www.facebook.com/watch/?v=${encodeURIComponent(v)}`;
+      }
+    }
+
+    return null;
   }
 
   function isInsideIgnoredChrome(el) {
@@ -1103,34 +1178,154 @@
     return found;
   }
 
+  function findNestedCommentContainersInShareDialog(shareDialog) {
+    const containers = [];
+    if (!shareDialog) return containers;
+
+    /* 1. Explicit comment/reply role="article" containers */
+    const articles = shareDialog.querySelectorAll('div[role="article"]');
+    for (const art of articles) {
+      const aria = cleanText(art.getAttribute("aria-label") || "").toLowerCase();
+      if (
+        aria.startsWith("comment by") ||
+        aria.startsWith("reply by") ||
+        aria.includes("মন্তব্য") ||
+        aria.includes("উত্তর")
+      ) {
+        containers.push(art);
+      }
+    }
+
+    /* 2. Leaf "Reply" / "উত্তর দিন" buttons inside a share card's comments section */
+    const spansAndBtns = shareDialog.querySelectorAll("span, div[role='button']");
+    for (const node of spansAndBtns) {
+      if (node.children.length > 0) continue;
+      if (isInsideIgnoredChrome(node)) continue;
+      const t = cleanText(node.textContent).toLowerCase();
+      if (t !== "reply" && t !== "উত্তর দিন") continue;
+
+      let curr = node.parentElement;
+      let bestRow = curr;
+      for (let d = 0; d < 10 && curr && curr !== shareDialog && curr !== document.body; d++) {
+        if (countLeafReplyNodes(curr) > 1) break;
+        const currTxt = cleanText(curr.innerText || curr.textContent).toLowerCase();
+        if (currTxt.includes("show attachment") || currTxt.includes("hide attachment")) break;
+        bestRow = curr;
+        curr = curr.parentElement;
+      }
+      if (bestRow) containers.push(bestRow);
+    }
+
+    /* 3. UFI Comments section starting at "Most relevant" / "All comments" / "Newest" inside a Share Card */
+    const allFilterCandidates = shareDialog.querySelectorAll('div[role="button"], span[role="button"], span');
+    const profileAnchors = Array.from(shareDialog.querySelectorAll("a[href]")).filter((a) =>
+      Boolean(cleanProfileUrl(a.getAttribute("href") || a.href))
+    );
+
+    for (const btn of allFilterCandidates) {
+      if (isInsideIgnoredChrome(btn)) continue;
+      const txt = cleanText(btn.innerText || btn.textContent).toLowerCase();
+      if (
+        txt !== "most relevant" &&
+        txt !== "all comments" &&
+        txt !== "newest" &&
+        txt !== "সবচেয়ে প্রাসঙ্গিক" &&
+        txt !== "সব মন্তব্য" &&
+        txt !== "নতুন"
+      ) {
+        continue;
+      }
+
+      /* Walk up from the comment filter button while the ancestor does NOT contain any profile anchor that precedes the filter button */
+      let curr = btn.parentElement;
+      let ufiCommentsSection = curr;
+      for (let d = 0; d < 10 && curr && curr !== shareDialog && curr !== document.body; d++) {
+        let hasPrecedingSharerAnchor = false;
+        for (const pa of profileAnchors) {
+          if (curr.contains(pa) && Boolean(pa.compareDocumentPosition(btn) & Node.DOCUMENT_POSITION_FOLLOWING)) {
+            hasPrecedingSharerAnchor = true;
+            break;
+          }
+        }
+        if (hasPrecedingSharerAnchor) break;
+        ufiCommentsSection = curr;
+        curr = curr.parentElement;
+      }
+      if (ufiCommentsSection) {
+        containers.push(ufiCommentsSection);
+      }
+    }
+
+    return containers;
+  }
+
   function extractSharesFromDialog(shareDialog) {
     const found = [];
+    if (!shareDialog) return found;
+
     triggerHoverHydration(shareDialog);
-    const links = Array.from(shareDialog.querySelectorAll("a[href]:not([data-fb-scraped='1'])"));
+    clickSeeOriginalAndSeeMore(shareDialog);
+
+    const nestedCommentContainers = findNestedCommentContainersInShareDialog(shareDialog);
+
+    const isInsideNestedComment = (node) => {
+      if (!node) return false;
+      for (const nc of nestedCommentContainers) {
+        if (nc === node || nc.contains(node)) return true;
+      }
+      if (
+        node.closest(
+          'div[role="article"][aria-label*="Comment by" i], div[role="article"][aria-label*="Reply by" i], div[role="article"][aria-label*="মন্তব্য"]'
+        )
+      ) {
+        return true;
+      }
+      const row = findRowForAnchor(node, shareDialog);
+      if (row && row !== shareDialog) {
+        const commentLinks = row.querySelectorAll('a[href*="comment_id="], a[href*="reply_comment_id="]');
+        if (commentLinks.length > 0) return true;
+      }
+      return false;
+    };
+
+    const links = Array.from(shareDialog.querySelectorAll("a[href]"));
     const urlToRecord = new Map();
     const orderedUrls = [];
 
     for (const a of links) {
       if (isInsideIgnoredChrome(a)) continue;
       if (a.closest('[role="tab"], [role="tablist"]')) continue;
+      if (isInsideNestedComment(a)) continue;
 
-      const cUrl = cleanProfileUrl(a.getAttribute("href") || a.href);
+      const rawHref = a.getAttribute("href") || a.href || "";
+      const cUrl = cleanProfileUrl(rawHref);
       if (!cUrl) continue;
 
+      const directPostUrl = cleanSharedPostUrl(rawHref) || "";
       const name = extractNameFromAnchor(a);
       const rowEl = findRowForAnchor(a, shareDialog);
       const avatarUrl = extractAvatarUrlFromContainer(rowEl);
 
       if (!urlToRecord.has(cUrl)) {
         orderedUrls.push(cUrl);
-        urlToRecord.set(cUrl, { name: name || "", avatar_url: avatarUrl });
+        urlToRecord.set(cUrl, {
+          name: name || "",
+          avatar_url: avatarUrl || "",
+          shared_post_url: directPostUrl,
+          content: "",
+          anchors: [a]
+        });
       } else {
         const existing = urlToRecord.get(cUrl);
+        existing.anchors.push(a);
         if (name && (!existing.name || (a.innerText || "").trim().length > 0)) {
           existing.name = name;
         }
         if (avatarUrl && !existing.avatar_url) {
           existing.avatar_url = avatarUrl;
+        }
+        if (directPostUrl && !existing.shared_post_url) {
+          existing.shared_post_url = directPostUrl;
         }
       }
       if (name) {
@@ -1139,17 +1334,187 @@
       }
     }
 
+    /* Second pass: For each sharer, inspect their Share Card container to extract Shared Caption (content) and Shared Post Link (shared_post_url) */
     for (const u of orderedUrls) {
       const rec = urlToRecord.get(u);
-      if (rec && rec.name) {
-        found.push({
-          name: rec.name,
-          url: u,
-          avatar_url: rec.avatar_url || "",
-          content: "",
-          action_type: "share"
-        });
+      if (!rec || !rec.name) continue;
+
+      const primaryAnchor = rec.anchors[0];
+      if (primaryAnchor) {
+        /* Walk up from primaryAnchor to find this sharer's full Share Card container without spilling into another sharer's card */
+        let curr = primaryAnchor.parentElement;
+        let cardEl = curr;
+        for (let d = 0; d < 12 && curr && curr !== shareDialog && curr !== document.body; d++) {
+          if (curr.querySelector('[aria-label="Close"], [aria-label="বন্ধ করুন"]')) {
+            break;
+          }
+          const heading = curr.querySelector("h1, h2, [role='heading']");
+          if (heading) {
+            const hTxt = cleanText(heading.innerText || heading.textContent).toLowerCase();
+            if (hTxt.includes("people who shared") || hTxt.includes("যারা এটি শেয়ার")) {
+              break;
+            }
+          }
+
+          let hasDifferentSharer = false;
+          const cardAnchors = curr.querySelectorAll("a[href]");
+          for (const oa of cardAnchors) {
+            if (isInsideNestedComment(oa)) continue;
+            const oaProfileUrl = cleanProfileUrl(oa.getAttribute("href") || oa.href);
+            if (oaProfileUrl && oaProfileUrl.toLowerCase() !== u.toLowerCase()) {
+              hasDifferentSharer = true;
+              break;
+            }
+          }
+          if (hasDifferentSharer) break;
+
+          cardEl = curr;
+          curr = curr.parentElement;
+        }
+
+        if (cardEl) {
+          if (!rec.avatar_url) {
+            rec.avatar_url = extractAvatarUrlFromContainer(cardEl) || "";
+          }
+
+          /* Find cutoff boundary inside cardEl where attachment / reactions / nested comments begin */
+          let cutoffEl = null;
+          const markCutoffCandidate = (cand) => {
+            if (!cand || cand === cardEl || cand.contains(primaryAnchor)) return;
+            if (!Boolean(primaryAnchor.compareDocumentPosition(cand) & Node.DOCUMENT_POSITION_FOLLOWING)) {
+              return;
+            }
+            if (
+              !cutoffEl ||
+              Boolean(cand.compareDocumentPosition(cutoffEl) & Node.DOCUMENT_POSITION_FOLLOWING)
+            ) {
+              cutoffEl = cand;
+            }
+          };
+
+          for (const nc of nestedCommentContainers) {
+            if (cardEl.contains(nc)) markCutoffCandidate(nc);
+          }
+
+          const cardNodes = cardEl.querySelectorAll(
+            'div[role="button"], span[role="button"], a, span, div[aria-label]'
+          );
+          for (const cn of cardNodes) {
+            const aria = cleanText(cn.getAttribute("aria-label") || "").toLowerCase();
+            if (
+              aria.startsWith("all reactions") ||
+              aria.startsWith("like:") ||
+              aria.startsWith("love:")
+            ) {
+              markCutoffCandidate(cn);
+              continue;
+            }
+            if (cn.children.length <= 2) {
+              const txt = cleanText(cn.innerText || cn.textContent).toLowerCase();
+              if (
+                txt === "show attachment" ||
+                txt === "hide attachment" ||
+                txt === "অ্যাটাচমেন্ট দেখুন" ||
+                txt === "most relevant" ||
+                txt === "all comments" ||
+                txt === "newest" ||
+                txt === "সবচেয়ে প্রাসঙ্গিক" ||
+                txt === "সব মন্তব্য"
+              ) {
+                markCutoffCandidate(cn);
+              }
+            }
+          }
+
+          const isAfterCutoff = (node) => {
+            if (!node) return true;
+            if (isInsideNestedComment(node)) return true;
+            if (!cutoffEl) return false;
+            if (cutoffEl === node || cutoffEl.contains(node)) return true;
+            return Boolean(cutoffEl.compareDocumentPosition(node) & Node.DOCUMENT_POSITION_FOLLOWING);
+          };
+
+          /* 1. Extract Shared Post Link (shared_post_url) from any permalink/timestamp anchor inside cardEl before cutoff */
+          if (!rec.shared_post_url) {
+            const cardLinks = cardEl.querySelectorAll("a[href]");
+            for (const cl of cardLinks) {
+              if (isAfterCutoff(cl)) continue;
+              const pUrl = cleanSharedPostUrl(cl.getAttribute("href") || cl.href);
+              if (pUrl) {
+                rec.shared_post_url = pUrl;
+                break;
+              }
+            }
+          }
+
+          /* 2. Extract Shared Caption / Title (content) from dir="auto" text blocks inside cardEl before cutoff */
+          const rawDirBlocks = Array.from(cardEl.querySelectorAll('div[dir="auto"], span[dir="auto"]'));
+          const candidateBlocks = rawDirBlocks.filter((tb) => {
+            if (isAfterCutoff(tb)) return false;
+            if (tb.contains(primaryAnchor)) return false;
+            if (cutoffEl && tb.contains(cutoffEl)) return false;
+            /* Skip if tb is inside the sharer's profile link or timestamp link (but allow hashtag/mention links inside a caption block) */
+            const parentLink = tb.closest("a[href]");
+            if (parentLink) {
+              const lHref = (parentLink.getAttribute("href") || "").toLowerCase();
+              if (!lHref.includes("/hashtag/")) return false;
+            }
+            return true;
+          });
+
+          const candidateSet = new Set(candidateBlocks);
+          const bodyParts = [];
+          for (const tb of candidateBlocks) {
+            /* If an ancestor is also in candidateSet, skip the child so we don't duplicate text */
+            let hasCandidateAncestor = false;
+            let p = tb.parentElement;
+            while (p && p !== cardEl) {
+              if (candidateSet.has(p)) {
+                hasCandidateAncestor = true;
+                break;
+              }
+              p = p.parentElement;
+            }
+            if (hasCandidateAncestor) continue;
+
+            const rawT = cleanText(tb.innerText || tb.textContent);
+            const cleanedT = rawT
+              .replace(INLINE_META_SUFFIX_RE, "")
+              .replace(TRAILING_TIME_RE, "")
+              .trim();
+            if (
+              isNoiseCommentBodyLine(rawT, rec.name) ||
+              isNoiseCommentBodyLine(cleanedT, rec.name)
+            ) {
+              continue;
+            }
+            const lowT = rawT.toLowerCase();
+            if (
+              lowT === "show attachment" ||
+              lowT === "hide attachment" ||
+              lowT === "অ্যাটাচমেন্ট দেখুন"
+            ) {
+              continue;
+            }
+            if (!bodyParts.includes(rawT)) {
+              bodyParts.push(rawT);
+            }
+          }
+
+          if (bodyParts.length > 0) {
+            rec.content = bodyParts.join(" ").trim();
+          }
+        }
       }
+
+      found.push({
+        name: rec.name,
+        url: u,
+        avatar_url: rec.avatar_url || "",
+        content: rec.content || "",
+        shared_post_url: rec.shared_post_url || "",
+        action_type: "share"
+      });
     }
 
     return found;
@@ -1202,8 +1567,32 @@
         targetMap.set(key, item);
         unsentBatch.push(item);
         added += 1;
-      } else if (item.url && !targetMap.get(key).url) {
-        targetMap.get(key).url = item.url;
+      } else {
+        const existing = targetMap.get(key);
+        let updated = false;
+        if (item.url && !existing.url) {
+          existing.url = item.url;
+          updated = true;
+        }
+        if (item.avatar_url && !existing.avatar_url) {
+          existing.avatar_url = item.avatar_url;
+          updated = true;
+        }
+        if (item.shared_post_url && !existing.shared_post_url) {
+          existing.shared_post_url = item.shared_post_url;
+          updated = true;
+        }
+        if (
+          actionType === "share" &&
+          item.content &&
+          (!existing.content || item.content.length > existing.content.length)
+        ) {
+          existing.content = item.content;
+          updated = true;
+        }
+        if (updated) {
+          unsentBatch.push(existing);
+        }
       }
     }
     return added;
@@ -1337,7 +1726,7 @@
         const currMax = Math.max(0, candidate.scrollHeight - candidate.clientHeight);
         candidate.scrollTop = Math.min(currMax, candidate.scrollTop + perStep);
         if (i === Math.floor(steps / 2)) {
-          if (actionType === "comment") {
+          if (activeAction === "comment" || activeAction === "share" || actionType === "comment" || actionType === "share") {
             await ensureOriginalCommentsRevealed(targetWin.root);
           }
           harvestVisibleIntoStore(actionType, targetWin);
@@ -1357,7 +1746,7 @@
         if (!isRunning) break;
         window.scrollBy(0, perStep);
         if (i === Math.floor(steps / 2)) {
-          if (actionType === "comment") {
+          if (actionType === "comment" || actionType === "share") {
             await ensureOriginalCommentsRevealed(targetWin.root);
           }
           harvestVisibleIntoStore(actionType, targetWin);
@@ -1500,7 +1889,7 @@
       await trySwitchToAllComments(targetWin.root);
     }
 
-    if (activeAction === "comment") {
+    if (activeAction === "comment" || activeAction === "share") {
       await ensureOriginalCommentsRevealed(targetWin.root);
     }
 
@@ -1528,7 +1917,7 @@
     }
     await sleep(settleWait);
 
-    if (activeAction === "comment") {
+    if (activeAction === "comment" || activeAction === "share") {
       await ensureOriginalCommentsRevealed(targetWin.root);
     }
 

@@ -134,6 +134,19 @@ class LotteryPrintExporter:
                     footer_html = f'<span class="profile-ref">{id_hint}</span>'
                     table_url_html = id_hint
 
+                full_share_caption_raw = (
+                    " | ".join(s for s in p.share_contents if s and s.strip())
+                    if getattr(p, "share_contents", None)
+                    else ""
+                )
+                raw_shared_post_url = getattr(p, "primary_shared_post_url", "") or ""
+                if raw_shared_post_url.startswith("http://") or raw_shared_post_url.startswith("https://"):
+                    safe_post_href = html.escape(raw_shared_post_url, quote=True)
+                    safe_post_label = html.escape(raw_shared_post_url)
+                    table_shared_post_html = f'<a class="profile-link" href="{safe_post_href}" target="_blank" rel="noopener noreferrer">{safe_post_label}</a>'
+                else:
+                    table_shared_post_html = html.escape(raw_shared_post_url)
+
                 missing_actions = []
                 if not p.liked:
                     missing_actions.append("No Reaction")
@@ -202,8 +215,10 @@ class LotteryPrintExporter:
                     <td>{'✅ Comment' if p.commented else '❌ Comment'} ({len(p.comment_texts)})</td>
                     <td>{'✅ Share' if p.shared else '❌ Share'}</td>
                     <td>{badge_label}</td>
-                    <td class="notranslate" translate="no">{html.escape(full_comment_raw[:140])}</td>
+                    <td class="notranslate" translate="no">{html.escape(" | ".join(p.comment_texts)[:140])}</td>
+                    <td class="notranslate" translate="no">{html.escape(full_share_caption_raw[:140])}</td>
                     <td class="col-url">{table_url_html}</td>
+                    <td class="col-url">{table_shared_post_html}</td>
                 </tr>
                 """)
 
@@ -223,7 +238,7 @@ class LotteryPrintExporter:
 <head>
 <meta charset="UTF-8">
 <meta name="google" content="notranslate">
-<title>Live Contest Lottery Tickets & Verification Sheet</title>
+<title>Sentra — Live Lottery Tickets & Verification Sheet</title>
 <style>
     * {{ box-sizing: border-box; }}
     body {{
@@ -668,11 +683,11 @@ class LotteryPrintExporter:
         }});
         const titleCountEl = document.getElementById("toolbarTicketCount");
         if (titleCountEl) {{
-            titleCountEl.textContent = "Contest Lottery Slips (" + visibleCount + " Tickets)";
+            titleCountEl.textContent = "Sentra Lottery Slips (" + visibleCount + " Tickets)";
         }}
         const sheetCountEl = document.getElementById("sheetTicketCount");
         if (sheetCountEl) {{
-            sheetCountEl.textContent = "Verification Sheet (" + visibleCount + " Contestants)";
+            sheetCountEl.textContent = "Sentra Verification Sheet (" + visibleCount + " Contestants)";
         }}
     }}
     function setBorderStyle(styleVal) {{
@@ -738,7 +753,7 @@ class LotteryPrintExporter:
             {get_sentra_logo_svg(size=28, bg_fill="#0b1120")}
             <span style="font-weight:800;letter-spacing:1px;font-size:15px;">SENTRA</span>
             <span style="opacity:0.65;">|</span>
-            <strong id="toolbarTicketCount">Contest Lottery Slips ({initial_visible_count} Tickets)</strong>
+            <strong id="toolbarTicketCount">Sentra Lottery Slips ({initial_visible_count} Tickets)</strong>
             <span style="font-size:12px;opacity:0.9;margin-left:4px;">({generated_at})</span>
         </div>
         <div class="toolbar-controls">
@@ -795,7 +810,7 @@ class LotteryPrintExporter:
     </div>
 
     <div class="judge-sheet-section">
-        <h3 id="sheetTicketCount" style="margin:0 0 8px 0;">Verification Sheet ({initial_visible_count} Contestants)</h3>
+        <h3 id="sheetTicketCount" style="margin:0 0 8px 0;">Sentra Verification Sheet ({initial_visible_count} Contestants)</h3>
         <table>
             <thead>
                 <tr>
@@ -806,7 +821,9 @@ class LotteryPrintExporter:
                     <th>Share</th>
                     <th>Contest Status / Reason</th>
                     <th>Comments Text</th>
+                    <th>Shared Caption</th>
                     <th>Profile Reference</th>
+                    <th>Shared Post Link</th>
                 </tr>
             </thead>
             <tbody>

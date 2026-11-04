@@ -1490,12 +1490,18 @@ def test_wireless_adb_qr_code_and_mdns_discovery():
     """
     Verifies:
       1. Pure-Python ISO/IEC 18004 QR Code generation (`generate_qr_matrix`) and round-trip
-         Reed-Solomon decoding (`decode_qr_matrix`) for Android 11+ Wireless Debugging QR payloads.
+         Reed-Solomon decoding (`decode_qr_matrix`) for Android 11+ Wireless Debugging QR payloads
+         (both compact 32-byte Version 2 25x25 and 41-byte Version 3 29x29).
       2. `DeviceManager._parse_adb_mdns_output` parses `_adb-tls-pairing._tcp` and `_adb-tls-connect._tcp`
          endpoints accurately.
     """
     from app.utils.qr_code import generate_qr_matrix, decode_qr_matrix
     from app.automation.device_manager import DeviceManager
+
+    qr_v2 = "WIFI:T:ADB;S:adb-a1b2;P:482910;;"
+    matrix_v2 = generate_qr_matrix(qr_v2)
+    assert len(matrix_v2) == 25  # Version 2 (25x25 modules, EC Level L)
+    assert decode_qr_matrix(matrix_v2) == qr_v2
 
     qr_payload = "WIFI:T:ADB;S:studio-fcv98765;P:84729163;;"
     matrix = generate_qr_matrix(qr_payload)
@@ -1517,5 +1523,155 @@ def test_wireless_adb_qr_code_and_mdns_discovery():
 
     assert len(parsed["connect"]) == 1
     assert parsed["connect"][0]["ip_port"] == "192.168.0.105:38411"
+
+
+def test_tecno_usb_detection_and_saved_devices_persistence(tmp_path, monkeypatch):
+    """
+    Verifies:
+      1. Tecno (Camon 20 Pro / Spark / Pova / Phantom / Transsion) Vendor IDs and model keywords
+         are registered in `ANDROID_USB_VENDOR_IDS` and `TECNO_MODEL_KEYWORDS`.
+      2. `DeviceManager.save_known_device`, `get_saved_devices`, and `remove_saved_device`
+         persist previously connected USB and Wi-Fi devices (including Tecno Camon 20 Pro)
+         so Sentra remembers them across restarts.
+    """
+    from app.automation.device_manager import (
+        ANDROID_USB_VENDOR_IDS,
+        TECNO_MODEL_KEYWORDS,
+        DeviceManager,
+    )
+
+    assert 0x2E04 in ANDROID_USB_VENDOR_IDS  # Transsion / Tecno
+    assert 0x0E8D in ANDROID_USB_VENDOR_IDS  # MediaTek / Tecno
+    assert 0x1782 in ANDROID_USB_VENDOR_IDS  # Unisoc / Tecno
+    assert "tecno" in TECNO_MODEL_KEYWORDS
+    assert "camon" in TECNO_MODEL_KEYWORDS
+    assert "ck7" in TECNO_MODEL_KEYWORDS  # Tecno Camon 20 Pro (CK7n / CK8n)
+
+    test_json = tmp_path / "known_devices.json"
+    monkeypatch.setattr(DeviceManager, "_known_devices_file_path", staticmethod(lambda: str(test_json)))
+    monkeypatch.setattr(
+        DeviceManager,
+        "_query_device_brand_and_model",
+        classmethod(lambda cls, s: ("Tecno", "TECNO Camon 20 Pro")),
+    )
+
+    DeviceManager.save_known_device(
+        serial="102622534S009003",
+        model="TECNO Camon 20 Pro",
+        vendor="Tecno",
+        connection_type="usb",
+    )
+    DeviceManager.save_known_device(
+        serial="192.168.1.105:39123",
+        model="SAMSUNG Galaxy S23",
+        vendor="Samsung",
+        connection_type="wifi",
+        ip_port="192.168.1.105:39123",
+    )
+
+    saved = DeviceManager.get_saved_devices()
+    assert len(saved) == 2
+    serials = {d["serial"] for d in saved}
+    assert "102622534S009003" in serials
+    assert "192.168.1.105:39123" in serials
+    tecno_entry = next(d for d in saved if d["serial"] == "102622534S009003")
+    assert tecno_entry["model"] == "TECNO Camon 20 Pro"
+    assert tecno_entry["vendor"] == "Tecno"
+
+    DeviceManager.remove_saved_device("192.168.1.105:39123")
+    saved_after = DeviceManager.get_saved_devices()
+    assert len(saved_after) == 1
+    assert saved_after[0]["serial"] == "102622534S009003"
+
+
+def test_share_types_with_shared_caption_and_post_url(tmp_path):
+    """
+    Verifies both types of Facebook Share records in 'People who shared this':
+      1. Type 1 (Simple Share Profile Row): profile URL + name, empty caption & post link.
+      2. Type 2 (Rich Share Post Card): profile URL + name + Shared Caption / Title + Shared Post Link.
+    Also verifies `clean_facebook_post_url`, `IncrementalContestAggregator` caption upgrade,
+    and CSV export of `Share Content` + `Shared Post URL`.
+    """
+    from app.automation.browser_dom_extractor import (
+        BrowserDOMExtractor,
+        clean_facebook_post_url,
+    )
+    from app.exporters.csv_exporter import CSVExporter
+
+    assert (
+        clean_facebook_post_url("https://www.facebook.com/shuvo.shill/posts/pfbid02ZvRjWn123?__cft__[0]=AZ&__tn__=-R")
+        == "https://www.facebook.com/shuvo.shill/posts/pfbid02ZvRjWn123"
+    )
+    assert (
+        clean_facebook_post_url("/permalink.php?story_fbid=pfbid09988&id=1000123456&__cft__[0]=AZ")
+        == "https://www.facebook.com/permalink.php?story_fbid=pfbid09988&id=1000123456"
+    )
+    assert (
+        clean_facebook_post_url("https://www.facebook.com/share/p/19AbCdEf/?mibextid=wwXIfr")
+        == "https://www.facebook.com/share/p/19AbCdEf"
+    )
+    # Profile links or comment links must NOT be treated as shared post links
+    assert clean_facebook_post_url("https://www.facebook.com/shuvo.shill") is None
+    assert clean_facebook_post_url("https://www.facebook.com/shuvo.shill/posts/pfbid02ZvRjWn123?comment_id=12345") is None
+
+    raw_items = [
+        # Type 1: Simple Share Profile Row
+        {
+            "name": "Raisa Islam",
+            "url": "https://www.facebook.com/raisa.islam.793830",
+            "avatar_url": "https://scontent.xx.fbcdn.net/v/raisa.jpg",
+            "content": "",
+            "shared_post_url": "",
+            "action_type": "share",
+        },
+        # Type 2: Rich Share Post Card (with Shared Caption / Title and Shared Post Link)
+        {
+            "name": "Shuvo Kumar Shill",
+            "url": "https://www.facebook.com/shuvo.shill",
+            "avatar_url": "https://scontent.xx.fbcdn.net/v/shuvo.jpg",
+            "content": "সঠিক : খাই চিনা বাদাম। #Vejalnai #ভেজালনাই #VejalNaiMixedNuts এতে উদ্ভিজ্জ আমিষ রয়েছে।",
+            "shared_post_url": "https://www.facebook.com/shuvo.shill/posts/pfbid02ZvRjWn123?__cft__[0]=AZ",
+            "action_type": "share",
+        },
+        # Comment by Shuvo Kumar Shill (separate from his share caption)
+        {
+            "name": "Shuvo Kumar Shill",
+            "url": "https://www.facebook.com/shuvo.shill",
+            "avatar_url": "https://scontent.xx.fbcdn.net/v/shuvo.jpg",
+            "content": "উত্তর: চিনা বাদাম",
+            "action_type": "comment",
+        },
+    ]
+
+    profiles = BrowserDOMExtractor.parse_dom_items(raw_items, session_id="s_shares", action_type="share")
+    assert len(profiles) == 3
+
+    raisa_share = next(p for p in profiles if p.name == "Raisa Islam")
+    assert raisa_share.profile_url == "https://www.facebook.com/raisa.islam.793830"
+    assert raisa_share.content == ""
+    assert raisa_share.shared_post_url is None
+
+    shuvo_share = next(p for p in profiles if p.name == "Shuvo Kumar Shill" and p.action_type == "share")
+    assert shuvo_share.profile_url == "https://www.facebook.com/shuvo.shill"
+    assert "সঠিক : খাই চিনা বাদাম।" in shuvo_share.content
+    assert shuvo_share.shared_post_url == "https://www.facebook.com/shuvo.shill/posts/pfbid02ZvRjWn123"
+
+    participants = ContestValidator.validate_participants(profiles)
+    shuvo_p = next(p for p in participants if p.name == "Shuvo Kumar Shill")
+    assert shuvo_p.commented is True
+    assert shuvo_p.shared is True
+    assert shuvo_p.combined_comments == "উত্তর: চিনা বাদাম"
+    assert "সঠিক : খাই চিনা বাদাম।" in shuvo_p.combined_share_captions
+    assert shuvo_p.primary_shared_post_url == "https://www.facebook.com/shuvo.shill/posts/pfbid02ZvRjWn123"
+
+    csv_path = str(tmp_path / "contest_shares.csv")
+    assert CSVExporter.export_contest(participants, csv_path) is True
+    with open(csv_path, "r", encoding="utf-8-sig") as f:
+        csv_text = f.read()
+    assert "Shared Post URL" in csv_text
+    assert "https://www.facebook.com/shuvo.shill/posts/pfbid02ZvRjWn123" in csv_text
+    assert "সঠিক : খাই চিনা বাদাম।" in csv_text
+
+
 
 

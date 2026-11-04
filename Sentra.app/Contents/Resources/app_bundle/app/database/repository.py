@@ -33,7 +33,7 @@ def ensure_writable_data_dir(subdir: str = "data") -> str:
         os.makedirs(target, exist_ok=True)
         return target
     except OSError:
-        fallback = os.path.expanduser("~/Library/Application Support/FacebookContestValidator/data")
+        fallback = os.path.expanduser("~/Library/Application Support/Sentra/data")
         os.makedirs(fallback, exist_ok=True)
         return fallback
 

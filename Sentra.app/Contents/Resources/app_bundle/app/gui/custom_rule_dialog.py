@@ -41,7 +41,7 @@ class CustomRuleBuilderDialog(QDialog):
             )
             for r in existing_rules
         ]
-        self.setWindowTitle("⚙️ FairDraw Custom Intelligence Rule Builder")
+        self.setWindowTitle("⚙️ Sentra Custom Intelligence Rule Builder")
         self.resize(620, 480)
         self.setStyleSheet(
             "QDialog { background-color: #0f172a; color: #f8fafc; }"

@@ -14,7 +14,7 @@
 		</data>
 		<key>Resources/app_bundle/app/__pycache__/__init__.cpython-314.pyc</key>
 		<data>
-		AyHNP7XmGnuTUzvXW3cCbkpKIJ4=
+		DIro5pkI8uaAic5QoxUSoW9EzGk=
 		</data>
 		<key>Resources/app_bundle/app/automation/__init__.py</key>
 		<data>
@@ -22,51 +22,51 @@
 		</data>
 		<key>Resources/app_bundle/app/automation/__pycache__/__init__.cpython-314.pyc</key>
 		<data>
-		yxaCI2v0CRFJEu8Nm/WIfAZ8amQ=
+		j2MbEHb0GcOl9+M+iLJw5BOcjcI=
 		</data>
 		<key>Resources/app_bundle/app/automation/__pycache__/adb_controller.cpython-314.pyc</key>
 		<data>
-		N2mi5VvHUHw9VnlP6hM0iJonTvU=
+		sJwcsEVtnyYBLQZ2NT+dmSHx968=
 		</data>
 		<key>Resources/app_bundle/app/automation/__pycache__/appium_manager.cpython-314.pyc</key>
 		<data>
-		WjO6h4EbeBMIpW9i/dyZcavRNjI=
+		ONsa/fXwUuUUlwxN6Z0gNq4WJGg=
 		</data>
 		<key>Resources/app_bundle/app/automation/__pycache__/browser_dom_extractor.cpython-314.pyc</key>
 		<data>
-		UbBAxF5H4DnFPtA6TECMcAleDf0=
+		lrZvqLfw3otxIpB635X5WvkTWF0=
 		</data>
 		<key>Resources/app_bundle/app/automation/__pycache__/collector_engine.cpython-314.pyc</key>
 		<data>
-		fgxvEnidi6a96yt/X9Sy/kiOQJ8=
+		chGnk96cCXENkdvEKQAKIlP5ZTo=
 		</data>
 		<key>Resources/app_bundle/app/automation/__pycache__/device_manager.cpython-314.pyc</key>
 		<data>
-		lcN6XLfyjlqeQg+HjQEgU6y4al8=
+		jxhDgFWoiYgnzVLiAYt5FIFmAJw=
 		</data>
 		<key>Resources/app_bundle/app/automation/__pycache__/facebook_detector.cpython-314.pyc</key>
 		<data>
-		69vyhRBwvACHwYYpXuay7JM0m7M=
+		LZIQcO3fri1bEjSSHluuiq4Br9A=
 		</data>
 		<key>Resources/app_bundle/app/automation/__pycache__/local_bridge_server.cpython-314.pyc</key>
 		<data>
-		OOLwEzKdsbgwzSGEooECF9jCehw=
+		H0Hw2kJcA499C4Nbd8ijkQCnKkU=
 		</data>
 		<key>Resources/app_bundle/app/automation/__pycache__/profile_extractor.cpython-314.pyc</key>
 		<data>
-		YM68bsbuILKusxUP4I1h5xB0yZI=
+		Scw+jNf2fMu/qprWNpXkJbCG3ok=
 		</data>
 		<key>Resources/app_bundle/app/automation/__pycache__/scroll_controller.cpython-314.pyc</key>
 		<data>
-		12bX4OU5vfI5UnZMart0f+dAmys=
+		/H39vKEJZQBsPriOW1DVmnEtgSI=
 		</data>
 		<key>Resources/app_bundle/app/automation/__pycache__/share_list_detector.cpython-314.pyc</key>
 		<data>
-		KiJiBAvGqK9iqgsCOuwAzvoyjsc=
+		lAZbD9req6d2hE6dAttWpbB2QT0=
 		</data>
 		<key>Resources/app_bundle/app/automation/__pycache__/ui_inspector.cpython-314.pyc</key>
 		<data>
-		8DdNGL8Fhzr9KrPLv3+evg6A6fo=
+		KcHAcbplyR4RRH1ikI94l3vZl8E=
 		</data>
 		<key>Resources/app_bundle/app/automation/adb_controller.py</key>
 		<data>
@@ -78,7 +78,7 @@
 		</data>
 		<key>Resources/app_bundle/app/automation/browser_dom_extractor.py</key>
 		<data>
-		qKISng7L2zKgngNCp8Kf8oP2npc=
+		D+S0dGAsKTpWxCATR5Gk7WLjRpY=
 		</data>
 		<key>Resources/app_bundle/app/automation/collector_engine.py</key>
 		<data>
@@ -86,7 +86,7 @@
 		</data>
 		<key>Resources/app_bundle/app/automation/device_manager.py</key>
 		<data>
-		7fx5v84y9vB9CxsJqEjxXSmb0wE=
+		jp2xS22PyFNCgZvn9nPTBJ4FTks=
 		</data>
 		<key>Resources/app_bundle/app/automation/facebook_detector.py</key>
 		<data>
@@ -118,11 +118,11 @@
 		</data>
 		<key>Resources/app_bundle/app/config/__pycache__/__init__.cpython-314.pyc</key>
 		<data>
-		USQMMsOqcEPcET3KSGmhsgzUmio=
+		Im6oJyHq/VIVnsWDIfzJ5taaA4k=
 		</data>
 		<key>Resources/app_bundle/app/config/__pycache__/settings.cpython-314.pyc</key>
 		<data>
-		5G4+JkmRB9/uJuzfIM2IMTb5StY=
+		YSXxxP1mNu9mUiFo5d16sY9cSXM=
 		</data>
 		<key>Resources/app_bundle/app/config/settings.py</key>
 		<data>
@@ -134,15 +134,15 @@
 		</data>
 		<key>Resources/app_bundle/app/database/__pycache__/__init__.cpython-314.pyc</key>
 		<data>
-		sjpw7fVSkazo+LzTX187x3rRLHc=
+		5fvYTCKQuVZ6ZvI9v/ZId/DDS0g=
 		</data>
 		<key>Resources/app_bundle/app/database/__pycache__/repository.cpython-314.pyc</key>
 		<data>
-		4Lqcql/TeG5zv1BtnZmC3qWJGug=
+		DhOaaeJ3zjvwHs4WXgM4ntgYiDU=
 		</data>
 		<key>Resources/app_bundle/app/database/repository.py</key>
 		<data>
-		mjRiOvmvTt3veUsBc9Ufvm30aaI=
+		wnZvwXQjlhX1JWOIMpZ/yU+6iD4=
 		</data>
 		<key>Resources/app_bundle/app/exporters/__init__.py</key>
 		<data>
@@ -150,23 +150,23 @@
 		</data>
 		<key>Resources/app_bundle/app/exporters/__pycache__/__init__.cpython-314.pyc</key>
 		<data>
-		SZjpnKR5/DP/ejZFgx/1o2IAVKE=
+		4rK9FfvnTxC3zowffBwc6Tuik1A=
 		</data>
 		<key>Resources/app_bundle/app/exporters/__pycache__/csv_exporter.cpython-314.pyc</key>
 		<data>
-		OxNskuvx7IpZr8mAAG2sKzW3ZPU=
+		z+guma4aRLxMWRwM+LSyyMaYUM8=
 		</data>
 		<key>Resources/app_bundle/app/exporters/__pycache__/json_exporter.cpython-314.pyc</key>
 		<data>
-		XlMB/pSSfGPq1i3wDMQ2CHGczVo=
+		LQ++HNBYllPdoouXxjsfDdYyBQ4=
 		</data>
 		<key>Resources/app_bundle/app/exporters/__pycache__/lottery_print_exporter.cpython-314.pyc</key>
 		<data>
-		Q4JolLnSstU0p1b93CKRvXYf8zI=
+		UxFdc1hiRkQGdms+LzPZO/y1ZOo=
 		</data>
 		<key>Resources/app_bundle/app/exporters/__pycache__/xlsx_exporter.cpython-314.pyc</key>
 		<data>
-		Xd5MTb+3amaHjPvr1CJqqc1AV3Y=
+		pq3v5xozjsWBCoAru79hXVEMKOU=
 		</data>
 		<key>Resources/app_bundle/app/exporters/csv_exporter.py</key>
 		<data>
@@ -178,7 +178,7 @@
 		</data>
 		<key>Resources/app_bundle/app/exporters/lottery_print_exporter.py</key>
 		<data>
-		3353kYTfY8A+QBeFgAwoajQ23y0=
+		m3prNmElGzbj8g04ut1jgFr7NXU=
 		</data>
 		<key>Resources/app_bundle/app/exporters/xlsx_exporter.py</key>
 		<data>
@@ -190,27 +190,27 @@
 		</data>
 		<key>Resources/app_bundle/app/gui/__pycache__/__init__.cpython-314.pyc</key>
 		<data>
-		D6WMWysj/Iwq6ojousoiBBe/ShE=
+		a+qSbSmapN4+4aGh7JSRKaz8KYI=
 		</data>
 		<key>Resources/app_bundle/app/gui/__pycache__/collector_panel.cpython-314.pyc</key>
 		<data>
-		ieccATnePeXyolxVBz454/FzRvw=
+		4JHf2oArDgf55iNK50mmZoHAim8=
 		</data>
 		<key>Resources/app_bundle/app/gui/__pycache__/device_panel.cpython-314.pyc</key>
 		<data>
-		frrQui/MTFs+FmjHDKwP82WS7rM=
+		EYXcTqnCKQ99PcZSHM/qelBEh6M=
 		</data>
 		<key>Resources/app_bundle/app/gui/__pycache__/logs_panel.cpython-314.pyc</key>
 		<data>
-		VqOp3vsDsMAAehIsIGtfLojcoik=
+		IMEMQ/bwUyzcNL9wxNfNTigb0S4=
 		</data>
 		<key>Resources/app_bundle/app/gui/__pycache__/main_window.cpython-314.pyc</key>
 		<data>
-		5MPNR6t2ofo9UmtFGrX9lEM3YL0=
+		qHcOh970J1JrUtUOpyM63vzIq38=
 		</data>
 		<key>Resources/app_bundle/app/gui/__pycache__/results_panel.cpython-314.pyc</key>
 		<data>
-		L7L+bgGrB+aESNHY2JW5UMihjrY=
+		VMQ7CAlxkfex/9lvGTS8HWvmnBo=
 		</data>
 		<key>Resources/app_bundle/app/gui/__pycache__/session_manager_dialog.cpython-314.pyc</key>
 		<data>
@@ -218,19 +218,19 @@
 		</data>
 		<key>Resources/app_bundle/app/gui/__pycache__/sync_profile_panel.cpython-314.pyc</key>
 		<data>
-		7p/KqWovXVIJOcn/CJtbxPCADOA=
+		1u2GjMSDEfSPlGyStb/amgR5Qz0=
 		</data>
 		<key>Resources/app_bundle/app/gui/collector_panel.py</key>
 		<data>
-		7j0v2EL3LBQYsCyDkALT+XYBAdo=
+		e21W9JPXSojagPd6KhyhUGJzdog=
 		</data>
 		<key>Resources/app_bundle/app/gui/custom_rule_dialog.py</key>
 		<data>
-		MQdE1zHyDcNRWdSxVrOOKEvX9C4=
+		7EWwa8O1CYoMzKKI3H+uM3/RzvU=
 		</data>
 		<key>Resources/app_bundle/app/gui/device_panel.py</key>
 		<data>
-		v+buklzeKm7FVD9G0WJsWTRke9g=
+		VgdxsCIo4SegLa/CTnGOy5WSnVQ=
 		</data>
 		<key>Resources/app_bundle/app/gui/live_lottery_dialog.py</key>
 		<data>
@@ -242,15 +242,15 @@
 		</data>
 		<key>Resources/app_bundle/app/gui/main_window.py</key>
 		<data>
-		6WReEFVtzVWOllo9ILS3gB5ud2w=
+		DQjyH+qe03lmqrf4ba4/hbjDPyw=
 		</data>
 		<key>Resources/app_bundle/app/gui/results_panel.py</key>
 		<data>
-		PcO5awLHUtpb7RnxuKGqMSzDSsQ=
+		U25pgX6tsggHnu7GylNuN+JbDaQ=
 		</data>
 		<key>Resources/app_bundle/app/gui/session_manager_dialog.py</key>
 		<data>
-		PWwl+edH64S2bHfqUYwpZo7GHvs=
+		AX8ak+Rv6EN9HAEirEusIZbGlZM=
 		</data>
 		<key>Resources/app_bundle/app/gui/sync_profile_panel.py</key>
 		<data>
@@ -262,15 +262,15 @@
 		</data>
 		<key>Resources/app_bundle/app/models/__pycache__/__init__.cpython-314.pyc</key>
 		<data>
-		+SwQf2qGkDp3eP3xAcJT+SbL6PY=
+		sSFiNt+OyazEqj+a7AuNASpLq/8=
 		</data>
 		<key>Resources/app_bundle/app/models/__pycache__/collection_session.cpython-314.pyc</key>
 		<data>
-		A+22Rukw8DanYvHENmL8A8v1LLc=
+		pkN/k7EX3N+be6BgMdz5KOvcpbk=
 		</data>
 		<key>Resources/app_bundle/app/models/__pycache__/share_profile.cpython-314.pyc</key>
 		<data>
-		sx3C8NnEljzMKm+zDvtYpfJkO3k=
+		5m7mIBlk140/IhUJdK6fC2ygPx0=
 		</data>
 		<key>Resources/app_bundle/app/models/collection_session.py</key>
 		<data>
@@ -294,23 +294,23 @@
 		</data>
 		<key>Resources/app_bundle/app/utils/__pycache__/__init__.cpython-314.pyc</key>
 		<data>
-		zS2GmRlDo3J7uQ2dmafVSg5QI0o=
+		BpSDpYCfuHur/Bmi3vp0xLdxcmw=
 		</data>
 		<key>Resources/app_bundle/app/utils/__pycache__/advanced_filter_engine.cpython-314.pyc</key>
 		<data>
-		kwy9aqCjiNAZ+8bnk4jb705bxuI=
+		IyrPOzcEadfxtVQ0S/HJP1nEiOo=
 		</data>
 		<key>Resources/app_bundle/app/utils/__pycache__/avatar_fingerprint.cpython-314.pyc</key>
 		<data>
-		w3evFjNYrj0CcxClewo5GZNal2U=
+		A+jbuOTJgCFdODyBMo2Or2CKmag=
 		</data>
 		<key>Resources/app_bundle/app/utils/__pycache__/contest_validator.cpython-314.pyc</key>
 		<data>
-		3ICDSewXZCgpAwBimFllYSHZJ6Q=
+		t72gICj7f3blA5DBlHnB/X2fExg=
 		</data>
 		<key>Resources/app_bundle/app/utils/__pycache__/deduplicator.cpython-314.pyc</key>
 		<data>
-		ByEcAeYAodZeay7XbKvfc31Q5qw=
+		+MwXmYX1szCU4jWfpQMxbzD38LY=
 		</data>
 		<key>Resources/app_bundle/app/utils/__pycache__/logger.cpython-314.pyc</key>
 		<data>
@@ -318,19 +318,27 @@
 		</data>
 		<key>Resources/app_bundle/app/utils/__pycache__/platform_binaries.cpython-314.pyc</key>
 		<data>
-		E7WJABAofpI4neLAOKpmI6wWVxU=
+		y4GhhQ+wjmgEjrGiVysqVJRIKqQ=
 		</data>
 		<key>Resources/app_bundle/app/utils/__pycache__/profile_sync_engine.cpython-314.pyc</key>
 		<data>
-		Z/YHnA6rR1p5DTd2Qh9Hk5mDQIs=
+		27g3R4TLpjtssqZFy4rBL+CwfgM=
+		</data>
+		<key>Resources/app_bundle/app/utils/__pycache__/qr_code.cpython-314.pyc</key>
+		<data>
+		sNNwN+LOjZLA9kFDX/L9FehrCFA=
+		</data>
+		<key>Resources/app_bundle/app/utils/__pycache__/sentra_brand.cpython-314.pyc</key>
+		<data>
+		k/mLlP8O78HU9yocFg6TY147moI=
 		</data>
 		<key>Resources/app_bundle/app/utils/__pycache__/text_normalizer.cpython-314.pyc</key>
 		<data>
-		PthH89HexbX3sJl2sm4Egxf71zE=
+		C1127edA8eSYDfxvndXFgZpyEEc=
 		</data>
 		<key>Resources/app_bundle/app/utils/__pycache__/url_normalizer.cpython-314.pyc</key>
 		<data>
-		IIHJu0BRiJZRuLEmw+06Vmn256w=
+		b052c1SHY62i781dWVFQU9X/+SU=
 		</data>
 		<key>Resources/app_bundle/app/utils/advanced_filter_engine.py</key>
 		<data>
@@ -362,11 +370,11 @@
 		</data>
 		<key>Resources/app_bundle/app/utils/qr_code.py</key>
 		<data>
-		xLTSqaFEiJzqmrn2Y/pW8BXIylU=
+		0fiRaT5EFReq4Is5kmKBTxJp7Mo=
 		</data>
 		<key>Resources/app_bundle/app/utils/sentra_brand.py</key>
 		<data>
-		PLNTTFfTgjlUjwk98AcJ7hUahdM=
+		9cAXF2GcAuGuqdcHEeCtjC5Fu5c=
 		</data>
 		<key>Resources/app_bundle/app/utils/text_normalizer.py</key>
 		<data>
@@ -398,7 +406,7 @@
 		</data>
 		<key>Resources/app_bundle/browser_extension/bookmarklet.html</key>
 		<data>
-		rrzViTv+e544iQfd9KX5i2x7+Gw=
+		e8Zj4BLUH52OPVf3CVA/oTKLX80=
 		</data>
 		<key>Resources/app_bundle/browser_extension/content.js</key>
 		<data>
@@ -1906,15 +1914,23 @@
 		</data>
 		<key>Resources/app_bundle/data/facebook_lottery_tickets_2026-11-02_01-34.html</key>
 		<data>
-		M0FeJ+mVqX3vgT+hDxgZFdlTm5U=
+		ccvlXzNW2jrx2AwJucI3/H4hOy4=
 		</data>
 		<key>Resources/app_bundle/data/facebook_lottery_tickets_2026-11-04_22-33.html</key>
 		<data>
-		M0FeJ+mVqX3vgT+hDxgZFdlTm5U=
+		ccvlXzNW2jrx2AwJucI3/H4hOy4=
 		</data>
 		<key>Resources/app_bundle/data/facebook_shares.sqlite</key>
 		<data>
 		/lCYk7pAsTOg8C+oP1bGWc49t0c=
+		</data>
+		<key>Resources/app_bundle/data/known_devices.json</key>
+		<data>
+		hlqUi3LCcP/KaFbqpRWdejSiPS0=
+		</data>
+		<key>Resources/app_bundle/data/sentra_lottery_tickets_latest.html</key>
+		<data>
+		ccvlXzNW2jrx2AwJucI3/H4hOy4=
 		</data>
 		<key>Resources/app_bundle/logs/app.log</key>
 		<data>
@@ -1922,7 +1938,7 @@
 		</data>
 		<key>Resources/app_bundle/main.py</key>
 		<data>
-		O0H5B9/9QX1hJcwnSF6Wdm723lk=
+		yyB59QFplITgbCY17BaXmNV7S9M=
 		</data>
 		<key>Resources/app_bundle/run.py</key>
 		<data>
@@ -9213,7 +9229,7 @@
 		<dict>
 			<key>hash2</key>
 			<data>
-			LDK2Dn0zlFPLX2mV5yMS+ZizGriDf4h2jQqUR4iW3Jw=
+			oN1zEvX/WYZOVoLAoH351UhjpAatRDe5Zq/nWWIjnAs=
 			</data>
 		</dict>
 		<key>Resources/app_bundle/app/automation/__init__.py</key>
@@ -9227,84 +9243,84 @@
 		<dict>
 			<key>hash2</key>
 			<data>
-			bNcgA8jkVKbS2g5mKxIb/gJwqdFq+OBCQwSd8T+QwE0=
+			O2i/6VIpqiRWOzgEuXqhaSxvMsXPQamLQXRRxsg75P4=
 			</data>
 		</dict>
 		<key>Resources/app_bundle/app/automation/__pycache__/adb_controller.cpython-314.pyc</key>
 		<dict>
 			<key>hash2</key>
 			<data>
-			pmxyrLtfOFWNcsHMq3De2zVIKQJwWsSOPZihbaS3gpo=
+			uqDMC7tcw6uwh8FEiOa4a0TMefxAhDTb25ZV7FLozH0=
 			</data>
 		</dict>
 		<key>Resources/app_bundle/app/automation/__pycache__/appium_manager.cpython-314.pyc</key>
 		<dict>
 			<key>hash2</key>
 			<data>
-			+dT816ywG7SckQH03rmiOZGRIqVIDitlPEiIRqUu+FI=
+			+M6y+4ajYJpI5hG+d/nSnFC59RxpjQP6dO3fEzJ51J0=
 			</data>
 		</dict>
 		<key>Resources/app_bundle/app/automation/__pycache__/browser_dom_extractor.cpython-314.pyc</key>
 		<dict>
 			<key>hash2</key>
 			<data>
-			PYv1d7q/CXL0+dghGkORHsxFxL0w2qOlzrmL4QywYo4=
+			HaBi0zqOXEmQ8mthCeTiqffWtMNnWvaP6l1NR4qr8T8=
 			</data>
 		</dict>
 		<key>Resources/app_bundle/app/automation/__pycache__/collector_engine.cpython-314.pyc</key>
 		<dict>
 			<key>hash2</key>
 			<data>
-			iYLAM87sDb8HK6NN7vlSp7FzO1I1NW79btpRrNFrsCw=
+			kUggUThdf4AU92mP0unribn/msCstGMj0ES+R/UBJb4=
 			</data>
 		</dict>
 		<key>Resources/app_bundle/app/automation/__pycache__/device_manager.cpython-314.pyc</key>
 		<dict>
 			<key>hash2</key>
 			<data>
-			JmIwN2LU3WSrBUklpXU/apm0OMEYVcLmxlHPFzoODyc=
+			x8FS/RhLGS5xHuhAoLFYHK/l6Yqu+rXjvuL4ugwuRtE=
 			</data>
 		</dict>
 		<key>Resources/app_bundle/app/automation/__pycache__/facebook_detector.cpython-314.pyc</key>
 		<dict>
 			<key>hash2</key>
 			<data>
-			jfUjZT4dItG+b5/WD6zXP7YatCA9DkJw8U4FQD5PPqk=
+			lvjLYxKjrmzxUch/mLmT2z6sxoXa0CVYvibEvn5tJ3o=
 			</data>
 		</dict>
 		<key>Resources/app_bundle/app/automation/__pycache__/local_bridge_server.cpython-314.pyc</key>
 		<dict>
 			<key>hash2</key>
 			<data>
-			TUNQ8nB50KKDi0yTEyJtpBK99/T8o3g+JT4e3gXK8a0=
+			vfoqVfbDWbW40tCIvGGyBpexSSU6Kz+v+NGqYMsrv7M=
 			</data>
 		</dict>
 		<key>Resources/app_bundle/app/automation/__pycache__/profile_extractor.cpython-314.pyc</key>
 		<dict>
 			<key>hash2</key>
 			<data>
-			kdJvIQXQRsvKZnLT7r2rawqZ1mCzXehd10U1mpChEK0=
+			V/8wWtM0j520GGma2TdQsizn1R5NK6Wms4PLjXThH2M=
 			</data>
 		</dict>
 		<key>Resources/app_bundle/app/automation/__pycache__/scroll_controller.cpython-314.pyc</key>
 		<dict>
 			<key>hash2</key>
 			<data>
-			2bfirjsGQi4ghoxx5TosZw72ayvu20mqEJODsFbBVqY=
+			xgevdhgV7q2otMHI7U2Yi6NUMYG2mmY07E+GoafZMjw=
 			</data>
 		</dict>
 		<key>Resources/app_bundle/app/automation/__pycache__/share_list_detector.cpython-314.pyc</key>
 		<dict>
 			<key>hash2</key>
 			<data>
-			WW2Lc+igG9t26jL/p5VPzhoLXWc7eOSgsN4Ieb0jk1U=
+			UHLmP5mksfMokn6h8g0mqkdDNtsup1EkFbRF0YZvsC0=
 			</data>
 		</dict>
 		<key>Resources/app_bundle/app/automation/__pycache__/ui_inspector.cpython-314.pyc</key>
 		<dict>
 			<key>hash2</key>
 			<data>
-			gZKjLniY0LFvWAWS+eRezXVD96Yn4tOx5iCjc389KhQ=
+			FsSQ4zaxR4Jt2JdQw/l2gESRpF9PSYpTf/0GGYijos8=
 			</data>
 		</dict>
 		<key>Resources/app_bundle/app/automation/adb_controller.py</key>
@@ -9325,7 +9341,7 @@
 		<dict>
 			<key>hash2</key>
 			<data>
-			Fc+YTx6k/O/f8RRDXRdx463wEPytlZla5A4qrgQnrX0=
+			JjaRcw1W6qK3Fg0TxGzkfpCCXPk3sr4N/Vpc8H91pgw=
 			</data>
 		</dict>
 		<key>Resources/app_bundle/app/automation/collector_engine.py</key>
@@ -9339,7 +9355,7 @@
 		<dict>
 			<key>hash2</key>
 			<data>
-			8QNmX8KKqcgLCae5DaPWWLmJKB1U7AJkSsy1Z27lnrU=
+			GlT9eLML8/YA9TZ+Y6CGRINSbVzwsrJPqmfgsXBAjd8=
 			</data>
 		</dict>
 		<key>Resources/app_bundle/app/automation/facebook_detector.py</key>
@@ -9395,14 +9411,14 @@
 		<dict>
 			<key>hash2</key>
 			<data>
-			8OIQ0r+nO9gn+bvbCo4YpGbmPg8zlKlSUVHJkk4UjWQ=
+			PFFKSiOvndEXNuYIVZyoBgReNo+xD6UuTZMcBCk4yQ4=
 			</data>
 		</dict>
 		<key>Resources/app_bundle/app/config/__pycache__/settings.cpython-314.pyc</key>
 		<dict>
 			<key>hash2</key>
 			<data>
-			rtNsGNoOehdItrQHjQtdxKzUVJpniimV+RToEgh9ELI=
+			b+1asM/yYQukPKw3puA8MNY5Sm9l2l1g4YubaO4UMRg=
 			</data>
 		</dict>
 		<key>Resources/app_bundle/app/config/settings.py</key>
@@ -9423,21 +9439,21 @@
 		<dict>
 			<key>hash2</key>
 			<data>
-			AEQ2234/5ySPr0TfZ/Axi5niAceC5RTQCz+KRVSPP9Q=
+			nV6gIrqfAIcRxq3VsZXZdd5XEEBrqXf5iEiZfmj8SA4=
 			</data>
 		</dict>
 		<key>Resources/app_bundle/app/database/__pycache__/repository.cpython-314.pyc</key>
 		<dict>
 			<key>hash2</key>
 			<data>
-			eRTiuAXI34w269FBcp7KGw+wQnjw/4BA32ia2AoSql4=
+			mYZTHXrDPVIJEA0GFjsTCBVPayuqZVEblx15DRJ5Sc0=
 			</data>
 		</dict>
 		<key>Resources/app_bundle/app/database/repository.py</key>
 		<dict>
 			<key>hash2</key>
 			<data>
-			A/YxoNP5YuqEUkwCOUh2ntOZtAhm6b72xEAUKzF7VPE=
+			olP7Jaaa9qoKGHFphbwU2DVwmz+lcSw3J8UCu+OwG1U=
 			</data>
 		</dict>
 		<key>Resources/app_bundle/app/exporters/__init__.py</key>
@@ -9451,35 +9467,35 @@
 		<dict>
 			<key>hash2</key>
 			<data>
-			qcUL0Hz6JS1c+vrQKgVoH5HA2PYA7Tk1uozcpgcpViU=
+			yhPTVfXhcW21vkOL0jMfYpbUSTHT6uI9+Ho3cELGxM4=
 			</data>
 		</dict>
 		<key>Resources/app_bundle/app/exporters/__pycache__/csv_exporter.cpython-314.pyc</key>
 		<dict>
 			<key>hash2</key>
 			<data>
-			ZtU7ilSBAmZgFtyfM7RGQR+1zEDW1IxkyUsBCPYwSyM=
+			XzP2g27jk5wMJbaDGeECI9oxWfDb0x19fxauxrYimLM=
 			</data>
 		</dict>
 		<key>Resources/app_bundle/app/exporters/__pycache__/json_exporter.cpython-314.pyc</key>
 		<dict>
 			<key>hash2</key>
 			<data>
-			c3CIf0W8zjHf7wpcaE/yqwvFVP2lZw+zxEV0hjDZArM=
+			5eZKQFL2IUQXERWLkpqz4cjw9QmvlMw0m2phVdKVzTQ=
 			</data>
 		</dict>
 		<key>Resources/app_bundle/app/exporters/__pycache__/lottery_print_exporter.cpython-314.pyc</key>
 		<dict>
 			<key>hash2</key>
 			<data>
-			sAtVZaHWAhq45KYxzfV3N1//jDzbOY0EWKQPy60QetQ=
+			ulQghimiPVAoVAVE7hMrR+BGg69xxHUwehoZXMo2VKM=
 			</data>
 		</dict>
 		<key>Resources/app_bundle/app/exporters/__pycache__/xlsx_exporter.cpython-314.pyc</key>
 		<dict>
 			<key>hash2</key>
 			<data>
-			LL40IP7WIYt70XNjXGCsBT1QS5oiYHExhlqIUtfhLCE=
+			QOzu/eN0uNYD0OpthUeA8NhkvW6HanFw6uJiMgErx5c=
 			</data>
 		</dict>
 		<key>Resources/app_bundle/app/exporters/csv_exporter.py</key>
@@ -9500,7 +9516,7 @@
 		<dict>
 			<key>hash2</key>
 			<data>
-			ivLX15m9NOF2YoOnh7s4Cu01wC27ws/QYrWj+aTtAZA=
+			fVeOiVi4fJKKWKnlJTfZXjkfkcRdG2htRhUXT0dHsUs=
 			</data>
 		</dict>
 		<key>Resources/app_bundle/app/exporters/xlsx_exporter.py</key>
@@ -9521,42 +9537,42 @@
 		<dict>
 			<key>hash2</key>
 			<data>
-			xmq9b/QZZqJLjPHiMceYkrLR9DLeIuJB3RV0V+ExRfc=
+			0ZXKOzVcdHnelj8AJc/JooqGMFyiutYBwfpsWrpUaF0=
 			</data>
 		</dict>
 		<key>Resources/app_bundle/app/gui/__pycache__/collector_panel.cpython-314.pyc</key>
 		<dict>
 			<key>hash2</key>
 			<data>
-			naEris334bl/FqwlcD11kL39AXNTBTTuzJyJvE95c5M=
+			7Uk9668GJ6x7ndVHMT/CfZFB3BlymmZs2RS9yXzsHWE=
 			</data>
 		</dict>
 		<key>Resources/app_bundle/app/gui/__pycache__/device_panel.cpython-314.pyc</key>
 		<dict>
 			<key>hash2</key>
 			<data>
-			O7w6d2Y5nRcglB4oy8MPXjCkAnW/lcXXP2oQOKT/ma4=
+			Riu3fz/qwFUAz/itoWR5eZ226hiHo8uhbxGeEHXQbJw=
 			</data>
 		</dict>
 		<key>Resources/app_bundle/app/gui/__pycache__/logs_panel.cpython-314.pyc</key>
 		<dict>
 			<key>hash2</key>
 			<data>
-			Ixgkysg4qOBuS/tflH6EEmgS4im/j2q1GL1QkbhUZDw=
+			MTA+vsUNWUqT/qXRLekJ0FlI0+DY/mje+PVHOoETaOA=
 			</data>
 		</dict>
 		<key>Resources/app_bundle/app/gui/__pycache__/main_window.cpython-314.pyc</key>
 		<dict>
 			<key>hash2</key>
 			<data>
-			hyK/PE6jS4poQJXWBgwUXv5nWc/jNuay/soBZ1dpf14=
+			u03R9X/YJVozzBuO0rYxbhmD6C9h+SuKomVcs+IV4Gw=
 			</data>
 		</dict>
 		<key>Resources/app_bundle/app/gui/__pycache__/results_panel.cpython-314.pyc</key>
 		<dict>
 			<key>hash2</key>
 			<data>
-			1NiF5hYg4AUFBmJltQVfTlnTpA/5F/e4ijSm0En923M=
+			E2zsDho8KEVsK3ajfIHOchmgn8tiM+z0UtmBhQ2/k1M=
 			</data>
 		</dict>
 		<key>Resources/app_bundle/app/gui/__pycache__/session_manager_dialog.cpython-314.pyc</key>
@@ -9570,28 +9586,28 @@
 		<dict>
 			<key>hash2</key>
 			<data>
-			hQeQSWwRxgz/pgVxnKIoeZogIqMRFSM3f//rmAa3exU=
+			/SPgA+cCFLW5tY4QvI5rep1SYMDF5lrmPMaE3r5/sVY=
 			</data>
 		</dict>
 		<key>Resources/app_bundle/app/gui/collector_panel.py</key>
 		<dict>
 			<key>hash2</key>
 			<data>
-			xKrYqAD1ZJzX2lnysMPsHtmmiERrylCfcYxFIV7segE=
+			fDhRT9EUrlkcbY4ZWveFMFUCUSOkg81KAF7cpg/oHEM=
 			</data>
 		</dict>
 		<key>Resources/app_bundle/app/gui/custom_rule_dialog.py</key>
 		<dict>
 			<key>hash2</key>
 			<data>
-			osaXezs8XuypqHN0qB9OZq0pRCpd8sn5xCmb3nzMT/I=
+			md4F6JoNddFgRGMYAEBxjf0ta1Zwl+F+BrJrdds3SIQ=
 			</data>
 		</dict>
 		<key>Resources/app_bundle/app/gui/device_panel.py</key>
 		<dict>
 			<key>hash2</key>
 			<data>
-			T81M6/VtdCky97i7/cCfUWj1BzRzOq9TMyBqGlY0CrI=
+			4l8Qs+dapXKAgIYdQ++kW5hm57gNdCgj5RuYubkTb4A=
 			</data>
 		</dict>
 		<key>Resources/app_bundle/app/gui/live_lottery_dialog.py</key>
@@ -9612,21 +9628,21 @@
 		<dict>
 			<key>hash2</key>
 			<data>
-			SnsBgXkYmue2wgToEcabxIbAhsj0kexP2nZGx3IyoqY=
+			9lU2mzvagz9BBebMC3LFFwcMfYcfkbblQZ/nEOJzBxw=
 			</data>
 		</dict>
 		<key>Resources/app_bundle/app/gui/results_panel.py</key>
 		<dict>
 			<key>hash2</key>
 			<data>
-			PSo8qC6Moqxnpq6Yo8o3sr7Dmgsdm7OnHDKs5mAFMuY=
+			u4iNSZY/iOdhTvqX5Y7JD01Vv2YxgeXdU2nA4BODRog=
 			</data>
 		</dict>
 		<key>Resources/app_bundle/app/gui/session_manager_dialog.py</key>
 		<dict>
 			<key>hash2</key>
 			<data>
-			G61RckRVojHEZgqlF0vjD78R/pfpeAX/Ki7QhNY3zUY=
+			okvQag9bwwMRiJPwWAPboC80wV7xZPuITyTpb492RvU=
 			</data>
 		</dict>
 		<key>Resources/app_bundle/app/gui/sync_profile_panel.py</key>
@@ -9647,21 +9663,21 @@
 		<dict>
 			<key>hash2</key>
 			<data>
-			Go1D+Bfyndz2NLP/TuNJ5zkuQ16yuFXyXfFCVyhYP3U=
+			hAjqQo1hw7TqqUyNi158D8Wmr4/E/O8zUqqW/psKtM0=
 			</data>
 		</dict>
 		<key>Resources/app_bundle/app/models/__pycache__/collection_session.cpython-314.pyc</key>
 		<dict>
 			<key>hash2</key>
 			<data>
-			ZBe1itch03GwG5Jy04ZvG7DMH1G9C24TrPUZhnW89/0=
+			8fvaJd13uFC5KeHeHZUrBS6zVrJFjxBfdAA4tXinoiQ=
 			</data>
 		</dict>
 		<key>Resources/app_bundle/app/models/__pycache__/share_profile.cpython-314.pyc</key>
 		<dict>
 			<key>hash2</key>
 			<data>
-			ngO+h8wuG7cm6x7tJ0UBcUlivhk6wLqXuGe23wrBTKA=
+			ZK4NLx6/L3Z5AegrHk3Jcnvcial11rarMk6IZmPv+Ac=
 			</data>
 		</dict>
 		<key>Resources/app_bundle/app/models/collection_session.py</key>
@@ -9703,35 +9719,35 @@
 		<dict>
 			<key>hash2</key>
 			<data>
-			NxCi/WymJtZVknQ0axupeDJjvYOYcBj4eOBnEw2B89Y=
+			1NiEhpqUeaSDUFPxpG4dcgbCzOIR21TViKkd87HIPc8=
 			</data>
 		</dict>
 		<key>Resources/app_bundle/app/utils/__pycache__/advanced_filter_engine.cpython-314.pyc</key>
 		<dict>
 			<key>hash2</key>
 			<data>
-			2JRT456EZYSYM3AN+XG2bm9moZug3iXepE5gxwwva1U=
+			VJgH+qgdELTJrNxb4Exch/9H0GkGkOoqv8vt6tj6eok=
 			</data>
 		</dict>
 		<key>Resources/app_bundle/app/utils/__pycache__/avatar_fingerprint.cpython-314.pyc</key>
 		<dict>
 			<key>hash2</key>
 			<data>
-			C6qLBCgEvCw3h+fpMuZ/GJglnvTn3j9E2vBcuSptrgw=
+			xxABRvNhxluqP+Yc+oi9D4oejwr+V3m8vCNfqxgO//M=
 			</data>
 		</dict>
 		<key>Resources/app_bundle/app/utils/__pycache__/contest_validator.cpython-314.pyc</key>
 		<dict>
 			<key>hash2</key>
 			<data>
-			GScBMRlLNO+tF1n3IzKTSRAlSBw+HHX+8Qt+ePF75RI=
+			ZJloLz5i2LhSOJHKTeTYhuQ1PnfEayRrMq3Blo24BjQ=
 			</data>
 		</dict>
 		<key>Resources/app_bundle/app/utils/__pycache__/deduplicator.cpython-314.pyc</key>
 		<dict>
 			<key>hash2</key>
 			<data>
-			dvXKUJAAPV1KShlI5Z+ioUdTPS2+t2amlWT8TO1uvd8=
+			PYUDVkqFvd3OvfVZ/xiZa1zASZrlWHijXmm5a75ACQM=
 			</data>
 		</dict>
 		<key>Resources/app_bundle/app/utils/__pycache__/logger.cpython-314.pyc</key>
@@ -9745,28 +9761,42 @@
 		<dict>
 			<key>hash2</key>
 			<data>
-			O1dcKWvjdNhcpw0Oq0i7a1IsvZsV5te2p59l8ACetqw=
+			UnkcNQlhSNH6HT+l4YM95l6h121NFBIY8amDNvXMsoM=
 			</data>
 		</dict>
 		<key>Resources/app_bundle/app/utils/__pycache__/profile_sync_engine.cpython-314.pyc</key>
 		<dict>
 			<key>hash2</key>
 			<data>
-			kLUgWvv4r5kSJgyEqBsrPaA1CR23HJDBCI77Ajz1APg=
+			brAsHKSYnf21sM4WYuLTdfI6K/NRVljkDj3meIWKeEc=
+			</data>
+		</dict>
+		<key>Resources/app_bundle/app/utils/__pycache__/qr_code.cpython-314.pyc</key>
+		<dict>
+			<key>hash2</key>
+			<data>
+			dnsX46IOqazE2p1lXphV7lzJqdYyQLbiUbqT108BG5s=
+			</data>
+		</dict>
+		<key>Resources/app_bundle/app/utils/__pycache__/sentra_brand.cpython-314.pyc</key>
+		<dict>
+			<key>hash2</key>
+			<data>
+			Yz5EuegIeOWnJ2cC2OUxOzcUI6xaxcrj6/xetZVweR4=
 			</data>
 		</dict>
 		<key>Resources/app_bundle/app/utils/__pycache__/text_normalizer.cpython-314.pyc</key>
 		<dict>
 			<key>hash2</key>
 			<data>
-			wVlQXbSZo/FUjnsJMpGDLtcyXJzUW2IV9Y2N6qPaUSU=
+			RCBLuNwZtI2PFn9o2abdgpRhju2XgL1ywJH0Dv3Yyq8=
 			</data>
 		</dict>
 		<key>Resources/app_bundle/app/utils/__pycache__/url_normalizer.cpython-314.pyc</key>
 		<dict>
 			<key>hash2</key>
 			<data>
-			VoC9MQbtB0K5qZBT0lopIDgNTwI+AhcGP/NYdLpv+pU=
+			lVAe4FdKwSGne7VaNm8+IffCfNrIv/7/6cLoAUpi8jE=
 			</data>
 		</dict>
 		<key>Resources/app_bundle/app/utils/advanced_filter_engine.py</key>
@@ -9822,14 +9852,14 @@
 		<dict>
 			<key>hash2</key>
 			<data>
-			zotM93Bvqvxh/bi+/eJMowxqPNKCr9Phe4QbCe2iMCU=
+			3Z4o+nIMGSN7r5/NP8i56Oa+UeMObZcUt5+eKMy10n4=
 			</data>
 		</dict>
 		<key>Resources/app_bundle/app/utils/sentra_brand.py</key>
 		<dict>
 			<key>hash2</key>
 			<data>
-			kV7Ls2lODikBP92jJaEB8uCKuc2yPaGLNHGNAyAsITQ=
+			p9oMx8x2kqOf9PM6cF/e2UspAlEIuAJEyBZj2y5cuwk=
 			</data>
 		</dict>
 		<key>Resources/app_bundle/app/utils/text_normalizer.py</key>
@@ -9885,7 +9915,7 @@
 		<dict>
 			<key>hash2</key>
 			<data>
-			kBbWigTYhdAJ9HF5hcOe+LXTVqJ+mK+mrg0aObdeWCw=
+			/ED7b6oFrD/uaisnPWFhai0GFbPHHjrVx5u+pBCflxA=
 			</data>
 		</dict>
 		<key>Resources/app_bundle/browser_extension/content.js</key>
@@ -12524,14 +12554,14 @@
 		<dict>
 			<key>hash2</key>
 			<data>
-			uDDqgJmwTu5hLBiB4M5rDP9fswEEf/O1TbkOoFlPN/0=
+			5ATlv6OQrQ0uKkrDTwmSlULiqssMXER3i+JQajdKTn4=
 			</data>
 		</dict>
 		<key>Resources/app_bundle/data/facebook_lottery_tickets_2026-11-04_22-33.html</key>
 		<dict>
 			<key>hash2</key>
 			<data>
-			uDDqgJmwTu5hLBiB4M5rDP9fswEEf/O1TbkOoFlPN/0=
+			5ATlv6OQrQ0uKkrDTwmSlULiqssMXER3i+JQajdKTn4=
 			</data>
 		</dict>
 		<key>Resources/app_bundle/data/facebook_shares.sqlite</key>
@@ -12539,6 +12569,20 @@
 			<key>hash2</key>
 			<data>
 			ZmMhNi1LSwRFQ5Z6ACWxUj/EAPNFfNADHJLILlcOEKs=
+			</data>
+		</dict>
+		<key>Resources/app_bundle/data/known_devices.json</key>
+		<dict>
+			<key>hash2</key>
+			<data>
+			yGlG9Y+SN5jYSgLJpJ4r5fAEAiGcu1bceKnQNNUUItw=
+			</data>
+		</dict>
+		<key>Resources/app_bundle/data/sentra_lottery_tickets_latest.html</key>
+		<dict>
+			<key>hash2</key>
+			<data>
+			5ATlv6OQrQ0uKkrDTwmSlULiqssMXER3i+JQajdKTn4=
 			</data>
 		</dict>
 		<key>Resources/app_bundle/logs/app.log</key>
@@ -12552,7 +12596,7 @@
 		<dict>
 			<key>hash2</key>
 			<data>
-			dYo14TwUermtL8pq2gntkFEwvkAQYraPJ3PNg8qMR00=
+			IwJE1NOKzgUQJvYcuqkIE8fAuenJvfqltX7i9RtJOww=
 			</data>
 		</dict>
 		<key>Resources/app_bundle/run.py</key>

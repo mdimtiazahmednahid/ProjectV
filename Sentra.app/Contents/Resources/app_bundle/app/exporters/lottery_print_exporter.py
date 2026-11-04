@@ -223,7 +223,7 @@ class LotteryPrintExporter:
 <head>
 <meta charset="UTF-8">
 <meta name="google" content="notranslate">
-<title>Live Contest Lottery Tickets & Verification Sheet</title>
+<title>Sentra — Live Lottery Tickets & Verification Sheet</title>
 <style>
     * {{ box-sizing: border-box; }}
     body {{
@@ -668,11 +668,11 @@ class LotteryPrintExporter:
         }});
         const titleCountEl = document.getElementById("toolbarTicketCount");
         if (titleCountEl) {{
-            titleCountEl.textContent = "Contest Lottery Slips (" + visibleCount + " Tickets)";
+            titleCountEl.textContent = "Sentra Lottery Slips (" + visibleCount + " Tickets)";
         }}
         const sheetCountEl = document.getElementById("sheetTicketCount");
         if (sheetCountEl) {{
-            sheetCountEl.textContent = "Verification Sheet (" + visibleCount + " Contestants)";
+            sheetCountEl.textContent = "Sentra Verification Sheet (" + visibleCount + " Contestants)";
         }}
     }}
     function setBorderStyle(styleVal) {{
@@ -738,7 +738,7 @@ class LotteryPrintExporter:
             {get_sentra_logo_svg(size=28, bg_fill="#0b1120")}
             <span style="font-weight:800;letter-spacing:1px;font-size:15px;">SENTRA</span>
             <span style="opacity:0.65;">|</span>
-            <strong id="toolbarTicketCount">Contest Lottery Slips ({initial_visible_count} Tickets)</strong>
+            <strong id="toolbarTicketCount">Sentra Lottery Slips ({initial_visible_count} Tickets)</strong>
             <span style="font-size:12px;opacity:0.9;margin-left:4px;">({generated_at})</span>
         </div>
         <div class="toolbar-controls">
@@ -795,7 +795,7 @@ class LotteryPrintExporter:
     </div>
 
     <div class="judge-sheet-section">
-        <h3 id="sheetTicketCount" style="margin:0 0 8px 0;">Verification Sheet ({initial_visible_count} Contestants)</h3>
+        <h3 id="sheetTicketCount" style="margin:0 0 8px 0;">Sentra Verification Sheet ({initial_visible_count} Contestants)</h3>
         <table>
             <thead>
                 <tr>

@@ -16,7 +16,7 @@ APP_DESCRIPTION = (
     "into structured, measurable insight."
 )
 APP_PILLARS = "OBSERVE. UNDERSTAND. DISCOVER."
-APP_WINDOW_TITLE = "Sentra — Public Data Intelligence & Contest Validator (Every signal has a story)"
+APP_WINDOW_TITLE = "Sentra — Every signal has a story. | Public Data Intelligence Platform"
 
 
 def get_sentra_logo_svg(size: int = 36, stroke_color: str = "#38bdf8", bg_fill: str = "none") -> str:

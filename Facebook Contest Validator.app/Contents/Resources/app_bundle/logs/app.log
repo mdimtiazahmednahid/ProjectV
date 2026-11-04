@@ -24,3 +24,545 @@
 23:04:10 INFO app.gui.main_window Started fresh contest session 476faf4d.
 23:44:11 INFO __main__ Starting Sentra — Public Data Intelligence & Contest Validator...
 23:44:11 INFO app.automation.local_bridge_server Local HTTP Extension Bridge listening on http://127.0.0.1:19876/batch
+00:12:28 INFO __main__ Starting Sentra — Public Data Intelligence & Contest Validator...
+00:12:28 INFO app.automation.local_bridge_server Local HTTP Extension Bridge listening on http://127.0.0.1:19876/batch
+00:17:58 INFO app.automation.adb_controller Connected to R87Y6002DSX via Direct ADB Mode (Screen: 720x1600).
+00:20:40 INFO app.automation.adb_controller Connected to R87Y6002DSX via Direct ADB Mode (Screen: 720x1600).
+00:21:51 INFO app.gui.main_window Starting collection for action: SHARE
+00:21:57 DEBUG app.automation.profile_extractor Extracted 14 'share' candidates from source (window=unknown).
+00:22:04 DEBUG app.automation.profile_extractor Extracted 14 'share' candidates from source (window=unknown).
+00:22:11 DEBUG app.automation.profile_extractor Extracted 14 'share' candidates from source (window=unknown).
+00:22:17 DEBUG app.automation.profile_extractor Extracted 13 'share' candidates from source (window=unknown).
+00:22:17 INFO app.exporters.csv_exporter Successfully exported 25 profiles to /Users/MacBookPro/Downloads/ShareExtractor-main 2/Facebook Contest Validator.app/Contents/Resources/app_bundle/data/autosave.csv
+00:22:17 INFO app.gui.main_window Auto-saved raw profiles to /Users/MacBookPro/Downloads/ShareExtractor-main 2/Facebook Contest Validator.app/Contents/Resources/app_bundle/data/autosave.csv
+00:22:17 INFO app.exporters.csv_exporter Successfully exported 25 contest participants to /Users/MacBookPro/Downloads/ShareExtractor-main 2/Facebook Contest Validator.app/Contents/Resources/app_bundle/data/autosave_contest.csv
+00:22:17 INFO app.gui.main_window Auto-saved contest validation to /Users/MacBookPro/Downloads/ShareExtractor-main 2/Facebook Contest Validator.app/Contents/Resources/app_bundle/data/autosave_contest.csv
+00:22:24 DEBUG app.automation.profile_extractor Extracted 13 'share' candidates from source (window=unknown).
+00:22:31 DEBUG app.automation.profile_extractor Extracted 14 'share' candidates from source (window=unknown).
+00:22:31 INFO app.gui.main_window Opened Bookmarklet setup page: /Users/MacBookPro/Downloads/ShareExtractor-main 2/Facebook Contest Validator.app/Contents/Resources/app_bundle/browser_extension/bookmarklet.html
+00:22:37 DEBUG app.automation.profile_extractor Extracted 15 'share' candidates from source (window=unknown).
+00:22:44 DEBUG app.automation.profile_extractor Extracted 14 'share' candidates from source (window=unknown).
+00:22:44 INFO app.exporters.csv_exporter Successfully exported 47 profiles to /Users/MacBookPro/Downloads/ShareExtractor-main 2/Facebook Contest Validator.app/Contents/Resources/app_bundle/data/autosave.csv
+00:22:44 INFO app.gui.main_window Auto-saved raw profiles to /Users/MacBookPro/Downloads/ShareExtractor-main 2/Facebook Contest Validator.app/Contents/Resources/app_bundle/data/autosave.csv
+00:22:44 INFO app.exporters.csv_exporter Successfully exported 47 contest participants to /Users/MacBookPro/Downloads/ShareExtractor-main 2/Facebook Contest Validator.app/Contents/Resources/app_bundle/data/autosave_contest.csv
+00:22:44 INFO app.gui.main_window Auto-saved contest validation to /Users/MacBookPro/Downloads/ShareExtractor-main 2/Facebook Contest Validator.app/Contents/Resources/app_bundle/data/autosave_contest.csv
+00:22:51 DEBUG app.automation.profile_extractor Extracted 14 'share' candidates from source (window=unknown).
+00:22:57 DEBUG app.automation.profile_extractor Extracted 14 'share' candidates from source (window=unknown).
+00:23:04 DEBUG app.automation.profile_extractor Extracted 14 'share' candidates from source (window=unknown).
+00:23:04 INFO app.exporters.csv_exporter Successfully exported 66 profiles to /Users/MacBookPro/Downloads/ShareExtractor-main 2/Facebook Contest Validator.app/Contents/Resources/app_bundle/data/autosave.csv
+00:23:04 INFO app.gui.main_window Auto-saved raw profiles to /Users/MacBookPro/Downloads/ShareExtractor-main 2/Facebook Contest Validator.app/Contents/Resources/app_bundle/data/autosave.csv
+00:23:04 INFO app.exporters.csv_exporter Successfully exported 63 contest participants to /Users/MacBookPro/Downloads/ShareExtractor-main 2/Facebook Contest Validator.app/Contents/Resources/app_bundle/data/autosave_contest.csv
+00:23:04 INFO app.gui.main_window Auto-saved contest validation to /Users/MacBookPro/Downloads/ShareExtractor-main 2/Facebook Contest Validator.app/Contents/Resources/app_bundle/data/autosave_contest.csv
+00:23:11 DEBUG app.automation.profile_extractor Extracted 14 'share' candidates from source (window=unknown).
+00:23:15 INFO app.automation.facebook_detector Current foreground app is , expecting com.facebook.katana
+00:23:15 WARNING app.gui.main_window Collection notice: Facebook is not in the foreground on the connected device.
+00:23:15 INFO app.exporters.csv_exporter Successfully exported 73 profiles to /Users/MacBookPro/Downloads/ShareExtractor-main 2/Facebook Contest Validator.app/Contents/Resources/app_bundle/data/autosave.csv
+00:23:15 INFO app.gui.main_window Auto-saved raw profiles to /Users/MacBookPro/Downloads/ShareExtractor-main 2/Facebook Contest Validator.app/Contents/Resources/app_bundle/data/autosave.csv
+00:23:15 INFO app.exporters.csv_exporter Successfully exported 73 contest participants to /Users/MacBookPro/Downloads/ShareExtractor-main 2/Facebook Contest Validator.app/Contents/Resources/app_bundle/data/autosave_contest.csv
+00:23:15 INFO app.gui.main_window Auto-saved contest validation to /Users/MacBookPro/Downloads/ShareExtractor-main 2/Facebook Contest Validator.app/Contents/Resources/app_bundle/data/autosave_contest.csv
+00:23:15 INFO app.gui.main_window Session 1eed092a-0768-4a57-9224-4591b54ab39b step completed. Total raw profiles: 167
+00:23:25 INFO app.automation.adb_controller Connected to R87Y6002DSX via Direct ADB Mode (Screen: 720x1600).
+00:23:28 INFO app.exporters.csv_exporter Successfully exported 83 profiles to /Users/MacBookPro/Downloads/ShareExtractor-main 2/Facebook Contest Validator.app/Contents/Resources/app_bundle/data/autosave.csv
+00:23:28 INFO app.gui.main_window Auto-saved raw profiles to /Users/MacBookPro/Downloads/ShareExtractor-main 2/Facebook Contest Validator.app/Contents/Resources/app_bundle/data/autosave.csv
+00:23:28 INFO app.exporters.csv_exporter Successfully exported 80 contest participants to /Users/MacBookPro/Downloads/ShareExtractor-main 2/Facebook Contest Validator.app/Contents/Resources/app_bundle/data/autosave_contest.csv
+00:23:28 INFO app.gui.main_window Auto-saved contest validation to /Users/MacBookPro/Downloads/ShareExtractor-main 2/Facebook Contest Validator.app/Contents/Resources/app_bundle/data/autosave_contest.csv
+00:23:28 INFO app.gui.main_window Auto-imported Browser Extension batch '1793816608053_0ovlqu' (10 profiles with links; 6 hybrid records synced).
+00:23:58 INFO app.gui.main_window Starting collection for action: SHARE
+00:24:02 DEBUG app.automation.profile_extractor Extracted 14 'share' candidates from source (window=unknown).
+00:24:11 DEBUG app.automation.profile_extractor Extracted 14 'share' candidates from source (window=unknown).
+00:24:14 INFO app.exporters.csv_exporter Successfully exported 88 profiles to /Users/MacBookPro/Downloads/ShareExtractor-main 2/Facebook Contest Validator.app/Contents/Resources/app_bundle/data/autosave.csv
+00:24:14 INFO app.gui.main_window Auto-saved raw profiles to /Users/MacBookPro/Downloads/ShareExtractor-main 2/Facebook Contest Validator.app/Contents/Resources/app_bundle/data/autosave.csv
+00:24:14 INFO app.exporters.csv_exporter Successfully exported 89 contest participants to /Users/MacBookPro/Downloads/ShareExtractor-main 2/Facebook Contest Validator.app/Contents/Resources/app_bundle/data/autosave_contest.csv
+00:24:14 INFO app.gui.main_window Auto-saved contest validation to /Users/MacBookPro/Downloads/ShareExtractor-main 2/Facebook Contest Validator.app/Contents/Resources/app_bundle/data/autosave_contest.csv
+00:24:14 INFO app.gui.main_window Session 1eed092a-0768-4a57-9224-4591b54ab39b step completed. Total raw profiles: 111
+00:24:18 INFO app.exporters.csv_exporter Successfully exported 88 profiles to /Users/MacBookPro/Downloads/ShareExtractor-main 2/Facebook Contest Validator.app/Contents/Resources/app_bundle/data/autosave.csv
+00:24:18 INFO app.gui.main_window Auto-saved raw profiles to /Users/MacBookPro/Downloads/ShareExtractor-main 2/Facebook Contest Validator.app/Contents/Resources/app_bundle/data/autosave.csv
+00:24:18 INFO app.exporters.csv_exporter Successfully exported 89 contest participants to /Users/MacBookPro/Downloads/ShareExtractor-main 2/Facebook Contest Validator.app/Contents/Resources/app_bundle/data/autosave_contest.csv
+00:24:18 INFO app.gui.main_window Auto-saved contest validation to /Users/MacBookPro/Downloads/ShareExtractor-main 2/Facebook Contest Validator.app/Contents/Resources/app_bundle/data/autosave_contest.csv
+00:24:18 INFO app.gui.main_window Loaded & synced 88 unique raw records (0 enriched with URLs) across 3 session(s).
+00:24:23 INFO app.gui.main_window Started fresh contest session 08c59b0b.
+00:24:28 INFO app.gui.main_window Starting collection for action: SHARE
+00:24:31 DEBUG app.automation.profile_extractor Extracted 14 'share' candidates from source (window=unknown).
+00:24:38 INFO app.exporters.csv_exporter Successfully exported 56 profiles to /Users/MacBookPro/Downloads/ShareExtractor-main 2/Facebook Contest Validator.app/Contents/Resources/app_bundle/data/autosave.csv
+00:24:38 INFO app.gui.main_window Auto-saved raw profiles to /Users/MacBookPro/Downloads/ShareExtractor-main 2/Facebook Contest Validator.app/Contents/Resources/app_bundle/data/autosave.csv
+00:24:38 INFO app.exporters.csv_exporter Successfully exported 51 contest participants to /Users/MacBookPro/Downloads/ShareExtractor-main 2/Facebook Contest Validator.app/Contents/Resources/app_bundle/data/autosave_contest.csv
+00:24:38 INFO app.gui.main_window Auto-saved contest validation to /Users/MacBookPro/Downloads/ShareExtractor-main 2/Facebook Contest Validator.app/Contents/Resources/app_bundle/data/autosave_contest.csv
+00:24:38 INFO app.gui.main_window Auto-imported Browser Extension batch '1793816677597_jk6g5l' (42 profiles with links; 8 hybrid records synced).
+00:24:38 DEBUG app.automation.profile_extractor Extracted 14 'share' candidates from source (window=unknown).
+00:24:41 INFO app.exporters.csv_exporter Successfully exported 72 profiles to /Users/MacBookPro/Downloads/ShareExtractor-main 2/Facebook Contest Validator.app/Contents/Resources/app_bundle/data/autosave.csv
+00:24:41 INFO app.gui.main_window Auto-saved raw profiles to /Users/MacBookPro/Downloads/ShareExtractor-main 2/Facebook Contest Validator.app/Contents/Resources/app_bundle/data/autosave.csv
+00:24:41 INFO app.exporters.csv_exporter Successfully exported 67 contest participants to /Users/MacBookPro/Downloads/ShareExtractor-main 2/Facebook Contest Validator.app/Contents/Resources/app_bundle/data/autosave_contest.csv
+00:24:41 INFO app.gui.main_window Auto-saved contest validation to /Users/MacBookPro/Downloads/ShareExtractor-main 2/Facebook Contest Validator.app/Contents/Resources/app_bundle/data/autosave_contest.csv
+00:24:41 INFO app.gui.main_window Auto-imported Browser Extension batch '1793816680681_7bz9i5' (10 profiles with links; 0 hybrid records synced).
+00:24:45 DEBUG app.automation.profile_extractor Extracted 13 'share' candidates from source (window=unknown).
+00:24:51 DEBUG app.automation.profile_extractor Extracted 13 'share' candidates from source (window=unknown).
+00:24:51 INFO app.exporters.csv_exporter Successfully exported 78 profiles to /Users/MacBookPro/Downloads/ShareExtractor-main 2/Facebook Contest Validator.app/Contents/Resources/app_bundle/data/autosave.csv
+00:24:51 INFO app.gui.main_window Auto-saved raw profiles to /Users/MacBookPro/Downloads/ShareExtractor-main 2/Facebook Contest Validator.app/Contents/Resources/app_bundle/data/autosave.csv
+00:24:51 INFO app.exporters.csv_exporter Successfully exported 69 contest participants to /Users/MacBookPro/Downloads/ShareExtractor-main 2/Facebook Contest Validator.app/Contents/Resources/app_bundle/data/autosave_contest.csv
+00:24:51 INFO app.gui.main_window Auto-saved contest validation to /Users/MacBookPro/Downloads/ShareExtractor-main 2/Facebook Contest Validator.app/Contents/Resources/app_bundle/data/autosave_contest.csv
+00:24:58 DEBUG app.automation.profile_extractor Extracted 14 'share' candidates from source (window=unknown).
+00:25:04 DEBUG app.automation.profile_extractor Extracted 14 'share' candidates from source (window=unknown).
+00:25:11 DEBUG app.automation.profile_extractor Extracted 14 'share' candidates from source (window=unknown).
+00:25:18 DEBUG app.automation.profile_extractor Extracted 14 'share' candidates from source (window=unknown).
+00:25:18 INFO app.exporters.csv_exporter Successfully exported 99 profiles to /Users/MacBookPro/Downloads/ShareExtractor-main 2/Facebook Contest Validator.app/Contents/Resources/app_bundle/data/autosave.csv
+00:25:18 INFO app.gui.main_window Auto-saved raw profiles to /Users/MacBookPro/Downloads/ShareExtractor-main 2/Facebook Contest Validator.app/Contents/Resources/app_bundle/data/autosave.csv
+00:25:18 INFO app.exporters.csv_exporter Successfully exported 88 contest participants to /Users/MacBookPro/Downloads/ShareExtractor-main 2/Facebook Contest Validator.app/Contents/Resources/app_bundle/data/autosave_contest.csv
+00:25:18 INFO app.gui.main_window Auto-saved contest validation to /Users/MacBookPro/Downloads/ShareExtractor-main 2/Facebook Contest Validator.app/Contents/Resources/app_bundle/data/autosave_contest.csv
+00:25:25 DEBUG app.automation.profile_extractor Extracted 14 'share' candidates from source (window=unknown).
+00:25:31 DEBUG app.automation.profile_extractor Extracted 14 'share' candidates from source (window=unknown).
+00:25:38 DEBUG app.automation.profile_extractor Extracted 14 'share' candidates from source (window=unknown).
+00:25:38 INFO app.exporters.csv_exporter Successfully exported 119 profiles to /Users/MacBookPro/Downloads/ShareExtractor-main 2/Facebook Contest Validator.app/Contents/Resources/app_bundle/data/autosave.csv
+00:25:38 INFO app.gui.main_window Auto-saved raw profiles to /Users/MacBookPro/Downloads/ShareExtractor-main 2/Facebook Contest Validator.app/Contents/Resources/app_bundle/data/autosave.csv
+00:25:38 INFO app.exporters.csv_exporter Successfully exported 103 contest participants to /Users/MacBookPro/Downloads/ShareExtractor-main 2/Facebook Contest Validator.app/Contents/Resources/app_bundle/data/autosave_contest.csv
+00:25:38 INFO app.gui.main_window Auto-saved contest validation to /Users/MacBookPro/Downloads/ShareExtractor-main 2/Facebook Contest Validator.app/Contents/Resources/app_bundle/data/autosave_contest.csv
+00:25:44 DEBUG app.automation.profile_extractor Extracted 14 'share' candidates from source (window=unknown).
+00:25:50 DEBUG app.automation.profile_extractor Extracted 14 'share' candidates from source (window=unknown).
+00:25:57 DEBUG app.automation.profile_extractor Extracted 14 'share' candidates from source (window=unknown).
+00:26:04 DEBUG app.automation.profile_extractor Extracted 14 'share' candidates from source (window=unknown).
+00:26:04 INFO app.exporters.csv_exporter Successfully exported 137 profiles to /Users/MacBookPro/Downloads/ShareExtractor-main 2/Facebook Contest Validator.app/Contents/Resources/app_bundle/data/autosave.csv
+00:26:04 INFO app.gui.main_window Auto-saved raw profiles to /Users/MacBookPro/Downloads/ShareExtractor-main 2/Facebook Contest Validator.app/Contents/Resources/app_bundle/data/autosave.csv
+00:26:04 INFO app.exporters.csv_exporter Successfully exported 122 contest participants to /Users/MacBookPro/Downloads/ShareExtractor-main 2/Facebook Contest Validator.app/Contents/Resources/app_bundle/data/autosave_contest.csv
+00:26:04 INFO app.gui.main_window Auto-saved contest validation to /Users/MacBookPro/Downloads/ShareExtractor-main 2/Facebook Contest Validator.app/Contents/Resources/app_bundle/data/autosave_contest.csv
+00:26:10 DEBUG app.automation.profile_extractor Extracted 14 'share' candidates from source (window=unknown).
+00:26:17 DEBUG app.automation.profile_extractor Extracted 14 'share' candidates from source (window=unknown).
+00:26:23 DEBUG app.automation.profile_extractor Extracted 14 'share' candidates from source (window=unknown).
+00:26:23 INFO app.exporters.csv_exporter Successfully exported 159 profiles to /Users/MacBookPro/Downloads/ShareExtractor-main 2/Facebook Contest Validator.app/Contents/Resources/app_bundle/data/autosave.csv
+00:26:23 INFO app.gui.main_window Auto-saved raw profiles to /Users/MacBookPro/Downloads/ShareExtractor-main 2/Facebook Contest Validator.app/Contents/Resources/app_bundle/data/autosave.csv
+00:26:23 INFO app.exporters.csv_exporter Successfully exported 137 contest participants to /Users/MacBookPro/Downloads/ShareExtractor-main 2/Facebook Contest Validator.app/Contents/Resources/app_bundle/data/autosave_contest.csv
+00:26:23 INFO app.gui.main_window Auto-saved contest validation to /Users/MacBookPro/Downloads/ShareExtractor-main 2/Facebook Contest Validator.app/Contents/Resources/app_bundle/data/autosave_contest.csv
+00:26:30 DEBUG app.automation.profile_extractor Extracted 14 'share' candidates from source (window=unknown).
+00:26:37 DEBUG app.automation.profile_extractor Extracted 14 'share' candidates from source (window=unknown).
+00:26:43 DEBUG app.automation.profile_extractor Extracted 14 'share' candidates from source (window=unknown).
+00:26:50 DEBUG app.automation.profile_extractor Extracted 14 'share' candidates from source (window=unknown).
+00:26:50 INFO app.exporters.csv_exporter Successfully exported 173 profiles to /Users/MacBookPro/Downloads/ShareExtractor-main 2/Facebook Contest Validator.app/Contents/Resources/app_bundle/data/autosave.csv
+00:26:50 INFO app.gui.main_window Auto-saved raw profiles to /Users/MacBookPro/Downloads/ShareExtractor-main 2/Facebook Contest Validator.app/Contents/Resources/app_bundle/data/autosave.csv
+00:26:50 INFO app.exporters.csv_exporter Successfully exported 155 contest participants to /Users/MacBookPro/Downloads/ShareExtractor-main 2/Facebook Contest Validator.app/Contents/Resources/app_bundle/data/autosave_contest.csv
+00:26:50 INFO app.gui.main_window Auto-saved contest validation to /Users/MacBookPro/Downloads/ShareExtractor-main 2/Facebook Contest Validator.app/Contents/Resources/app_bundle/data/autosave_contest.csv
+00:26:57 DEBUG app.automation.profile_extractor Extracted 14 'share' candidates from source (window=unknown).
+00:27:04 DEBUG app.automation.profile_extractor Extracted 14 'share' candidates from source (window=unknown).
+00:27:11 DEBUG app.automation.profile_extractor Extracted 14 'share' candidates from source (window=unknown).
+00:27:17 DEBUG app.automation.profile_extractor Extracted 14 'share' candidates from source (window=unknown).
+00:27:17 INFO app.exporters.csv_exporter Successfully exported 194 profiles to /Users/MacBookPro/Downloads/ShareExtractor-main 2/Facebook Contest Validator.app/Contents/Resources/app_bundle/data/autosave.csv
+00:27:17 INFO app.gui.main_window Auto-saved raw profiles to /Users/MacBookPro/Downloads/ShareExtractor-main 2/Facebook Contest Validator.app/Contents/Resources/app_bundle/data/autosave.csv
+00:27:17 INFO app.exporters.csv_exporter Successfully exported 173 contest participants to /Users/MacBookPro/Downloads/ShareExtractor-main 2/Facebook Contest Validator.app/Contents/Resources/app_bundle/data/autosave_contest.csv
+00:27:17 INFO app.gui.main_window Auto-saved contest validation to /Users/MacBookPro/Downloads/ShareExtractor-main 2/Facebook Contest Validator.app/Contents/Resources/app_bundle/data/autosave_contest.csv
+00:27:24 DEBUG app.automation.profile_extractor Extracted 14 'share' candidates from source (window=unknown).
+00:27:30 DEBUG app.automation.profile_extractor Extracted 14 'share' candidates from source (window=unknown).
+00:27:37 DEBUG app.automation.profile_extractor Extracted 14 'share' candidates from source (window=unknown).
+00:27:37 INFO app.exporters.csv_exporter Successfully exported 211 profiles to /Users/MacBookPro/Downloads/ShareExtractor-main 2/Facebook Contest Validator.app/Contents/Resources/app_bundle/data/autosave.csv
+00:27:37 INFO app.gui.main_window Auto-saved raw profiles to /Users/MacBookPro/Downloads/ShareExtractor-main 2/Facebook Contest Validator.app/Contents/Resources/app_bundle/data/autosave.csv
+00:27:37 INFO app.exporters.csv_exporter Successfully exported 185 contest participants to /Users/MacBookPro/Downloads/ShareExtractor-main 2/Facebook Contest Validator.app/Contents/Resources/app_bundle/data/autosave_contest.csv
+00:27:37 INFO app.gui.main_window Auto-saved contest validation to /Users/MacBookPro/Downloads/ShareExtractor-main 2/Facebook Contest Validator.app/Contents/Resources/app_bundle/data/autosave_contest.csv
+00:27:44 DEBUG app.automation.profile_extractor Extracted 14 'share' candidates from source (window=unknown).
+00:27:50 DEBUG app.automation.profile_extractor Extracted 14 'share' candidates from source (window=unknown).
+00:27:57 DEBUG app.automation.profile_extractor Extracted 14 'share' candidates from source (window=unknown).
+00:28:02 INFO app.exporters.csv_exporter Successfully exported 282 profiles to /Users/MacBookPro/Downloads/ShareExtractor-main 2/Facebook Contest Validator.app/Contents/Resources/app_bundle/data/autosave.csv
+00:28:02 INFO app.gui.main_window Auto-saved raw profiles to /Users/MacBookPro/Downloads/ShareExtractor-main 2/Facebook Contest Validator.app/Contents/Resources/app_bundle/data/autosave.csv
+00:28:02 INFO app.exporters.csv_exporter Successfully exported 227 contest participants to /Users/MacBookPro/Downloads/ShareExtractor-main 2/Facebook Contest Validator.app/Contents/Resources/app_bundle/data/autosave_contest.csv
+00:28:02 INFO app.gui.main_window Auto-saved contest validation to /Users/MacBookPro/Downloads/ShareExtractor-main 2/Facebook Contest Validator.app/Contents/Resources/app_bundle/data/autosave_contest.csv
+00:28:02 INFO app.gui.main_window Auto-imported Browser Extension batch '1793816881751_vncigo' (104 profiles with links; 95 hybrid records synced).
+00:28:04 DEBUG app.automation.profile_extractor Extracted 13 'share' candidates from source (window=unknown).
+00:28:04 INFO app.exporters.csv_exporter Successfully exported 282 profiles to /Users/MacBookPro/Downloads/ShareExtractor-main 2/Facebook Contest Validator.app/Contents/Resources/app_bundle/data/autosave.csv
+00:28:04 INFO app.gui.main_window Auto-saved raw profiles to /Users/MacBookPro/Downloads/ShareExtractor-main 2/Facebook Contest Validator.app/Contents/Resources/app_bundle/data/autosave.csv
+00:28:04 INFO app.exporters.csv_exporter Successfully exported 227 contest participants to /Users/MacBookPro/Downloads/ShareExtractor-main 2/Facebook Contest Validator.app/Contents/Resources/app_bundle/data/autosave_contest.csv
+00:28:04 INFO app.gui.main_window Auto-saved contest validation to /Users/MacBookPro/Downloads/ShareExtractor-main 2/Facebook Contest Validator.app/Contents/Resources/app_bundle/data/autosave_contest.csv
+00:28:10 DEBUG app.automation.profile_extractor Extracted 13 'share' candidates from source (window=unknown).
+00:28:17 DEBUG app.automation.profile_extractor Extracted 14 'share' candidates from source (window=unknown).
+00:28:23 DEBUG app.automation.profile_extractor Extracted 14 'share' candidates from source (window=unknown).
+00:28:23 INFO app.exporters.csv_exporter Successfully exported 303 profiles to /Users/MacBookPro/Downloads/ShareExtractor-main 2/Facebook Contest Validator.app/Contents/Resources/app_bundle/data/autosave.csv
+00:28:23 INFO app.gui.main_window Auto-saved raw profiles to /Users/MacBookPro/Downloads/ShareExtractor-main 2/Facebook Contest Validator.app/Contents/Resources/app_bundle/data/autosave.csv
+00:28:23 INFO app.exporters.csv_exporter Successfully exported 237 contest participants to /Users/MacBookPro/Downloads/ShareExtractor-main 2/Facebook Contest Validator.app/Contents/Resources/app_bundle/data/autosave_contest.csv
+00:28:23 INFO app.gui.main_window Auto-saved contest validation to /Users/MacBookPro/Downloads/ShareExtractor-main 2/Facebook Contest Validator.app/Contents/Resources/app_bundle/data/autosave_contest.csv
+00:28:29 DEBUG app.automation.profile_extractor Extracted 14 'share' candidates from source (window=unknown).
+00:28:36 DEBUG app.automation.profile_extractor Extracted 14 'share' candidates from source (window=unknown).
+00:28:43 DEBUG app.automation.profile_extractor Extracted 14 'share' candidates from source (window=unknown).
+00:28:46 INFO app.exporters.csv_exporter Successfully exported 325 profiles to /Users/MacBookPro/Downloads/ShareExtractor-main 2/Facebook Contest Validator.app/Contents/Resources/app_bundle/data/autosave.csv
+00:28:46 INFO app.gui.main_window Auto-saved raw profiles to /Users/MacBookPro/Downloads/ShareExtractor-main 2/Facebook Contest Validator.app/Contents/Resources/app_bundle/data/autosave.csv
+00:28:46 INFO app.exporters.csv_exporter Successfully exported 256 contest participants to /Users/MacBookPro/Downloads/ShareExtractor-main 2/Facebook Contest Validator.app/Contents/Resources/app_bundle/data/autosave_contest.csv
+00:28:46 INFO app.gui.main_window Auto-saved contest validation to /Users/MacBookPro/Downloads/ShareExtractor-main 2/Facebook Contest Validator.app/Contents/Resources/app_bundle/data/autosave_contest.csv
+00:28:46 INFO app.gui.main_window Auto-imported Browser Extension batch '1793816925455_4grsv7' (115 profiles with links; 25 hybrid records synced).
+00:28:49 DEBUG app.automation.profile_extractor Extracted 14 'share' candidates from source (window=unknown).
+00:28:50 INFO app.exporters.csv_exporter Successfully exported 325 profiles to /Users/MacBookPro/Downloads/ShareExtractor-main 2/Facebook Contest Validator.app/Contents/Resources/app_bundle/data/autosave.csv
+00:28:50 INFO app.gui.main_window Auto-saved raw profiles to /Users/MacBookPro/Downloads/ShareExtractor-main 2/Facebook Contest Validator.app/Contents/Resources/app_bundle/data/autosave.csv
+00:28:50 INFO app.exporters.csv_exporter Successfully exported 256 contest participants to /Users/MacBookPro/Downloads/ShareExtractor-main 2/Facebook Contest Validator.app/Contents/Resources/app_bundle/data/autosave_contest.csv
+00:28:50 INFO app.gui.main_window Auto-saved contest validation to /Users/MacBookPro/Downloads/ShareExtractor-main 2/Facebook Contest Validator.app/Contents/Resources/app_bundle/data/autosave_contest.csv
+00:28:52 INFO app.automation.adb_controller Connected to R87Y6002DSX via Direct ADB Mode (Screen: 720x1600).
+00:28:56 DEBUG app.automation.profile_extractor Extracted 14 'share' candidates from source (window=unknown).
+00:28:59 INFO app.gui.main_window Starting collection for action: SHARE
+00:28:59 INFO app.exporters.csv_exporter Successfully exported 336 profiles to /Users/MacBookPro/Downloads/ShareExtractor-main 2/Facebook Contest Validator.app/Contents/Resources/app_bundle/data/autosave.csv
+00:28:59 INFO app.gui.main_window Auto-saved raw profiles to /Users/MacBookPro/Downloads/ShareExtractor-main 2/Facebook Contest Validator.app/Contents/Resources/app_bundle/data/autosave.csv
+00:28:59 INFO app.exporters.csv_exporter Successfully exported 263 contest participants to /Users/MacBookPro/Downloads/ShareExtractor-main 2/Facebook Contest Validator.app/Contents/Resources/app_bundle/data/autosave_contest.csv
+00:28:59 INFO app.gui.main_window Auto-saved contest validation to /Users/MacBookPro/Downloads/ShareExtractor-main 2/Facebook Contest Validator.app/Contents/Resources/app_bundle/data/autosave_contest.csv
+00:28:59 INFO app.gui.main_window Session 08c59b0b-16bc-45e6-bc9d-eaa10226168b step completed. Total raw profiles: 353
+00:29:03 DEBUG app.automation.profile_extractor Extracted 13 'share' candidates from source (window=unknown).
+00:29:10 DEBUG app.automation.profile_extractor Extracted 11 'share' candidates from source (window=unknown).
+00:29:16 DEBUG app.automation.profile_extractor Extracted 9 'share' candidates from source (window=unknown).
+00:29:21 INFO app.automation.collector_engine Page source has not changed after scroll.
+00:29:27 INFO app.automation.collector_engine Page source has not changed after scroll.
+00:29:33 INFO app.automation.collector_engine Page source has not changed after scroll.
+00:29:33 INFO app.automation.collector_engine End of list reached, waiting 4s for lazy load (Auto-Retry 1/1)...
+00:29:33 INFO app.automation.adb_controller Connected to R87Y6002DSX via Direct ADB Mode (Screen: 720x1600).
+00:29:43 INFO app.automation.adb_controller Connected to R87Y6002DSX via Direct ADB Mode (Screen: 720x1600).
+00:29:44 INFO app.automation.adb_controller Connected to R87Y6002DSX via Direct ADB Mode (Screen: 720x1600).
+00:29:45 INFO app.automation.collector_engine Page source has not changed after scroll.
+00:29:45 INFO app.automation.collector_engine End of list reached (source stable).
+00:29:45 INFO app.exporters.csv_exporter Successfully exported 346 profiles to /Users/MacBookPro/Downloads/ShareExtractor-main 2/Facebook Contest Validator.app/Contents/Resources/app_bundle/data/autosave.csv
+00:29:45 INFO app.gui.main_window Auto-saved raw profiles to /Users/MacBookPro/Downloads/ShareExtractor-main 2/Facebook Contest Validator.app/Contents/Resources/app_bundle/data/autosave.csv
+00:29:45 INFO app.exporters.csv_exporter Successfully exported 271 contest participants to /Users/MacBookPro/Downloads/ShareExtractor-main 2/Facebook Contest Validator.app/Contents/Resources/app_bundle/data/autosave_contest.csv
+00:29:45 INFO app.gui.main_window Auto-saved contest validation to /Users/MacBookPro/Downloads/ShareExtractor-main 2/Facebook Contest Validator.app/Contents/Resources/app_bundle/data/autosave_contest.csv
+00:29:45 INFO app.gui.main_window Session 08c59b0b-16bc-45e6-bc9d-eaa10226168b step completed. Total raw profiles: 386
+00:29:46 INFO app.gui.main_window Starting collection for action: SHARE
+00:29:50 DEBUG app.automation.profile_extractor Extracted 9 'share' candidates from source (window=unknown).
+00:29:56 INFO app.automation.collector_engine Page source has not changed after scroll.
+00:30:01 INFO app.automation.collector_engine Page source has not changed after scroll.
+00:30:07 INFO app.automation.collector_engine Page source has not changed after scroll.
+00:30:07 INFO app.automation.collector_engine End of list reached, waiting 4s for lazy load (Auto-Retry 1/1)...
+00:30:17 INFO app.automation.collector_engine Page source has not changed after scroll.
+00:30:17 INFO app.automation.collector_engine End of list reached (source stable).
+00:30:17 INFO app.exporters.csv_exporter Successfully exported 346 profiles to /Users/MacBookPro/Downloads/ShareExtractor-main 2/Facebook Contest Validator.app/Contents/Resources/app_bundle/data/autosave.csv
+00:30:17 INFO app.gui.main_window Auto-saved raw profiles to /Users/MacBookPro/Downloads/ShareExtractor-main 2/Facebook Contest Validator.app/Contents/Resources/app_bundle/data/autosave.csv
+00:30:17 INFO app.exporters.csv_exporter Successfully exported 271 contest participants to /Users/MacBookPro/Downloads/ShareExtractor-main 2/Facebook Contest Validator.app/Contents/Resources/app_bundle/data/autosave_contest.csv
+00:30:17 INFO app.gui.main_window Auto-saved contest validation to /Users/MacBookPro/Downloads/ShareExtractor-main 2/Facebook Contest Validator.app/Contents/Resources/app_bundle/data/autosave_contest.csv
+00:30:17 INFO app.gui.main_window Session 08c59b0b-16bc-45e6-bc9d-eaa10226168b step completed. Total raw profiles: 395
+00:30:19 INFO app.exporters.csv_exporter Successfully exported 356 profiles to /Users/MacBookPro/Downloads/ShareExtractor-main 2/Facebook Contest Validator.app/Contents/Resources/app_bundle/data/autosave.csv
+00:30:19 INFO app.gui.main_window Auto-saved raw profiles to /Users/MacBookPro/Downloads/ShareExtractor-main 2/Facebook Contest Validator.app/Contents/Resources/app_bundle/data/autosave.csv
+00:30:19 INFO app.exporters.csv_exporter Successfully exported 278 contest participants to /Users/MacBookPro/Downloads/ShareExtractor-main 2/Facebook Contest Validator.app/Contents/Resources/app_bundle/data/autosave_contest.csv
+00:30:19 INFO app.gui.main_window Auto-saved contest validation to /Users/MacBookPro/Downloads/ShareExtractor-main 2/Facebook Contest Validator.app/Contents/Resources/app_bundle/data/autosave_contest.csv
+00:30:19 INFO app.gui.main_window Auto-imported Browser Extension batch '1793817018269_o91ldt' (10 profiles with links; 6 hybrid records synced).
+00:30:37 INFO app.exporters.csv_exporter Successfully exported 401 profiles to /Users/MacBookPro/Downloads/ShareExtractor-main 2/Facebook Contest Validator.app/Contents/Resources/app_bundle/data/autosave.csv
+00:30:37 INFO app.gui.main_window Auto-saved raw profiles to /Users/MacBookPro/Downloads/ShareExtractor-main 2/Facebook Contest Validator.app/Contents/Resources/app_bundle/data/autosave.csv
+00:30:37 INFO app.exporters.csv_exporter Successfully exported 296 contest participants to /Users/MacBookPro/Downloads/ShareExtractor-main 2/Facebook Contest Validator.app/Contents/Resources/app_bundle/data/autosave_contest.csv
+00:30:37 INFO app.gui.main_window Auto-saved contest validation to /Users/MacBookPro/Downloads/ShareExtractor-main 2/Facebook Contest Validator.app/Contents/Resources/app_bundle/data/autosave_contest.csv
+00:30:37 INFO app.gui.main_window Auto-imported Browser Extension batch '1793817036602_ds54qh' (170 profiles with links; 47 hybrid records synced).
+00:30:38 INFO app.exporters.csv_exporter Successfully exported 411 profiles to /Users/MacBookPro/Downloads/ShareExtractor-main 2/Facebook Contest Validator.app/Contents/Resources/app_bundle/data/autosave.csv
+00:30:38 INFO app.gui.main_window Auto-saved raw profiles to /Users/MacBookPro/Downloads/ShareExtractor-main 2/Facebook Contest Validator.app/Contents/Resources/app_bundle/data/autosave.csv
+00:30:38 INFO app.exporters.csv_exporter Successfully exported 299 contest participants to /Users/MacBookPro/Downloads/ShareExtractor-main 2/Facebook Contest Validator.app/Contents/Resources/app_bundle/data/autosave_contest.csv
+00:30:38 INFO app.gui.main_window Auto-saved contest validation to /Users/MacBookPro/Downloads/ShareExtractor-main 2/Facebook Contest Validator.app/Contents/Resources/app_bundle/data/autosave_contest.csv
+00:30:38 INFO app.gui.main_window Auto-imported Browser Extension batch '1793817037680_gkbjkh' (10 profiles with links; 14 hybrid records synced).
+00:31:03 INFO app.gui.main_window Starting collection for action: LIKE
+00:31:06 DEBUG app.automation.profile_extractor Extracted 12 'like' candidates from source (window=unknown).
+00:31:13 DEBUG app.automation.profile_extractor Extracted 12 'like' candidates from source (window=unknown).
+00:31:19 DEBUG app.automation.profile_extractor Extracted 12 'like' candidates from source (window=unknown).
+00:31:26 DEBUG app.automation.profile_extractor Extracted 12 'like' candidates from source (window=unknown).
+00:31:32 DEBUG app.automation.profile_extractor Extracted 12 'like' candidates from source (window=unknown).
+00:31:32 INFO app.exporters.csv_exporter Successfully exported 438 profiles to /Users/MacBookPro/Downloads/ShareExtractor-main 2/Facebook Contest Validator.app/Contents/Resources/app_bundle/data/autosave.csv
+00:31:32 INFO app.gui.main_window Auto-saved raw profiles to /Users/MacBookPro/Downloads/ShareExtractor-main 2/Facebook Contest Validator.app/Contents/Resources/app_bundle/data/autosave.csv
+00:31:32 INFO app.exporters.csv_exporter Successfully exported 310 contest participants to /Users/MacBookPro/Downloads/ShareExtractor-main 2/Facebook Contest Validator.app/Contents/Resources/app_bundle/data/autosave_contest.csv
+00:31:32 INFO app.gui.main_window Auto-saved contest validation to /Users/MacBookPro/Downloads/ShareExtractor-main 2/Facebook Contest Validator.app/Contents/Resources/app_bundle/data/autosave_contest.csv
+00:31:39 DEBUG app.automation.profile_extractor Extracted 12 'like' candidates from source (window=like).
+00:31:46 DEBUG app.automation.profile_extractor Extracted 12 'like' candidates from source (window=like).
+00:31:52 DEBUG app.automation.profile_extractor Extracted 12 'like' candidates from source (window=like).
+00:31:59 DEBUG app.automation.profile_extractor Extracted 12 'like' candidates from source (window=like).
+00:31:59 INFO app.exporters.csv_exporter Successfully exported 459 profiles to /Users/MacBookPro/Downloads/ShareExtractor-main 2/Facebook Contest Validator.app/Contents/Resources/app_bundle/data/autosave.csv
+00:31:59 INFO app.gui.main_window Auto-saved raw profiles to /Users/MacBookPro/Downloads/ShareExtractor-main 2/Facebook Contest Validator.app/Contents/Resources/app_bundle/data/autosave.csv
+00:31:59 INFO app.exporters.csv_exporter Successfully exported 320 contest participants to /Users/MacBookPro/Downloads/ShareExtractor-main 2/Facebook Contest Validator.app/Contents/Resources/app_bundle/data/autosave_contest.csv
+00:31:59 INFO app.gui.main_window Auto-saved contest validation to /Users/MacBookPro/Downloads/ShareExtractor-main 2/Facebook Contest Validator.app/Contents/Resources/app_bundle/data/autosave_contest.csv
+00:32:05 DEBUG app.automation.profile_extractor Extracted 12 'like' candidates from source (window=like).
+00:32:06 INFO app.exporters.csv_exporter Successfully exported 469 profiles to /Users/MacBookPro/Downloads/ShareExtractor-main 2/Facebook Contest Validator.app/Contents/Resources/app_bundle/data/autosave.csv
+00:32:06 INFO app.gui.main_window Auto-saved raw profiles to /Users/MacBookPro/Downloads/ShareExtractor-main 2/Facebook Contest Validator.app/Contents/Resources/app_bundle/data/autosave.csv
+00:32:06 INFO app.exporters.csv_exporter Successfully exported 323 contest participants to /Users/MacBookPro/Downloads/ShareExtractor-main 2/Facebook Contest Validator.app/Contents/Resources/app_bundle/data/autosave_contest.csv
+00:32:06 INFO app.gui.main_window Auto-saved contest validation to /Users/MacBookPro/Downloads/ShareExtractor-main 2/Facebook Contest Validator.app/Contents/Resources/app_bundle/data/autosave_contest.csv
+00:32:06 INFO app.gui.main_window Hybrid Sync Profile applied: enriched 22 records with verified Profile URLs.
+00:32:12 DEBUG app.automation.profile_extractor Extracted 12 'like' candidates from source (window=like).
+00:32:19 DEBUG app.automation.profile_extractor Extracted 12 'like' candidates from source (window=like).
+00:32:25 DEBUG app.automation.profile_extractor Extracted 12 'like' candidates from source (window=like).
+00:32:25 INFO app.exporters.csv_exporter Successfully exported 479 profiles to /Users/MacBookPro/Downloads/ShareExtractor-main 2/Facebook Contest Validator.app/Contents/Resources/app_bundle/data/autosave.csv
+00:32:25 INFO app.gui.main_window Auto-saved raw profiles to /Users/MacBookPro/Downloads/ShareExtractor-main 2/Facebook Contest Validator.app/Contents/Resources/app_bundle/data/autosave.csv
+00:32:25 INFO app.exporters.csv_exporter Successfully exported 323 contest participants to /Users/MacBookPro/Downloads/ShareExtractor-main 2/Facebook Contest Validator.app/Contents/Resources/app_bundle/data/autosave_contest.csv
+00:32:25 INFO app.gui.main_window Auto-saved contest validation to /Users/MacBookPro/Downloads/ShareExtractor-main 2/Facebook Contest Validator.app/Contents/Resources/app_bundle/data/autosave_contest.csv
+00:32:32 DEBUG app.automation.profile_extractor Extracted 12 'like' candidates from source (window=like).
+00:32:39 DEBUG app.automation.profile_extractor Extracted 12 'like' candidates from source (window=unknown).
+00:32:45 DEBUG app.automation.profile_extractor Extracted 12 'like' candidates from source (window=unknown).
+00:32:52 DEBUG app.automation.profile_extractor Extracted 12 'like' candidates from source (window=unknown).
+00:32:52 INFO app.exporters.csv_exporter Successfully exported 501 profiles to /Users/MacBookPro/Downloads/ShareExtractor-main 2/Facebook Contest Validator.app/Contents/Resources/app_bundle/data/autosave.csv
+00:32:52 INFO app.gui.main_window Auto-saved raw profiles to /Users/MacBookPro/Downloads/ShareExtractor-main 2/Facebook Contest Validator.app/Contents/Resources/app_bundle/data/autosave.csv
+00:32:52 INFO app.exporters.csv_exporter Successfully exported 324 contest participants to /Users/MacBookPro/Downloads/ShareExtractor-main 2/Facebook Contest Validator.app/Contents/Resources/app_bundle/data/autosave_contest.csv
+00:32:52 INFO app.gui.main_window Auto-saved contest validation to /Users/MacBookPro/Downloads/ShareExtractor-main 2/Facebook Contest Validator.app/Contents/Resources/app_bundle/data/autosave_contest.csv
+00:32:58 DEBUG app.automation.profile_extractor Extracted 12 'like' candidates from source (window=unknown).
+00:33:05 DEBUG app.automation.profile_extractor Extracted 12 'like' candidates from source (window=unknown).
+00:33:12 DEBUG app.automation.profile_extractor Extracted 12 'like' candidates from source (window=unknown).
+00:33:18 DEBUG app.automation.profile_extractor Extracted 12 'like' candidates from source (window=unknown).
+00:33:19 INFO app.exporters.csv_exporter Successfully exported 523 profiles to /Users/MacBookPro/Downloads/ShareExtractor-main 2/Facebook Contest Validator.app/Contents/Resources/app_bundle/data/autosave.csv
+00:33:19 INFO app.gui.main_window Auto-saved raw profiles to /Users/MacBookPro/Downloads/ShareExtractor-main 2/Facebook Contest Validator.app/Contents/Resources/app_bundle/data/autosave.csv
+00:33:19 INFO app.exporters.csv_exporter Successfully exported 328 contest participants to /Users/MacBookPro/Downloads/ShareExtractor-main 2/Facebook Contest Validator.app/Contents/Resources/app_bundle/data/autosave_contest.csv
+00:33:19 INFO app.gui.main_window Auto-saved contest validation to /Users/MacBookPro/Downloads/ShareExtractor-main 2/Facebook Contest Validator.app/Contents/Resources/app_bundle/data/autosave_contest.csv
+00:33:20 INFO app.exporters.csv_exporter Successfully exported 525 profiles to /Users/MacBookPro/Downloads/ShareExtractor-main 2/Facebook Contest Validator.app/Contents/Resources/app_bundle/data/autosave.csv
+00:33:20 INFO app.gui.main_window Auto-saved raw profiles to /Users/MacBookPro/Downloads/ShareExtractor-main 2/Facebook Contest Validator.app/Contents/Resources/app_bundle/data/autosave.csv
+00:33:20 INFO app.exporters.csv_exporter Successfully exported 329 contest participants to /Users/MacBookPro/Downloads/ShareExtractor-main 2/Facebook Contest Validator.app/Contents/Resources/app_bundle/data/autosave_contest.csv
+00:33:20 INFO app.gui.main_window Auto-saved contest validation to /Users/MacBookPro/Downloads/ShareExtractor-main 2/Facebook Contest Validator.app/Contents/Resources/app_bundle/data/autosave_contest.csv
+00:33:20 INFO app.gui.main_window Hybrid Sync Profile applied: enriched 49 records with verified Profile URLs.
+00:33:25 DEBUG app.automation.profile_extractor Extracted 12 'like' candidates from source (window=unknown).
+00:33:32 DEBUG app.automation.profile_extractor Extracted 12 'like' candidates from source (window=like).
+00:33:38 DEBUG app.automation.profile_extractor Extracted 12 'like' candidates from source (window=like).
+00:33:45 DEBUG app.automation.profile_extractor Extracted 12 'like' candidates from source (window=like).
+00:33:45 INFO app.exporters.csv_exporter Successfully exported 545 profiles to /Users/MacBookPro/Downloads/ShareExtractor-main 2/Facebook Contest Validator.app/Contents/Resources/app_bundle/data/autosave.csv
+00:33:45 INFO app.gui.main_window Auto-saved raw profiles to /Users/MacBookPro/Downloads/ShareExtractor-main 2/Facebook Contest Validator.app/Contents/Resources/app_bundle/data/autosave.csv
+00:33:45 INFO app.exporters.csv_exporter Successfully exported 330 contest participants to /Users/MacBookPro/Downloads/ShareExtractor-main 2/Facebook Contest Validator.app/Contents/Resources/app_bundle/data/autosave_contest.csv
+00:33:45 INFO app.gui.main_window Auto-saved contest validation to /Users/MacBookPro/Downloads/ShareExtractor-main 2/Facebook Contest Validator.app/Contents/Resources/app_bundle/data/autosave_contest.csv
+00:33:51 DEBUG app.automation.profile_extractor Extracted 12 'like' candidates from source (window=like).
+00:33:58 DEBUG app.automation.profile_extractor Extracted 12 'like' candidates from source (window=unknown).
+00:34:04 INFO app.exporters.csv_exporter Successfully exported 555 profiles to /Users/MacBookPro/Downloads/ShareExtractor-main 2/Facebook Contest Validator.app/Contents/Resources/app_bundle/data/autosave.csv
+00:34:04 INFO app.gui.main_window Auto-saved raw profiles to /Users/MacBookPro/Downloads/ShareExtractor-main 2/Facebook Contest Validator.app/Contents/Resources/app_bundle/data/autosave.csv
+00:34:04 INFO app.exporters.csv_exporter Successfully exported 331 contest participants to /Users/MacBookPro/Downloads/ShareExtractor-main 2/Facebook Contest Validator.app/Contents/Resources/app_bundle/data/autosave_contest.csv
+00:34:04 INFO app.gui.main_window Auto-saved contest validation to /Users/MacBookPro/Downloads/ShareExtractor-main 2/Facebook Contest Validator.app/Contents/Resources/app_bundle/data/autosave_contest.csv
+00:34:04 INFO app.gui.main_window Hybrid Sync Profile applied: enriched 31 records with verified Profile URLs.
+00:34:05 DEBUG app.automation.profile_extractor Extracted 12 'like' candidates from source (window=unknown).
+00:34:12 DEBUG app.automation.profile_extractor Extracted 12 'like' candidates from source (window=unknown).
+00:34:18 DEBUG app.automation.profile_extractor Extracted 12 'like' candidates from source (window=unknown).
+00:34:18 INFO app.exporters.csv_exporter Successfully exported 565 profiles to /Users/MacBookPro/Downloads/ShareExtractor-main 2/Facebook Contest Validator.app/Contents/Resources/app_bundle/data/autosave.csv
+00:34:18 INFO app.gui.main_window Auto-saved raw profiles to /Users/MacBookPro/Downloads/ShareExtractor-main 2/Facebook Contest Validator.app/Contents/Resources/app_bundle/data/autosave.csv
+00:34:18 INFO app.exporters.csv_exporter Successfully exported 332 contest participants to /Users/MacBookPro/Downloads/ShareExtractor-main 2/Facebook Contest Validator.app/Contents/Resources/app_bundle/data/autosave_contest.csv
+00:34:18 INFO app.gui.main_window Auto-saved contest validation to /Users/MacBookPro/Downloads/ShareExtractor-main 2/Facebook Contest Validator.app/Contents/Resources/app_bundle/data/autosave_contest.csv
+00:34:25 DEBUG app.automation.profile_extractor Extracted 12 'like' candidates from source (window=like).
+00:34:32 DEBUG app.automation.profile_extractor Extracted 12 'like' candidates from source (window=like).
+00:34:38 DEBUG app.automation.profile_extractor Extracted 13 'like' candidates from source (window=like).
+00:34:45 DEBUG app.automation.profile_extractor Extracted 12 'like' candidates from source (window=unknown).
+00:34:45 INFO app.exporters.csv_exporter Successfully exported 585 profiles to /Users/MacBookPro/Downloads/ShareExtractor-main 2/Facebook Contest Validator.app/Contents/Resources/app_bundle/data/autosave.csv
+00:34:45 INFO app.gui.main_window Auto-saved raw profiles to /Users/MacBookPro/Downloads/ShareExtractor-main 2/Facebook Contest Validator.app/Contents/Resources/app_bundle/data/autosave.csv
+00:34:45 INFO app.exporters.csv_exporter Successfully exported 339 contest participants to /Users/MacBookPro/Downloads/ShareExtractor-main 2/Facebook Contest Validator.app/Contents/Resources/app_bundle/data/autosave_contest.csv
+00:34:45 INFO app.gui.main_window Auto-saved contest validation to /Users/MacBookPro/Downloads/ShareExtractor-main 2/Facebook Contest Validator.app/Contents/Resources/app_bundle/data/autosave_contest.csv
+00:34:52 DEBUG app.automation.profile_extractor Extracted 12 'like' candidates from source (window=unknown).
+00:34:58 DEBUG app.automation.profile_extractor Extracted 12 'like' candidates from source (window=unknown).
+00:35:05 DEBUG app.automation.profile_extractor Extracted 12 'like' candidates from source (window=like).
+00:35:11 INFO app.exporters.csv_exporter Successfully exported 605 profiles to /Users/MacBookPro/Downloads/ShareExtractor-main 2/Facebook Contest Validator.app/Contents/Resources/app_bundle/data/autosave.csv
+00:35:11 INFO app.gui.main_window Auto-saved raw profiles to /Users/MacBookPro/Downloads/ShareExtractor-main 2/Facebook Contest Validator.app/Contents/Resources/app_bundle/data/autosave.csv
+00:35:11 INFO app.exporters.csv_exporter Successfully exported 354 contest participants to /Users/MacBookPro/Downloads/ShareExtractor-main 2/Facebook Contest Validator.app/Contents/Resources/app_bundle/data/autosave_contest.csv
+00:35:11 INFO app.gui.main_window Auto-saved contest validation to /Users/MacBookPro/Downloads/ShareExtractor-main 2/Facebook Contest Validator.app/Contents/Resources/app_bundle/data/autosave_contest.csv
+00:35:11 INFO app.gui.main_window Hybrid Sync Profile applied: enriched 21 records with verified Profile URLs.
+00:35:12 DEBUG app.automation.profile_extractor Extracted 12 'like' candidates from source (window=like).
+00:35:12 INFO app.exporters.csv_exporter Successfully exported 605 profiles to /Users/MacBookPro/Downloads/ShareExtractor-main 2/Facebook Contest Validator.app/Contents/Resources/app_bundle/data/autosave.csv
+00:35:12 INFO app.gui.main_window Auto-saved raw profiles to /Users/MacBookPro/Downloads/ShareExtractor-main 2/Facebook Contest Validator.app/Contents/Resources/app_bundle/data/autosave.csv
+00:35:12 INFO app.exporters.csv_exporter Successfully exported 354 contest participants to /Users/MacBookPro/Downloads/ShareExtractor-main 2/Facebook Contest Validator.app/Contents/Resources/app_bundle/data/autosave_contest.csv
+00:35:12 INFO app.gui.main_window Auto-saved contest validation to /Users/MacBookPro/Downloads/ShareExtractor-main 2/Facebook Contest Validator.app/Contents/Resources/app_bundle/data/autosave_contest.csv
+00:35:14 INFO app.exporters.csv_exporter Successfully exported 610 profiles to /Users/MacBookPro/Downloads/ShareExtractor-main 2/Facebook Contest Validator.app/Contents/Resources/app_bundle/data/autosave.csv
+00:35:14 INFO app.gui.main_window Auto-saved raw profiles to /Users/MacBookPro/Downloads/ShareExtractor-main 2/Facebook Contest Validator.app/Contents/Resources/app_bundle/data/autosave.csv
+00:35:14 INFO app.exporters.csv_exporter Successfully exported 356 contest participants to /Users/MacBookPro/Downloads/ShareExtractor-main 2/Facebook Contest Validator.app/Contents/Resources/app_bundle/data/autosave_contest.csv
+00:35:14 INFO app.gui.main_window Auto-saved contest validation to /Users/MacBookPro/Downloads/ShareExtractor-main 2/Facebook Contest Validator.app/Contents/Resources/app_bundle/data/autosave_contest.csv
+00:35:14 INFO app.gui.main_window Hybrid Sync Profile applied: enriched 1 records with verified Profile URLs.
+00:35:18 DEBUG app.automation.profile_extractor Extracted 12 'like' candidates from source (window=like).
+00:35:25 DEBUG app.automation.profile_extractor Extracted 12 'like' candidates from source (window=unknown).
+00:35:29 INFO app.exporters.csv_exporter Successfully exported 738 profiles to /Users/MacBookPro/Downloads/ShareExtractor-main 2/Facebook Contest Validator.app/Contents/Resources/app_bundle/data/autosave.csv
+00:35:29 INFO app.gui.main_window Auto-saved raw profiles to /Users/MacBookPro/Downloads/ShareExtractor-main 2/Facebook Contest Validator.app/Contents/Resources/app_bundle/data/autosave.csv
+00:35:29 INFO app.exporters.csv_exporter Successfully exported 422 contest participants to /Users/MacBookPro/Downloads/ShareExtractor-main 2/Facebook Contest Validator.app/Contents/Resources/app_bundle/data/autosave_contest.csv
+00:35:29 INFO app.gui.main_window Auto-saved contest validation to /Users/MacBookPro/Downloads/ShareExtractor-main 2/Facebook Contest Validator.app/Contents/Resources/app_bundle/data/autosave_contest.csv
+00:35:29 INFO app.gui.main_window Auto-imported Browser Extension batch '1793817328534_ngdj4f' (299 profiles with links; 102 hybrid records synced).
+00:35:31 DEBUG app.automation.profile_extractor Extracted 12 'like' candidates from source (window=unknown).
+00:35:38 DEBUG app.automation.profile_extractor Extracted 12 'like' candidates from source (window=unknown).
+00:35:38 INFO app.exporters.csv_exporter Successfully exported 743 profiles to /Users/MacBookPro/Downloads/ShareExtractor-main 2/Facebook Contest Validator.app/Contents/Resources/app_bundle/data/autosave.csv
+00:35:38 INFO app.gui.main_window Auto-saved raw profiles to /Users/MacBookPro/Downloads/ShareExtractor-main 2/Facebook Contest Validator.app/Contents/Resources/app_bundle/data/autosave.csv
+00:35:38 INFO app.exporters.csv_exporter Successfully exported 425 contest participants to /Users/MacBookPro/Downloads/ShareExtractor-main 2/Facebook Contest Validator.app/Contents/Resources/app_bundle/data/autosave_contest.csv
+00:35:38 INFO app.gui.main_window Auto-saved contest validation to /Users/MacBookPro/Downloads/ShareExtractor-main 2/Facebook Contest Validator.app/Contents/Resources/app_bundle/data/autosave_contest.csv
+00:35:45 DEBUG app.automation.profile_extractor Extracted 12 'like' candidates from source (window=unknown).
+00:35:52 DEBUG app.automation.profile_extractor Extracted 12 'like' candidates from source (window=unknown).
+00:35:58 DEBUG app.automation.profile_extractor Extracted 12 'like' candidates from source (window=like).
+00:36:05 DEBUG app.automation.profile_extractor Extracted 13 'like' candidates from source (window=like).
+00:36:05 INFO app.exporters.csv_exporter Successfully exported 765 profiles to /Users/MacBookPro/Downloads/ShareExtractor-main 2/Facebook Contest Validator.app/Contents/Resources/app_bundle/data/autosave.csv
+00:36:05 INFO app.gui.main_window Auto-saved raw profiles to /Users/MacBookPro/Downloads/ShareExtractor-main 2/Facebook Contest Validator.app/Contents/Resources/app_bundle/data/autosave.csv
+00:36:05 INFO app.exporters.csv_exporter Successfully exported 428 contest participants to /Users/MacBookPro/Downloads/ShareExtractor-main 2/Facebook Contest Validator.app/Contents/Resources/app_bundle/data/autosave_contest.csv
+00:36:05 INFO app.gui.main_window Auto-saved contest validation to /Users/MacBookPro/Downloads/ShareExtractor-main 2/Facebook Contest Validator.app/Contents/Resources/app_bundle/data/autosave_contest.csv
+00:36:06 INFO app.exporters.csv_exporter Successfully exported 769 profiles to /Users/MacBookPro/Downloads/ShareExtractor-main 2/Facebook Contest Validator.app/Contents/Resources/app_bundle/data/autosave.csv
+00:36:06 INFO app.gui.main_window Auto-saved raw profiles to /Users/MacBookPro/Downloads/ShareExtractor-main 2/Facebook Contest Validator.app/Contents/Resources/app_bundle/data/autosave.csv
+00:36:06 INFO app.exporters.csv_exporter Successfully exported 430 contest participants to /Users/MacBookPro/Downloads/ShareExtractor-main 2/Facebook Contest Validator.app/Contents/Resources/app_bundle/data/autosave_contest.csv
+00:36:06 INFO app.gui.main_window Auto-saved contest validation to /Users/MacBookPro/Downloads/ShareExtractor-main 2/Facebook Contest Validator.app/Contents/Resources/app_bundle/data/autosave_contest.csv
+00:36:06 INFO app.gui.main_window Auto-imported Browser Extension batch '1793817352287_6ebp99' (299 profiles with links; 31 hybrid records synced).
+00:36:12 DEBUG app.automation.profile_extractor Extracted 13 'like' candidates from source (window=like).
+00:36:18 DEBUG app.automation.profile_extractor Extracted 12 'like' candidates from source (window=unknown).
+00:36:25 DEBUG app.automation.profile_extractor Extracted 12 'like' candidates from source (window=unknown).
+00:36:31 DEBUG app.automation.profile_extractor Extracted 13 'like' candidates from source (window=like).
+00:36:31 INFO app.exporters.csv_exporter Successfully exported 786 profiles to /Users/MacBookPro/Downloads/ShareExtractor-main 2/Facebook Contest Validator.app/Contents/Resources/app_bundle/data/autosave.csv
+00:36:31 INFO app.gui.main_window Auto-saved raw profiles to /Users/MacBookPro/Downloads/ShareExtractor-main 2/Facebook Contest Validator.app/Contents/Resources/app_bundle/data/autosave.csv
+00:36:31 INFO app.exporters.csv_exporter Successfully exported 433 contest participants to /Users/MacBookPro/Downloads/ShareExtractor-main 2/Facebook Contest Validator.app/Contents/Resources/app_bundle/data/autosave_contest.csv
+00:36:31 INFO app.gui.main_window Auto-saved contest validation to /Users/MacBookPro/Downloads/ShareExtractor-main 2/Facebook Contest Validator.app/Contents/Resources/app_bundle/data/autosave_contest.csv
+00:36:34 INFO app.exporters.csv_exporter Successfully exported 790 profiles to /Users/MacBookPro/Downloads/ShareExtractor-main 2/Facebook Contest Validator.app/Contents/Resources/app_bundle/data/autosave.csv
+00:36:34 INFO app.gui.main_window Auto-saved raw profiles to /Users/MacBookPro/Downloads/ShareExtractor-main 2/Facebook Contest Validator.app/Contents/Resources/app_bundle/data/autosave.csv
+00:36:34 INFO app.exporters.csv_exporter Successfully exported 434 contest participants to /Users/MacBookPro/Downloads/ShareExtractor-main 2/Facebook Contest Validator.app/Contents/Resources/app_bundle/data/autosave_contest.csv
+00:36:34 INFO app.gui.main_window Auto-saved contest validation to /Users/MacBookPro/Downloads/ShareExtractor-main 2/Facebook Contest Validator.app/Contents/Resources/app_bundle/data/autosave_contest.csv
+00:36:34 INFO app.gui.main_window Hybrid Sync Profile applied: enriched 20 records with verified Profile URLs.
+00:36:38 DEBUG app.automation.profile_extractor Extracted 12 'like' candidates from source (window=like).
+00:36:45 DEBUG app.automation.profile_extractor Extracted 12 'like' candidates from source (window=like).
+00:36:52 DEBUG app.automation.profile_extractor Extracted 12 'like' candidates from source (window=unknown).
+00:36:59 DEBUG app.automation.profile_extractor Extracted 12 'like' candidates from source (window=unknown).
+00:36:59 INFO app.exporters.csv_exporter Successfully exported 808 profiles to /Users/MacBookPro/Downloads/ShareExtractor-main 2/Facebook Contest Validator.app/Contents/Resources/app_bundle/data/autosave.csv
+00:36:59 INFO app.gui.main_window Auto-saved raw profiles to /Users/MacBookPro/Downloads/ShareExtractor-main 2/Facebook Contest Validator.app/Contents/Resources/app_bundle/data/autosave.csv
+00:36:59 INFO app.exporters.csv_exporter Successfully exported 438 contest participants to /Users/MacBookPro/Downloads/ShareExtractor-main 2/Facebook Contest Validator.app/Contents/Resources/app_bundle/data/autosave_contest.csv
+00:36:59 INFO app.gui.main_window Auto-saved contest validation to /Users/MacBookPro/Downloads/ShareExtractor-main 2/Facebook Contest Validator.app/Contents/Resources/app_bundle/data/autosave_contest.csv
+00:37:05 DEBUG app.automation.profile_extractor Extracted 12 'like' candidates from source (window=unknown).
+00:37:12 DEBUG app.automation.profile_extractor Extracted 12 'like' candidates from source (window=unknown).
+00:37:18 DEBUG app.automation.profile_extractor Extracted 12 'like' candidates from source (window=unknown).
+00:37:25 DEBUG app.automation.profile_extractor Extracted 12 'like' candidates from source (window=unknown).
+00:37:25 INFO app.exporters.csv_exporter Successfully exported 829 profiles to /Users/MacBookPro/Downloads/ShareExtractor-main 2/Facebook Contest Validator.app/Contents/Resources/app_bundle/data/autosave.csv
+00:37:25 INFO app.gui.main_window Auto-saved raw profiles to /Users/MacBookPro/Downloads/ShareExtractor-main 2/Facebook Contest Validator.app/Contents/Resources/app_bundle/data/autosave.csv
+00:37:25 INFO app.exporters.csv_exporter Successfully exported 445 contest participants to /Users/MacBookPro/Downloads/ShareExtractor-main 2/Facebook Contest Validator.app/Contents/Resources/app_bundle/data/autosave_contest.csv
+00:37:25 INFO app.gui.main_window Auto-saved contest validation to /Users/MacBookPro/Downloads/ShareExtractor-main 2/Facebook Contest Validator.app/Contents/Resources/app_bundle/data/autosave_contest.csv
+00:37:32 DEBUG app.automation.profile_extractor Extracted 12 'like' candidates from source (window=unknown).
+00:37:38 DEBUG app.automation.profile_extractor Extracted 13 'like' candidates from source (window=unknown).
+00:37:45 DEBUG app.automation.profile_extractor Extracted 12 'like' candidates from source (window=unknown).
+00:37:51 DEBUG app.automation.profile_extractor Extracted 12 'like' candidates from source (window=like).
+00:37:58 DEBUG app.automation.profile_extractor Extracted 12 'like' candidates from source (window=like).
+00:37:58 INFO app.exporters.csv_exporter Successfully exported 850 profiles to /Users/MacBookPro/Downloads/ShareExtractor-main 2/Facebook Contest Validator.app/Contents/Resources/app_bundle/data/autosave.csv
+00:37:58 INFO app.gui.main_window Auto-saved raw profiles to /Users/MacBookPro/Downloads/ShareExtractor-main 2/Facebook Contest Validator.app/Contents/Resources/app_bundle/data/autosave.csv
+00:37:58 INFO app.exporters.csv_exporter Successfully exported 456 contest participants to /Users/MacBookPro/Downloads/ShareExtractor-main 2/Facebook Contest Validator.app/Contents/Resources/app_bundle/data/autosave_contest.csv
+00:37:58 INFO app.gui.main_window Auto-saved contest validation to /Users/MacBookPro/Downloads/ShareExtractor-main 2/Facebook Contest Validator.app/Contents/Resources/app_bundle/data/autosave_contest.csv
+00:38:05 DEBUG app.automation.profile_extractor Extracted 12 'like' candidates from source (window=like).
+00:38:11 DEBUG app.automation.profile_extractor Extracted 12 'like' candidates from source (window=like).
+00:38:17 DEBUG app.automation.profile_extractor Extracted 12 'like' candidates from source (window=like).
+00:38:24 DEBUG app.automation.profile_extractor Extracted 12 'like' candidates from source (window=like).
+00:38:24 INFO app.exporters.csv_exporter Successfully exported 870 profiles to /Users/MacBookPro/Downloads/ShareExtractor-main 2/Facebook Contest Validator.app/Contents/Resources/app_bundle/data/autosave.csv
+00:38:24 INFO app.gui.main_window Auto-saved raw profiles to /Users/MacBookPro/Downloads/ShareExtractor-main 2/Facebook Contest Validator.app/Contents/Resources/app_bundle/data/autosave.csv
+00:38:24 INFO app.exporters.csv_exporter Successfully exported 465 contest participants to /Users/MacBookPro/Downloads/ShareExtractor-main 2/Facebook Contest Validator.app/Contents/Resources/app_bundle/data/autosave_contest.csv
+00:38:24 INFO app.gui.main_window Auto-saved contest validation to /Users/MacBookPro/Downloads/ShareExtractor-main 2/Facebook Contest Validator.app/Contents/Resources/app_bundle/data/autosave_contest.csv
+00:38:31 DEBUG app.automation.profile_extractor Extracted 12 'like' candidates from source (window=like).
+00:38:37 DEBUG app.automation.profile_extractor Extracted 12 'like' candidates from source (window=like).
+00:38:44 DEBUG app.automation.profile_extractor Extracted 12 'like' candidates from source (window=like).
+00:38:51 DEBUG app.automation.profile_extractor Extracted 12 'like' candidates from source (window=like).
+00:38:51 INFO app.exporters.csv_exporter Successfully exported 891 profiles to /Users/MacBookPro/Downloads/ShareExtractor-main 2/Facebook Contest Validator.app/Contents/Resources/app_bundle/data/autosave.csv
+00:38:51 INFO app.gui.main_window Auto-saved raw profiles to /Users/MacBookPro/Downloads/ShareExtractor-main 2/Facebook Contest Validator.app/Contents/Resources/app_bundle/data/autosave.csv
+00:38:51 INFO app.exporters.csv_exporter Successfully exported 478 contest participants to /Users/MacBookPro/Downloads/ShareExtractor-main 2/Facebook Contest Validator.app/Contents/Resources/app_bundle/data/autosave_contest.csv
+00:38:51 INFO app.gui.main_window Auto-saved contest validation to /Users/MacBookPro/Downloads/ShareExtractor-main 2/Facebook Contest Validator.app/Contents/Resources/app_bundle/data/autosave_contest.csv
+00:38:58 DEBUG app.automation.profile_extractor Extracted 12 'like' candidates from source (window=like).
+00:39:04 DEBUG app.automation.profile_extractor Extracted 12 'like' candidates from source (window=unknown).
+00:39:11 DEBUG app.automation.profile_extractor Extracted 12 'like' candidates from source (window=unknown).
+00:39:17 DEBUG app.automation.profile_extractor Extracted 12 'like' candidates from source (window=unknown).
+00:39:17 INFO app.exporters.csv_exporter Successfully exported 912 profiles to /Users/MacBookPro/Downloads/ShareExtractor-main 2/Facebook Contest Validator.app/Contents/Resources/app_bundle/data/autosave.csv
+00:39:17 INFO app.gui.main_window Auto-saved raw profiles to /Users/MacBookPro/Downloads/ShareExtractor-main 2/Facebook Contest Validator.app/Contents/Resources/app_bundle/data/autosave.csv
+00:39:17 INFO app.exporters.csv_exporter Successfully exported 495 contest participants to /Users/MacBookPro/Downloads/ShareExtractor-main 2/Facebook Contest Validator.app/Contents/Resources/app_bundle/data/autosave_contest.csv
+00:39:17 INFO app.gui.main_window Auto-saved contest validation to /Users/MacBookPro/Downloads/ShareExtractor-main 2/Facebook Contest Validator.app/Contents/Resources/app_bundle/data/autosave_contest.csv
+00:39:24 DEBUG app.automation.profile_extractor Extracted 12 'like' candidates from source (window=like).
+00:39:26 INFO app.exporters.csv_exporter Successfully exported 932 profiles to /Users/MacBookPro/Downloads/ShareExtractor-main 2/Facebook Contest Validator.app/Contents/Resources/app_bundle/data/autosave.csv
+00:39:26 INFO app.gui.main_window Auto-saved raw profiles to /Users/MacBookPro/Downloads/ShareExtractor-main 2/Facebook Contest Validator.app/Contents/Resources/app_bundle/data/autosave.csv
+00:39:26 INFO app.exporters.csv_exporter Successfully exported 512 contest participants to /Users/MacBookPro/Downloads/ShareExtractor-main 2/Facebook Contest Validator.app/Contents/Resources/app_bundle/data/autosave_contest.csv
+00:39:26 INFO app.gui.main_window Auto-saved contest validation to /Users/MacBookPro/Downloads/ShareExtractor-main 2/Facebook Contest Validator.app/Contents/Resources/app_bundle/data/autosave_contest.csv
+00:39:26 INFO app.gui.main_window Auto-imported Browser Extension batch '1793817566050_t527an' (10 profiles with links; 81 hybrid records synced).
+00:39:27 INFO app.exporters.csv_exporter Successfully exported 983 profiles to /Users/MacBookPro/Downloads/ShareExtractor-main 2/Facebook Contest Validator.app/Contents/Resources/app_bundle/data/autosave.csv
+00:39:27 INFO app.gui.main_window Auto-saved raw profiles to /Users/MacBookPro/Downloads/ShareExtractor-main 2/Facebook Contest Validator.app/Contents/Resources/app_bundle/data/autosave.csv
+00:39:27 INFO app.exporters.csv_exporter Successfully exported 534 contest participants to /Users/MacBookPro/Downloads/ShareExtractor-main 2/Facebook Contest Validator.app/Contents/Resources/app_bundle/data/autosave_contest.csv
+00:39:27 INFO app.gui.main_window Auto-saved contest validation to /Users/MacBookPro/Downloads/ShareExtractor-main 2/Facebook Contest Validator.app/Contents/Resources/app_bundle/data/autosave_contest.csv
+00:39:27 INFO app.gui.main_window Auto-imported Browser Extension batch '1793817566967_j5ib57' (360 profiles with links; 62 hybrid records synced).
+00:39:31 DEBUG app.automation.profile_extractor Extracted 12 'like' candidates from source (window=like).
+00:39:37 DEBUG app.automation.profile_extractor Extracted 12 'like' candidates from source (window=like).
+00:39:44 DEBUG app.automation.profile_extractor Extracted 12 'like' candidates from source (window=like).
+00:39:44 INFO app.exporters.csv_exporter Successfully exported 993 profiles to /Users/MacBookPro/Downloads/ShareExtractor-main 2/Facebook Contest Validator.app/Contents/Resources/app_bundle/data/autosave.csv
+00:39:44 INFO app.gui.main_window Auto-saved raw profiles to /Users/MacBookPro/Downloads/ShareExtractor-main 2/Facebook Contest Validator.app/Contents/Resources/app_bundle/data/autosave.csv
+00:39:44 INFO app.exporters.csv_exporter Successfully exported 541 contest participants to /Users/MacBookPro/Downloads/ShareExtractor-main 2/Facebook Contest Validator.app/Contents/Resources/app_bundle/data/autosave_contest.csv
+00:39:44 INFO app.gui.main_window Auto-saved contest validation to /Users/MacBookPro/Downloads/ShareExtractor-main 2/Facebook Contest Validator.app/Contents/Resources/app_bundle/data/autosave_contest.csv
+00:39:50 INFO app.automation.collector_engine Page source has not changed after scroll.
+00:39:56 INFO app.automation.collector_engine Page source has not changed after scroll.
+00:40:02 INFO app.automation.collector_engine Page source has not changed after scroll.
+00:40:02 INFO app.automation.collector_engine End of list reached, waiting 4s for lazy load (Auto-Retry 1/1)...
+00:40:11 INFO app.automation.collector_engine Page source has not changed after scroll.
+00:40:11 INFO app.automation.collector_engine End of list reached (source stable).
+00:40:12 INFO app.exporters.csv_exporter Successfully exported 993 profiles to /Users/MacBookPro/Downloads/ShareExtractor-main 2/Facebook Contest Validator.app/Contents/Resources/app_bundle/data/autosave.csv
+00:40:12 INFO app.gui.main_window Auto-saved raw profiles to /Users/MacBookPro/Downloads/ShareExtractor-main 2/Facebook Contest Validator.app/Contents/Resources/app_bundle/data/autosave.csv
+00:40:12 INFO app.exporters.csv_exporter Successfully exported 541 contest participants to /Users/MacBookPro/Downloads/ShareExtractor-main 2/Facebook Contest Validator.app/Contents/Resources/app_bundle/data/autosave_contest.csv
+00:40:12 INFO app.gui.main_window Auto-saved contest validation to /Users/MacBookPro/Downloads/ShareExtractor-main 2/Facebook Contest Validator.app/Contents/Resources/app_bundle/data/autosave_contest.csv
+00:40:12 INFO app.gui.main_window Session 08c59b0b-16bc-45e6-bc9d-eaa10226168b step completed. Total raw profiles: 1019
+00:41:44 INFO app.exporters.csv_exporter Successfully exported 1023 profiles to /Users/MacBookPro/Downloads/ShareExtractor-main 2/Facebook Contest Validator.app/Contents/Resources/app_bundle/data/autosave.csv
+00:41:44 INFO app.gui.main_window Auto-saved raw profiles to /Users/MacBookPro/Downloads/ShareExtractor-main 2/Facebook Contest Validator.app/Contents/Resources/app_bundle/data/autosave.csv
+00:41:44 INFO app.exporters.csv_exporter Successfully exported 558 contest participants to /Users/MacBookPro/Downloads/ShareExtractor-main 2/Facebook Contest Validator.app/Contents/Resources/app_bundle/data/autosave_contest.csv
+00:41:44 INFO app.gui.main_window Auto-saved contest validation to /Users/MacBookPro/Downloads/ShareExtractor-main 2/Facebook Contest Validator.app/Contents/Resources/app_bundle/data/autosave_contest.csv
+00:41:44 INFO app.gui.main_window Auto-imported Browser Extension batch '1793817703726_84pq8e' (390 profiles with links; 28 hybrid records synced).
+00:41:57 INFO app.gui.main_window Starting collection for action: LIKE
+00:42:01 DEBUG app.automation.profile_extractor Extracted 12 'like' candidates from source (window=like).
+00:42:06 INFO app.automation.collector_engine Page source has not changed after scroll.
+00:42:13 INFO app.automation.collector_engine Page source has not changed after scroll.
+00:42:18 INFO app.automation.collector_engine Page source has not changed after scroll.
+00:42:18 INFO app.automation.collector_engine End of list reached, waiting 4s for lazy load (Auto-Retry 1/1)...
+00:42:29 DEBUG app.automation.profile_extractor Extracted 12 'like' candidates from source (window=unknown).
+00:42:31 INFO app.exporters.csv_exporter Successfully exported 1023 profiles to /Users/MacBookPro/Downloads/ShareExtractor-main 2/Facebook Contest Validator.app/Contents/Resources/app_bundle/data/autosave.csv
+00:42:31 INFO app.gui.main_window Auto-saved raw profiles to /Users/MacBookPro/Downloads/ShareExtractor-main 2/Facebook Contest Validator.app/Contents/Resources/app_bundle/data/autosave.csv
+00:42:31 INFO app.exporters.csv_exporter Successfully exported 558 contest participants to /Users/MacBookPro/Downloads/ShareExtractor-main 2/Facebook Contest Validator.app/Contents/Resources/app_bundle/data/autosave_contest.csv
+00:42:31 INFO app.gui.main_window Auto-saved contest validation to /Users/MacBookPro/Downloads/ShareExtractor-main 2/Facebook Contest Validator.app/Contents/Resources/app_bundle/data/autosave_contest.csv
+00:42:31 INFO app.gui.main_window Hybrid Sync Profile applied: enriched 1 records with verified Profile URLs.
+00:42:36 DEBUG app.automation.profile_extractor Extracted 12 'like' candidates from source (window=unknown).
+00:42:42 DEBUG app.automation.profile_extractor Extracted 12 'like' candidates from source (window=unknown).
+00:42:49 DEBUG app.automation.profile_extractor Extracted 12 'like' candidates from source (window=unknown).
+00:42:49 INFO app.exporters.csv_exporter Successfully exported 1023 profiles to /Users/MacBookPro/Downloads/ShareExtractor-main 2/Facebook Contest Validator.app/Contents/Resources/app_bundle/data/autosave.csv
+00:42:49 INFO app.gui.main_window Auto-saved raw profiles to /Users/MacBookPro/Downloads/ShareExtractor-main 2/Facebook Contest Validator.app/Contents/Resources/app_bundle/data/autosave.csv
+00:42:49 INFO app.exporters.csv_exporter Successfully exported 558 contest participants to /Users/MacBookPro/Downloads/ShareExtractor-main 2/Facebook Contest Validator.app/Contents/Resources/app_bundle/data/autosave_contest.csv
+00:42:49 INFO app.gui.main_window Auto-saved contest validation to /Users/MacBookPro/Downloads/ShareExtractor-main 2/Facebook Contest Validator.app/Contents/Resources/app_bundle/data/autosave_contest.csv
+00:42:55 DEBUG app.automation.profile_extractor Extracted 12 'like' candidates from source (window=unknown).
+00:43:02 DEBUG app.automation.profile_extractor Extracted 12 'like' candidates from source (window=unknown).
+00:43:08 DEBUG app.automation.profile_extractor Extracted 12 'like' candidates from source (window=unknown).
+00:43:13 INFO app.exporters.csv_exporter Successfully exported 1043 profiles to /Users/MacBookPro/Downloads/ShareExtractor-main 2/Facebook Contest Validator.app/Contents/Resources/app_bundle/data/autosave.csv
+00:43:13 INFO app.gui.main_window Auto-saved raw profiles to /Users/MacBookPro/Downloads/ShareExtractor-main 2/Facebook Contest Validator.app/Contents/Resources/app_bundle/data/autosave.csv
+00:43:13 INFO app.exporters.csv_exporter Successfully exported 565 contest participants to /Users/MacBookPro/Downloads/ShareExtractor-main 2/Facebook Contest Validator.app/Contents/Resources/app_bundle/data/autosave_contest.csv
+00:43:13 INFO app.gui.main_window Auto-saved contest validation to /Users/MacBookPro/Downloads/ShareExtractor-main 2/Facebook Contest Validator.app/Contents/Resources/app_bundle/data/autosave_contest.csv
+00:43:13 INFO app.gui.main_window Auto-imported Browser Extension batch '1793817792682_xl6c0m' (410 profiles with links; 33 hybrid records synced).
+00:43:15 DEBUG app.automation.profile_extractor Extracted 12 'like' candidates from source (window=unknown).
+00:43:15 INFO app.exporters.csv_exporter Successfully exported 1043 profiles to /Users/MacBookPro/Downloads/ShareExtractor-main 2/Facebook Contest Validator.app/Contents/Resources/app_bundle/data/autosave.csv
+00:43:15 INFO app.gui.main_window Auto-saved raw profiles to /Users/MacBookPro/Downloads/ShareExtractor-main 2/Facebook Contest Validator.app/Contents/Resources/app_bundle/data/autosave.csv
+00:43:15 INFO app.exporters.csv_exporter Successfully exported 565 contest participants to /Users/MacBookPro/Downloads/ShareExtractor-main 2/Facebook Contest Validator.app/Contents/Resources/app_bundle/data/autosave_contest.csv
+00:43:15 INFO app.gui.main_window Auto-saved contest validation to /Users/MacBookPro/Downloads/ShareExtractor-main 2/Facebook Contest Validator.app/Contents/Resources/app_bundle/data/autosave_contest.csv
+00:43:16 INFO app.exporters.csv_exporter Successfully exported 1045 profiles to /Users/MacBookPro/Downloads/ShareExtractor-main 2/Facebook Contest Validator.app/Contents/Resources/app_bundle/data/autosave.csv
+00:43:16 INFO app.gui.main_window Auto-saved raw profiles to /Users/MacBookPro/Downloads/ShareExtractor-main 2/Facebook Contest Validator.app/Contents/Resources/app_bundle/data/autosave.csv
+00:43:16 INFO app.exporters.csv_exporter Successfully exported 565 contest participants to /Users/MacBookPro/Downloads/ShareExtractor-main 2/Facebook Contest Validator.app/Contents/Resources/app_bundle/data/autosave_contest.csv
+00:43:16 INFO app.gui.main_window Auto-saved contest validation to /Users/MacBookPro/Downloads/ShareExtractor-main 2/Facebook Contest Validator.app/Contents/Resources/app_bundle/data/autosave_contest.csv
+00:43:16 INFO app.gui.main_window Auto-imported Browser Extension batch '1793817794923_p48h3k' (412 profiles with links; 1 hybrid records synced).
+00:43:21 DEBUG app.automation.profile_extractor Extracted 12 'like' candidates from source (window=unknown).
+00:43:28 DEBUG app.automation.profile_extractor Extracted 12 'like' candidates from source (window=like).
+00:43:29 INFO app.exporters.csv_exporter Successfully exported 1045 profiles to /Users/MacBookPro/Downloads/ShareExtractor-main 2/Facebook Contest Validator.app/Contents/Resources/app_bundle/data/autosave.csv
+00:43:29 INFO app.gui.main_window Auto-saved raw profiles to /Users/MacBookPro/Downloads/ShareExtractor-main 2/Facebook Contest Validator.app/Contents/Resources/app_bundle/data/autosave.csv
+00:43:29 INFO app.exporters.csv_exporter Successfully exported 565 contest participants to /Users/MacBookPro/Downloads/ShareExtractor-main 2/Facebook Contest Validator.app/Contents/Resources/app_bundle/data/autosave_contest.csv
+00:43:29 INFO app.gui.main_window Auto-saved contest validation to /Users/MacBookPro/Downloads/ShareExtractor-main 2/Facebook Contest Validator.app/Contents/Resources/app_bundle/data/autosave_contest.csv
+00:43:29 INFO app.gui.main_window Auto-imported Browser Extension batch '1793817808567_zx56tr' (412 profiles with links; 0 hybrid records synced).
+00:43:35 DEBUG app.automation.profile_extractor Extracted 12 'like' candidates from source (window=like).
+00:43:41 DEBUG app.automation.profile_extractor Extracted 12 'like' candidates from source (window=like).
+00:43:41 INFO app.exporters.csv_exporter Successfully exported 1045 profiles to /Users/MacBookPro/Downloads/ShareExtractor-main 2/Facebook Contest Validator.app/Contents/Resources/app_bundle/data/autosave.csv
+00:43:41 INFO app.gui.main_window Auto-saved raw profiles to /Users/MacBookPro/Downloads/ShareExtractor-main 2/Facebook Contest Validator.app/Contents/Resources/app_bundle/data/autosave.csv
+00:43:41 INFO app.exporters.csv_exporter Successfully exported 565 contest participants to /Users/MacBookPro/Downloads/ShareExtractor-main 2/Facebook Contest Validator.app/Contents/Resources/app_bundle/data/autosave_contest.csv
+00:43:41 INFO app.gui.main_window Auto-saved contest validation to /Users/MacBookPro/Downloads/ShareExtractor-main 2/Facebook Contest Validator.app/Contents/Resources/app_bundle/data/autosave_contest.csv
+00:43:47 DEBUG app.automation.profile_extractor Extracted 13 'like' candidates from source (window=like).
+00:43:54 DEBUG app.automation.profile_extractor Extracted 12 'like' candidates from source (window=like).
+00:44:01 DEBUG app.automation.profile_extractor Extracted 12 'like' candidates from source (window=like).
+00:44:07 DEBUG app.automation.profile_extractor Extracted 12 'like' candidates from source (window=like).
+00:44:07 INFO app.exporters.csv_exporter Successfully exported 1045 profiles to /Users/MacBookPro/Downloads/ShareExtractor-main 2/Facebook Contest Validator.app/Contents/Resources/app_bundle/data/autosave.csv
+00:44:07 INFO app.gui.main_window Auto-saved raw profiles to /Users/MacBookPro/Downloads/ShareExtractor-main 2/Facebook Contest Validator.app/Contents/Resources/app_bundle/data/autosave.csv
+00:44:07 INFO app.exporters.csv_exporter Successfully exported 565 contest participants to /Users/MacBookPro/Downloads/ShareExtractor-main 2/Facebook Contest Validator.app/Contents/Resources/app_bundle/data/autosave_contest.csv
+00:44:07 INFO app.gui.main_window Auto-saved contest validation to /Users/MacBookPro/Downloads/ShareExtractor-main 2/Facebook Contest Validator.app/Contents/Resources/app_bundle/data/autosave_contest.csv
+00:44:14 DEBUG app.automation.profile_extractor Extracted 13 'like' candidates from source (window=like).
+00:44:21 DEBUG app.automation.profile_extractor Extracted 12 'like' candidates from source (window=like).
+00:44:27 DEBUG app.automation.profile_extractor Extracted 12 'like' candidates from source (window=like).
+00:44:34 DEBUG app.automation.profile_extractor Extracted 12 'like' candidates from source (window=like).
+00:44:34 INFO app.exporters.csv_exporter Successfully exported 1045 profiles to /Users/MacBookPro/Downloads/ShareExtractor-main 2/Facebook Contest Validator.app/Contents/Resources/app_bundle/data/autosave.csv
+00:44:34 INFO app.gui.main_window Auto-saved raw profiles to /Users/MacBookPro/Downloads/ShareExtractor-main 2/Facebook Contest Validator.app/Contents/Resources/app_bundle/data/autosave.csv
+00:44:34 INFO app.exporters.csv_exporter Successfully exported 565 contest participants to /Users/MacBookPro/Downloads/ShareExtractor-main 2/Facebook Contest Validator.app/Contents/Resources/app_bundle/data/autosave_contest.csv
+00:44:34 INFO app.gui.main_window Auto-saved contest validation to /Users/MacBookPro/Downloads/ShareExtractor-main 2/Facebook Contest Validator.app/Contents/Resources/app_bundle/data/autosave_contest.csv
+00:44:41 DEBUG app.automation.profile_extractor Extracted 12 'like' candidates from source (window=like).
+00:44:47 DEBUG app.automation.profile_extractor Extracted 12 'like' candidates from source (window=unknown).
+00:44:52 INFO app.exporters.csv_exporter Successfully exported 1055 profiles to /Users/MacBookPro/Downloads/ShareExtractor-main 2/Facebook Contest Validator.app/Contents/Resources/app_bundle/data/autosave.csv
+00:44:52 INFO app.gui.main_window Auto-saved raw profiles to /Users/MacBookPro/Downloads/ShareExtractor-main 2/Facebook Contest Validator.app/Contents/Resources/app_bundle/data/autosave.csv
+00:44:52 INFO app.exporters.csv_exporter Successfully exported 571 contest participants to /Users/MacBookPro/Downloads/ShareExtractor-main 2/Facebook Contest Validator.app/Contents/Resources/app_bundle/data/autosave_contest.csv
+00:44:52 INFO app.gui.main_window Auto-saved contest validation to /Users/MacBookPro/Downloads/ShareExtractor-main 2/Facebook Contest Validator.app/Contents/Resources/app_bundle/data/autosave_contest.csv
+00:44:52 INFO app.gui.main_window Auto-imported Browser Extension batch '1793817891760_jb98cn' (422 profiles with links; 12 hybrid records synced).
+00:44:54 DEBUG app.automation.profile_extractor Extracted 12 'like' candidates from source (window=unknown).
+00:44:57 INFO app.exporters.csv_exporter Successfully exported 1055 profiles to /Users/MacBookPro/Downloads/ShareExtractor-main 2/Facebook Contest Validator.app/Contents/Resources/app_bundle/data/autosave.csv
+00:44:57 INFO app.gui.main_window Auto-saved raw profiles to /Users/MacBookPro/Downloads/ShareExtractor-main 2/Facebook Contest Validator.app/Contents/Resources/app_bundle/data/autosave.csv
+00:44:57 INFO app.exporters.csv_exporter Successfully exported 571 contest participants to /Users/MacBookPro/Downloads/ShareExtractor-main 2/Facebook Contest Validator.app/Contents/Resources/app_bundle/data/autosave_contest.csv
+00:44:57 INFO app.gui.main_window Auto-saved contest validation to /Users/MacBookPro/Downloads/ShareExtractor-main 2/Facebook Contest Validator.app/Contents/Resources/app_bundle/data/autosave_contest.csv
+00:44:57 INFO app.gui.main_window Auto-imported Browser Extension batch '1793817896382_admklm' (422 profiles with links; 0 hybrid records synced).
+00:44:59 INFO app.exporters.csv_exporter Successfully exported 1055 profiles to /Users/MacBookPro/Downloads/ShareExtractor-main 2/Facebook Contest Validator.app/Contents/Resources/app_bundle/data/autosave.csv
+00:44:59 INFO app.gui.main_window Auto-saved raw profiles to /Users/MacBookPro/Downloads/ShareExtractor-main 2/Facebook Contest Validator.app/Contents/Resources/app_bundle/data/autosave.csv
+00:44:59 INFO app.exporters.csv_exporter Successfully exported 571 contest participants to /Users/MacBookPro/Downloads/ShareExtractor-main 2/Facebook Contest Validator.app/Contents/Resources/app_bundle/data/autosave_contest.csv
+00:44:59 INFO app.gui.main_window Auto-saved contest validation to /Users/MacBookPro/Downloads/ShareExtractor-main 2/Facebook Contest Validator.app/Contents/Resources/app_bundle/data/autosave_contest.csv
+00:44:59 INFO app.gui.main_window Auto-imported Browser Extension batch '1793817898341_ze2r1i' (422 profiles with links; 0 hybrid records synced).
+00:45:01 DEBUG app.automation.profile_extractor Extracted 12 'like' candidates from source (window=unknown).
+00:45:01 INFO app.exporters.csv_exporter Successfully exported 1055 profiles to /Users/MacBookPro/Downloads/ShareExtractor-main 2/Facebook Contest Validator.app/Contents/Resources/app_bundle/data/autosave.csv
+00:45:01 INFO app.gui.main_window Auto-saved raw profiles to /Users/MacBookPro/Downloads/ShareExtractor-main 2/Facebook Contest Validator.app/Contents/Resources/app_bundle/data/autosave.csv
+00:45:01 INFO app.exporters.csv_exporter Successfully exported 571 contest participants to /Users/MacBookPro/Downloads/ShareExtractor-main 2/Facebook Contest Validator.app/Contents/Resources/app_bundle/data/autosave_contest.csv
+00:45:01 INFO app.gui.main_window Auto-saved contest validation to /Users/MacBookPro/Downloads/ShareExtractor-main 2/Facebook Contest Validator.app/Contents/Resources/app_bundle/data/autosave_contest.csv
+00:45:07 DEBUG app.automation.profile_extractor Extracted 12 'like' candidates from source (window=like).
+00:45:14 DEBUG app.automation.profile_extractor Extracted 12 'like' candidates from source (window=like).
+00:45:20 DEBUG app.automation.profile_extractor Extracted 12 'like' candidates from source (window=like).
+00:45:24 INFO app.exporters.csv_exporter Successfully exported 1055 profiles to /Users/MacBookPro/Downloads/ShareExtractor-main 2/Facebook Contest Validator.app/Contents/Resources/app_bundle/data/autosave.csv
+00:45:24 INFO app.gui.main_window Auto-saved raw profiles to /Users/MacBookPro/Downloads/ShareExtractor-main 2/Facebook Contest Validator.app/Contents/Resources/app_bundle/data/autosave.csv
+00:45:24 INFO app.exporters.csv_exporter Successfully exported 571 contest participants to /Users/MacBookPro/Downloads/ShareExtractor-main 2/Facebook Contest Validator.app/Contents/Resources/app_bundle/data/autosave_contest.csv
+00:45:24 INFO app.gui.main_window Auto-saved contest validation to /Users/MacBookPro/Downloads/ShareExtractor-main 2/Facebook Contest Validator.app/Contents/Resources/app_bundle/data/autosave_contest.csv
+00:45:24 INFO app.gui.main_window Auto-imported Browser Extension batch '1793817923772_plq1g2' (422 profiles with links; 0 hybrid records synced).
+00:45:26 INFO app.automation.collector_engine Page source has not changed after scroll.
+00:45:32 DEBUG app.automation.profile_extractor Extracted 2 'like' candidates from source (window=comment).
+00:45:39 DEBUG app.automation.profile_extractor Extracted 3 'like' candidates from source (window=comment).
+00:45:42 INFO app.exporters.csv_exporter Successfully exported 1057 profiles to /Users/MacBookPro/Downloads/ShareExtractor-main 2/Facebook Contest Validator.app/Contents/Resources/app_bundle/data/autosave.csv
+00:45:42 INFO app.gui.main_window Auto-saved raw profiles to /Users/MacBookPro/Downloads/ShareExtractor-main 2/Facebook Contest Validator.app/Contents/Resources/app_bundle/data/autosave.csv
+00:45:42 INFO app.exporters.csv_exporter Successfully exported 572 contest participants to /Users/MacBookPro/Downloads/ShareExtractor-main 2/Facebook Contest Validator.app/Contents/Resources/app_bundle/data/autosave_contest.csv
+00:45:42 INFO app.gui.main_window Auto-saved contest validation to /Users/MacBookPro/Downloads/ShareExtractor-main 2/Facebook Contest Validator.app/Contents/Resources/app_bundle/data/autosave_contest.csv
+00:45:42 INFO app.gui.main_window Session 08c59b0b-16bc-45e6-bc9d-eaa10226168b step completed. Total raw profiles: 1060

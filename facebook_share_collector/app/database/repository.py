@@ -33,7 +33,7 @@ def ensure_writable_data_dir(subdir: str = "data") -> str:
         os.makedirs(target, exist_ok=True)
         return target
     except OSError:
-        fallback = os.path.expanduser("~/Library/Application Support/FacebookContestValidator/data")
+        fallback = os.path.expanduser("~/Library/Application Support/Sentra/data")
         os.makedirs(fallback, exist_ok=True)
         return fallback
 
@@ -107,6 +107,8 @@ class DatabaseRepository:
                     cursor.execute("ALTER TABLE profiles ADD COLUMN avatar_hash TEXT")
                 if 'avatar_path' not in columns:
                     cursor.execute("ALTER TABLE profiles ADD COLUMN avatar_path TEXT")
+                if 'shared_post_url' not in columns:
+                    cursor.execute("ALTER TABLE profiles ADD COLUMN shared_post_url TEXT")
                 
                 # Create indexes to speed up deduplication searches
                 cursor.execute("CREATE INDEX IF NOT EXISTS idx_profiles_url ON profiles(profile_url)")
@@ -157,9 +159,10 @@ class DatabaseRepository:
                     INSERT OR REPLACE INTO profiles (
                         id, name, profile_url, share_url, source, confidence,
                         first_seen_at, last_seen_at, session_id, scroll_index,
-                        content, reactions, comments, action_type, avatar_hash, avatar_path
+                        content, reactions, comments, action_type, avatar_hash, avatar_path,
+                        shared_post_url
                     )
-                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                     """,
                     [
                         (
@@ -169,6 +172,7 @@ class DatabaseRepository:
                             getattr(p, 'action_type', 'share'),
                             getattr(p, 'avatar_hash', None),
                             getattr(p, 'avatar_path', None),
+                            getattr(p, 'shared_post_url', None),
                         )
                         for p in profiles
                     ]
@@ -214,6 +218,7 @@ class DatabaseRepository:
                         reactions=row_dict.get('reactions', None),
                         comments=row_dict.get('comments', None),
                         action_type=row_dict.get('action_type') or 'share',
+                        shared_post_url=row_dict.get('shared_post_url', None),
                         avatar_hash=row_dict.get('avatar_hash', None),
                         avatar_path=row_dict.get('avatar_path', None)
                     ))

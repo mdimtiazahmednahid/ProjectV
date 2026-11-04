@@ -213,10 +213,10 @@ class MainWindow(QMainWindow):
                             return
                     QMessageBox.information(
                         self,
-                        "No Extension Batch in Clipboard",
-                        "The clipboard does not currently contain an FB Contest Extension batch.\n\n"
-                        "Use the Chrome/Edge Extension or Bookmarklet on facebook.com and click "
-                        "'1. Auto-Scrape Likes', '2. Auto-Scrape Comments', or '3. Auto-Scrape Shares'."
+                        "No Sentra Extension Batch in Clipboard",
+                        "The clipboard does not currently contain a Sentra Extension batch.\n\n"
+                        "Use the Sentra Chrome/Edge Extension or Bookmarklet on facebook.com and click "
+                        "'1. Auto-Scrape Reactions', '2. Auto-Scrape Comments', or '3. Auto-Scrape Shares'."
                     )
                 return
 
@@ -349,8 +349,8 @@ class MainWindow(QMainWindow):
             "QTabBar::tab:selected { background: #2563eb; color: #ffffff; }"
             "QTabBar::tab:hover:!selected { background: #334155; color: #f8fafc; }"
         )
-        self.tabs.addTab(self.results_panel, "🏆 Contest Validation & Live Lottery List")
-        self.tabs.addTab(self.sync_profile_panel, "🔄 Sync Profile (Hybrid Phone + Web Matcher)")
+        self.tabs.addTab(self.results_panel, "🏆 Sentra Intelligence & Live Lottery List")
+        self.tabs.addTab(self.sync_profile_panel, "🔄 Sentra Sync Profile (Hybrid Phone + Web Matcher)")
         self.tabs.currentChanged.connect(self._on_tab_changed)
         
         splitter.addWidget(self.tabs)

@@ -140,6 +140,84 @@ def clean_facebook_profile_url(raw_url: str) -> Optional[str]:
     return f"https://www.facebook.com/{username}"
 
 
+def clean_facebook_post_url(raw_url: str) -> Optional[str]:
+    """
+    Normalizes a raw Facebook post / share permalink into a clean canonical post URL.
+    Supports:
+      - https://www.facebook.com/<username>/posts/<post_id_or_pfbid>
+      - https://www.facebook.com/permalink.php?story_fbid=...&id=...
+      - https://www.facebook.com/story.php?story_fbid=...&id=...
+      - https://www.facebook.com/groups/<gid>/posts/<post_id>
+      - https://www.facebook.com/share/p/<token>
+      - https://www.facebook.com/<username>/videos/<video_id>
+      - https://www.facebook.com/photo.php?fbid=...
+      - https://www.facebook.com/watch/?v=...
+    Returns None if raw_url is a plain profile URL or comment link.
+    """
+    if not raw_url:
+        return None
+
+    url = raw_url.strip()
+    if url.startswith("#") or url.startswith("javascript:"):
+        return None
+    if url.startswith("/"):
+        url = "https://www.facebook.com" + url
+    if "facebook.com" not in url.lower():
+        return None
+
+    try:
+        parsed = urlparse(url)
+    except Exception:
+        return None
+
+    qs = parse_qs(parsed.query)
+    if "comment_id" in qs or "reply_comment_id" in qs:
+        return None
+
+    path = parsed.path or "/"
+    clean_lower_path = path.lower().rstrip("/")
+
+    # 1. /permalink.php?story_fbid=...&id=... or /story.php?story_fbid=...&id=...
+    if clean_lower_path in ("/permalink.php", "/story.php"):
+        story_fbids = qs.get("story_fbid", [])
+        uids = qs.get("id", [])
+        if story_fbids and uids:
+            return f"https://www.facebook.com/permalink.php?story_fbid={quote(story_fbids[0])}&id={quote(uids[0])}"
+        if story_fbids:
+            return f"https://www.facebook.com/permalink.php?story_fbid={quote(story_fbids[0])}"
+        return None
+
+    # 2. /<username>/(posts|videos|activity)/<post_id_or_pfbid>
+    m_user_post = re.match(r"^/([^/]+)/(posts|videos|activity)/([^/?#]+)", path, re.IGNORECASE)
+    if m_user_post:
+        return f"https://www.facebook.com/{m_user_post.group(1)}/{m_user_post.group(2)}/{m_user_post.group(3)}"
+
+    # 3. /groups/<gid>/(posts|permalink)/<post_id>
+    m_group_post = re.match(r"^/groups/([^/]+)/(posts|permalink)/([^/?#]+)", path, re.IGNORECASE)
+    if m_group_post:
+        return f"https://www.facebook.com/groups/{m_group_post.group(1)}/{m_group_post.group(2)}/{m_group_post.group(3)}"
+
+    # 4. /share/p/<token> or /share/v/<token> or /share/<token>
+    m_share = re.match(r"^/share/(?:([pv])/)?([^/?#]+)", path, re.IGNORECASE)
+    if m_share:
+        kind_seg = f"{m_share.group(1)}/" if m_share.group(1) else ""
+        return f"https://www.facebook.com/share/{kind_seg}{m_share.group(2)}"
+
+    # 5. /photo.php?fbid=... or /photo/?fbid=...
+    if clean_lower_path in ("/photo.php", "/photo"):
+        fbids = qs.get("fbid", [])
+        if fbids:
+            return f"https://www.facebook.com/photo.php?fbid={quote(fbids[0])}"
+
+    # 6. /watch/?v=...
+    if clean_lower_path == "/watch":
+        vs = qs.get("v", [])
+        if vs:
+            return f"https://www.facebook.com/watch/?v={quote(vs[0])}"
+
+    return None
+
+
 def _is_valid_person_name(name: str) -> bool:
     if not name:
         return False
@@ -561,6 +639,7 @@ class BrowserDOMExtractor:
                 flags=re.IGNORECASE,
             ).strip()
             raw_url = item.get("url") or ""
+            raw_shared_post_url = item.get("shared_post_url") or ""
             avatar_url = (item.get("avatar_url") or "").strip()
             content = normalize_text(item.get("content") or "")
             item_action = (item.get("action_type") or action_type or "share").lower().strip()
@@ -568,6 +647,10 @@ class BrowserDOMExtractor:
                 item_action = "share"
 
             clean_url = clean_facebook_profile_url(raw_url)
+            clean_post_url = (
+                clean_facebook_post_url(raw_shared_post_url)
+                or (clean_facebook_post_url(raw_url) if item_action == "share" else None)
+            )
             if not raw_name:
                 continue
             # For comments (or items with avatar_url/content), allow keeping the record even if Facebook didn't hydrate an href
@@ -578,7 +661,12 @@ class BrowserDOMExtractor:
                 continue
 
             identity_key = (clean_url or raw_name).lower()
-            key = (identity_key, item_action, content if item_action == "comment" else "")
+            key = (
+                identity_key,
+                item_action,
+                content if item_action in ("comment", "share") else "",
+                clean_post_url or "" if item_action == "share" else "",
+            )
             if key in seen_keys:
                 continue
             seen_keys.add(key)
@@ -588,6 +676,7 @@ class BrowserDOMExtractor:
                     name=raw_name,
                     profile_url=clean_url,
                     share_url=avatar_url if avatar_url.startswith("http") else None,
+                    shared_post_url=clean_post_url,
                     content=content,
                     action_type=item_action,
                     confidence=1.0 if clean_url else 0.9,
@@ -667,20 +756,67 @@ class BrowserDOMExtractor:
         js_code = "".join(cleaned_lines).strip()
         bookmarklet_href = "javascript:" + quote(js_code, safe="();,/:@&=+$#-_.!~*'()")
 
+        from app.utils.sentra_brand import (
+            APP_DESCRIPTION,
+            APP_PILLARS,
+            APP_TAGLINE,
+            APP_UPPER,
+            get_sentra_logo_svg,
+        )
+
         page_html = f"""<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>FB Contest Scraper — 1-Click Bookmarklet & Extension Setup</title>
+  <title>SENTRA — 1-Click Browser Bookmarklet & Extension Setup</title>
   <style>
     body {{
       font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-      background: #0f172a;
+      background: #0b1120;
       color: #f8fafc;
       max-width: 780px;
-      margin: 40px auto;
+      margin: 32px auto;
       padding: 24px;
       line-height: 1.6;
+    }}
+    .brand-hero {{
+      background: #0d1526;
+      border: 1px solid #1e293b;
+      border-radius: 14px;
+      padding: 22px 26px;
+      margin-bottom: 24px;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.45);
+    }}
+    .brand-top {{
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 10px;
+    }}
+    .brand-title {{
+      font-size: 24px;
+      font-weight: 800;
+      letter-spacing: 1.5px;
+      color: #ffffff;
+    }}
+    .brand-tagline {{
+      font-size: 18px;
+      font-weight: 700;
+      color: #f8fafc;
+      margin: 4px 0 6px 0;
+    }}
+    .brand-desc {{
+      font-size: 13.5px;
+      color: #94a3b8;
+      margin: 0 0 12px 0;
+    }}
+    .brand-pillars {{
+      font-size: 11.5px;
+      font-weight: 800;
+      letter-spacing: 1.4px;
+      color: #35c5f0;
+      border-top: 1px solid #1e293b;
+      padding-top: 10px;
     }}
     .card {{
       background: #1e293b;
@@ -690,19 +826,19 @@ class BrowserDOMExtractor:
       margin-bottom: 24px;
       box-shadow: 0 10px 25px rgba(0,0,0,0.35);
     }}
-    h1 {{ color: #60a5fa; margin-top: 0; }}
+    h1 {{ color: #35c5f0; margin-top: 0; font-size: 21px; }}
     h2 {{ color: #93c5fd; margin-top: 0; font-size: 18px; }}
     .bookmarklet-btn {{
       display: inline-block;
-      background: linear-gradient(135deg, #2563eb, #7c3aed);
+      background: linear-gradient(135deg, #0284c7, #2563eb);
       color: #ffffff;
       font-weight: 800;
       font-size: 17px;
       text-decoration: none;
       padding: 14px 28px;
       border-radius: 999px;
-      border: 2px dashed #93c5fd;
-      box-shadow: 0 8px 20px rgba(37, 99, 235, 0.45);
+      border: 2px dashed #35c5f0;
+      box-shadow: 0 8px 20px rgba(53, 197, 240, 0.35);
       cursor: grab;
       margin: 12px 0;
     }}
@@ -725,25 +861,35 @@ class BrowserDOMExtractor:
   </style>
 </head>
 <body>
+  <div class="brand-hero">
+    <div class="brand-top">
+      {get_sentra_logo_svg(size=36, stroke_color="#35c5f0")}
+      <span class="brand-title">{APP_UPPER}</span>
+    </div>
+    <div class="brand-tagline">{APP_TAGLINE}</div>
+    <div class="brand-desc">{APP_DESCRIPTION}</div>
+    <div class="brand-pillars">{APP_PILLARS}</div>
+  </div>
+
   <div class="card">
-    <h1>🔖 Option A: 1-Click Browser Bookmark (Zero Installation)</h1>
+    <h1>🔖 Option A: 1-Click Sentra Browser Bookmark (Zero Installation)</h1>
     <p>Works in <strong>Chrome, Safari, Edge, Brave, and Firefox</strong> without installing anything:</p>
     <ol>
       <li>Make sure your browser's <strong>Bookmarks Bar</strong> is visible (<code>Cmd+Shift+B</code> on Mac or <code>Ctrl+Shift+B</code> on Windows).</li>
-      <li><strong>Drag the glowing button below</strong> up onto your Bookmarks Bar:</li>
+      <li><strong>Drag the glowing Sentra button below</strong> up onto your Bookmarks Bar:</li>
     </ol>
     <p style="text-align:center;">
-      <a class="bookmarklet-btn" href="{bookmarklet_href}" title="Drag me to your Bookmarks Bar!">🎯 FB Contest Scraper</a>
-      <button class="copy-btn" onclick="navigator.clipboard.writeText(document.querySelector('.bookmarklet-btn').href);this.textContent='✅ Bookmarklet URL Copied!';">📋 Copy Bookmark URL</button>
+      <a class="bookmarklet-btn" href="{bookmarklet_href}" title="Drag me to your Bookmarks Bar!">🛰️ SENTRA Signal Collector</a>
+      <button class="copy-btn" onclick="navigator.clipboard.writeText(document.querySelector('.bookmarklet-btn').href);this.textContent='✅ Sentra Bookmarklet Copied!';">📋 Copy Bookmark URL</button>
     </p>
     <ol start="3">
-      <li>Open your Facebook contest post in your browser and <strong>click the <code>🎯 FB Contest Scraper</code> bookmark</strong> on your Bookmarks Bar — the floating scraper panel will appear immediately!</li>
-      <li>Click <strong>Step 1 (Likes)</strong>, <strong>Step 2 (Comments)</strong>, and <strong>Step 3 (Shares)</strong> — every batch is automatically sent to your Desktop App via the clipboard!</li>
+      <li>Open your Facebook contest post in your browser and <strong>click the <code>🛰️ SENTRA Signal Collector</code> bookmark</strong> on your Bookmarks Bar — the floating Sentra panel will appear immediately!</li>
+      <li>Click <strong>Step 1 (Reactions)</strong>, <strong>Step 2 (Comments)</strong>, and <strong>Step 3 (Shares)</strong> — every batch is automatically streamed to your Sentra Desktop App!</li>
     </ol>
   </div>
 
   <div class="card">
-    <h2>🧩 Option B: Installable Chrome / Edge Extension (Auto-Loads on Facebook)</h2>
+    <h2>🧩 Option B: Installable Sentra Chrome / Edge Extension (Auto-Loads on Facebook)</h2>
     <ol>
       <li>Open <code>chrome://extensions/</code> in Chrome (or <code>edge://extensions/</code> in Edge).</li>
       <li>Turn on <strong>Developer mode</strong> (top-right) and click <strong>Load unpacked</strong>.</li>

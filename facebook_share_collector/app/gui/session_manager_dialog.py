@@ -21,7 +21,7 @@ class SessionManagerDialog(QDialog):
         self.selected_session_ids: List[str] = []
         self.start_new_requested: bool = False
 
-        self.setWindowTitle("📂 Contest Session Manager & Multi-Session Merger")
+        self.setWindowTitle("📂 Sentra — Session Manager & Multi-Session Merger")
         self.resize(860, 520)
         self.setStyleSheet(
             "QDialog { background-color: #0f172a; color: #f8fafc; }"
@@ -35,8 +35,8 @@ class SessionManagerDialog(QDialog):
         layout = QVBoxLayout(self)
 
         header = QLabel(
-            "<b>📂 Manage & Merge Saved Contest Sessions</b> — "
-            "Check one or more sessions below (e.g. a Phone Shares session + a Web Likes/Comments session) "
+            "<b>📂 Sentra — Manage & Merge Saved Sessions</b> — "
+            "Check one or more sessions below (e.g. a Phone Shares session + a Web Reactions/Comments session) "
             "and click <b>Load & Sync Selected Sessions</b>."
         )
         header.setWordWrap(True)
@@ -48,7 +48,7 @@ class SessionManagerDialog(QDialog):
         self.table = QTableWidget()
         self.table.setColumnCount(8)
         self.table.setHorizontalHeaderLabels([
-            "Select", "Session ID", "Started At", "Likes 👍", "Comments 💬", "Shares 🔄", "With URL 🔗", "Total Raw"
+            "Select", "Session ID", "Started At", "Reactions 👍", "Comments 💬", "Shares 🔄", "With URL 🔗", "Total Raw"
         ])
         self.table.horizontalHeader().setSectionResizeMode(QHeaderView.Interactive)
         self.table.horizontalHeader().setStretchLastSection(True)
