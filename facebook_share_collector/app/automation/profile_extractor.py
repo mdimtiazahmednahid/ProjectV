@@ -2,7 +2,7 @@ import logging
 import re
 import xml.etree.ElementTree as ET
 from typing import List, Optional, Tuple
-from app.models.share_profile import ShareProfile
+from app.models.share_profile import ShareProfile, normalize_reaction_type
 from app.automation.ui_inspector import UIInspector
 from app.utils.text_normalizer import normalize_text
 from app.utils.avatar_fingerprint import AvatarFingerprinter, parse_bounds
@@ -38,12 +38,13 @@ class ProfileExtractor:
     @staticmethod
     def _has_letters(text: str) -> bool:
         """
-        Returns True if text contains at least 2 alphabetic/Bangla letters
-        (prevents pure emoji strings like '💓💓' or '·' from being mistaken for a person's name).
+        Returns True if text contains at least 2 alphabetic/Bangla letters or vowel signs
+        (prevents pure emoji strings like '💓💓' or '·' from being mistaken for a person's name,
+        while preserving short Bangla names like 'মৌ' or 'মা').
         """
         if not text:
             return False
-        letter_count = sum(1 for ch in text if ch.isalpha())
+        letter_count = sum(1 for ch in text if ch.isalpha() or ("\u0980" <= ch <= "\u09FF"))
         return letter_count >= 2
 
     @classmethod
@@ -121,12 +122,30 @@ class ProfileExtractor:
                 _, _, w, h = b
                 if h < 280 or (w > h * 2.5):
                     continue
-            valid.append((c, b, cls.classify_container_window(c, root=root)))
+            valid.append([c, b, cls.classify_container_window(c, root=root)])
 
         if not valid:
             fallback = raw_containers[-1:] if raw_containers else []
             fb_bounds = parse_bounds(fallback[0].attrib.get("bounds", "")) if fallback else None
             return fallback, fb_bounds, "unknown"
+
+        # If an outer container (e.g. ViewPager / ScrollView) wraps an inner RecyclerView / ListView,
+        # propagate the outer container's detected window type to the inner container and prefer the inner container!
+        valid_elems = {id(item[0]) for item in valid}
+        outer_wrapping_ids = set()
+        for i, (outer_c, _, outer_kind) in enumerate(valid):
+            descendants = {id(d) for d in outer_c.iter() if d is not outer_c}
+            inner_matches = [item for item in valid if id(item[0]) in descendants]
+            if inner_matches:
+                outer_wrapping_ids.add(id(outer_c))
+                if outer_kind != "unknown":
+                    for inner_item in inner_matches:
+                        if inner_item[2] == "unknown":
+                            inner_item[2] = outer_kind
+
+        leaf_valid = [item for item in valid if id(item[0]) not in outer_wrapping_ids]
+        if leaf_valid:
+            valid = leaf_valid
 
         # First priority: container whose classified type matches the requested action_type (pick topmost/last in XML tree)
         matching = [item for item in valid if item[2] == action_type]
