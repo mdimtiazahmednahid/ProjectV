@@ -19,17 +19,30 @@ class ADBDriver:
 
     def __init__(self, device_serial: str):
         self.device_serial = device_serial
-        self.adb_bin = resolve_adb_binary()
+        self.adb_bin = resolve_adb_binary(auto_download=True)
         self._window_size: Optional[Dict[str, int]] = None
 
     def _run_adb(self, args: list, timeout: float = 10.0, binary: bool = False):
         cmd = [self.adb_bin, "-s", self.device_serial] + args
+        kwargs = subprocess_windowless_kwargs()
+        if binary:
+            return subprocess.run(
+                cmd,
+                capture_output=True,
+                text=False,
+                timeout=timeout,
+                **kwargs,
+            )
+        # Critical on Windows: force UTF-8 decoding with replacement so Bangla/emoji/bullet
+        # characters in Android uiautomator XML dumps never trigger cp1252 UnicodeDecodeError!
         return subprocess.run(
             cmd,
             capture_output=True,
-            text=not binary,
+            text=True,
+            encoding="utf-8",
+            errors="replace",
             timeout=timeout,
-            **subprocess_windowless_kwargs()
+            **kwargs,
         )
 
     def get_window_size(self) -> Dict[str, int]:
@@ -94,23 +107,47 @@ class ADBDriver:
     def page_source(self) -> str:
         """
         Dumps UI XML hierarchy directly via ADB without needing Appium Server.
+        Uses isolated try/except blocks per strategy so a timeout or /dev/tty restriction
+        on Windows adb.exe always falls back cleanly to /sdcard/window_dump.xml.
         """
+        # Strategy 1: Fast compressed stdout streaming via /dev/tty
         try:
-            # Fast stdout streaming via /dev/tty
-            res = self._run_adb(["exec-out", "uiautomator", "dump", "/dev/tty"], timeout=8.0)
-            raw = res.stdout or ""
-            xml = self._extract_xml(raw)
+            res = self._run_adb(["exec-out", "uiautomator", "dump", "--compressed", "/dev/tty"], timeout=6.0)
+            xml = self._extract_xml(res.stdout or "")
             if xml:
                 return xml
+        except Exception as e:
+            logger.debug(f"Strategy 1 (compressed /dev/tty) skipped: {e}")
 
-            # Fallback for devices where /dev/tty is not supported or animations delayed dump
+        # Strategy 2: Uncompressed stdout streaming via /dev/tty
+        try:
+            res = self._run_adb(["exec-out", "uiautomator", "dump", "/dev/tty"], timeout=6.0)
+            xml = self._extract_xml(res.stdout or "")
+            if xml:
+                return xml
+        except Exception as e:
+            logger.debug(f"Strategy 2 (/dev/tty) skipped: {e}")
+
+        # Strategy 3: Compressed dump to /sdcard/window_dump.xml + cat
+        try:
             self._run_adb(["shell", "uiautomator", "dump", "--compressed", "/sdcard/window_dump.xml"], timeout=8.0)
             res2 = self._run_adb(["exec-out", "cat", "/sdcard/window_dump.xml"], timeout=6.0)
             xml2 = self._extract_xml(res2.stdout or "")
             if xml2:
                 return xml2
         except Exception as e:
-            logger.error(f"Direct ADB page_source dump failed: {e}")
+            logger.debug(f"Strategy 3 (compressed /sdcard/window_dump.xml) skipped: {e}")
+
+        # Strategy 4: Standard dump to /sdcard/window_dump.xml + shell cat
+        try:
+            self._run_adb(["shell", "uiautomator", "dump", "/sdcard/window_dump.xml"], timeout=8.0)
+            res3 = self._run_adb(["shell", "cat", "/sdcard/window_dump.xml"], timeout=6.0)
+            xml3 = self._extract_xml(res3.stdout or "")
+            if xml3:
+                return xml3
+        except Exception as e:
+            logger.error(f"Direct ADB page_source dump failed across all strategies: {e}")
+
         return ""
 
     @staticmethod
@@ -131,8 +168,11 @@ class ADBDriver:
         """
         try:
             res = self._run_adb(["exec-out", "screencap", "-p"], timeout=6.0, binary=True)
-            if res.returncode == 0 and res.stdout and res.stdout.startswith(b"\x89PNG"):
-                return res.stdout
+            data = res.stdout or b""
+            if data.startswith(b"\x89PNG\r\r\n"):
+                data = data.replace(b"\r\n", b"\n")
+            if res.returncode == 0 and data.startswith(b"\x89PNG"):
+                return data
         except Exception as e:
             logger.debug(f"ADB screencap failed: {e}")
         return b""
@@ -201,4 +241,3 @@ class ADBManager:
 
     def is_connected(self) -> bool:
         return self.driver is not None
-

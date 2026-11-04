@@ -4,6 +4,9 @@ import shutil
 import sys
 import traceback
 
+os.environ.setdefault("PYTHONUTF8", "1")
+os.environ.setdefault("PYTHONIOENCODING", "utf-8")
+
 if getattr(sys, "frozen", False):
     APP_ROOT = os.path.dirname(os.path.abspath(sys.executable))
     BUNDLE_RESOURCE_ROOT = getattr(sys, "_MEIPASS", APP_ROOT)

@@ -700,6 +700,186 @@ def test_mass_load_20k_users_performance_and_consistency():
         assert os.path.getsize(out_csv) > 1_000_000
 
 
+def test_windows_utf8_litho_multiline_and_local_http_bridge():
+    """
+    Verifies the Windows fixes:
+      1. ProfileExtractor extracts Likes with ', 12 mutual friends, Add friend' and
+         Comments from multiline Litho ViewGroups even when avatar content-desc is generic or missing.
+      2. LocalBridgeServer receives POST /batch over localhost HTTP and queues batches cleanly.
+    """
+    import urllib.request
+    from app.automation.local_bridge_server import LocalBridgeServer
+
+    litho_comments_xml = """<?xml version="1.0" encoding="UTF-8"?>
+    <hierarchy rotation="0">
+      <android.widget.ScrollView scrollable="true" bounds="[0,200][1080,2200]">
+        <android.view.ViewGroup bounds="[0,200][1080,2200]">
+          <!-- Comment 1: Generic 'Profile picture' + multiline Litho ViewGroup with Bangla & bullet -->
+          <android.view.ViewGroup bounds="[0,250][1080,450]">
+            <android.widget.ImageView content-desc="Profile picture" bounds="[36,260][126,350]" />
+            <android.view.ViewGroup text="তৌহিদা ফাতেমা&#10;· Follow&#10;আলহামদুলিল্লাহ দারুণ আয়োজন!&#10;2h" bounds="[140,260][980,420]" />
+            <android.widget.Button content-desc="Reply to তৌহিদা's comment" bounds="[140,420][300,450]" />
+          </android.view.ViewGroup>
+          <!-- Comment 2: 'Profile picture of <Name>' format -->
+          <android.view.ViewGroup bounds="[0,460][1080,660]">
+            <android.widget.ImageView content-desc="Profile picture of Tanjeeb Khan" bounds="[36,470][126,560]" />
+            <android.view.ViewGroup text="Tanjeeb Khan&#10;লাগাও বৃক্ষ!" bounds="[140,470][980,620]" />
+          </android.view.ViewGroup>
+        </android.view.ViewGroup>
+      </android.widget.ScrollView>
+    </hierarchy>
+    """
+    extractor = ProfileExtractor(min_confidence=0.6)
+    comments = extractor.extract(litho_comments_xml, session_id="s_win", action_type="comment")
+    assert len(comments) == 2
+    assert comments[0].name == "তৌহিদা ফাতেমা"
+    assert comments[0].content == "আলহামদুলিল্লাহ দারুণ আয়োজন!"
+    assert comments[1].name == "Tanjeeb Khan"
+    assert comments[1].content == "লাগাও বৃক্ষ!"
+
+    litho_likes_xml = """<?xml version="1.0" encoding="UTF-8"?>
+    <hierarchy rotation="0">
+      <androidx.recyclerview.widget.RecyclerView scrollable="true" bounds="[0,200][1080,2200]">
+        <android.view.ViewGroup content-desc="Md. Rakib Hasan, 12 mutual friends, Add friend" clickable="true" bounds="[0,250][1080,400]" />
+        <android.view.ViewGroup text="Champa Akter&#10;5 mutual friends&#10;Add friend" clickable="true" bounds="[0,410][1080,560]" />
+      </androidx.recyclerview.widget.RecyclerView>
+    </hierarchy>
+    """
+    likes = extractor.extract(litho_likes_xml, session_id="s_win", action_type="like")
+    assert len(likes) == 2
+    assert likes[0].name == "Md. Rakib Hasan"
+    assert likes[1].name == "Champa Akter"
+
+    # Test LocalBridgeServer queue & HTTP POST handler
+    bridge = LocalBridgeServer(port=19881)
+    payload = 'FB_CONTEST_BATCH_V1:{"batch_id":"win_http_1","action_type":"like","items":[{"name":"তৌহিদা ফাতেমা","url":"https://www.facebook.com/touhida.fatema","action_type":"like"}]}'
+    bridge.enqueue_batch_str(payload)
+    batches = bridge.pop_batches()
+    assert len(batches) == 1
+    parsed = BrowserDOMExtractor.parse_clipboard_batch(batches[0], session_id="s_win")
+    assert parsed is not None
+    b_id, profs = parsed
+    assert b_id == "win_http_1"
+    assert len(profs) == 1
+    assert profs[0].name == "তৌহিদা ফাতেমা"
+    assert profs[0].profile_url == "https://www.facebook.com/touhida.fatema"
+
+
+def test_advanced_filter_engine_boolean_and_or_not_and_bangla_boundaries():
+    """
+    Tests DrawSystem (FairDraw) Advanced Filtering & Boolean Logic (AND / OR / NOT):
+      1. Whole-word boundary matching for English & Bangla ('4' vs '14', 'ভালো' vs 'ভালোবাসি', 'apple' vs 'pineapple').
+      2. OR keywords (any right answer variation: '4, চার, four').
+      3. AND keywords (must contain all required words).
+      4. NOT keywords (wrong answer / spam exclusion takes priority).
+      5. Inline Boolean Expression syntax: '(apple OR আপেল) AND fresh NOT rotten'.
+      6. Emoji-only / Invalid comment detection & Category Pill counts ('qualified', 'correct', 'wrong', 'invalid', 'no_comments', 'duplicates', 'disqualified').
+    """
+    from app.utils.advanced_filter_engine import AdvancedFilterConfig, AdvancedFilterEngine
+
+    # 1. Whole-Word Boundary Checks (DrawSystem test_regex.php parity)
+    assert AdvancedFilterEngine.match_single_keyword("The answer is 4.", "4", "whole_word") is True
+    assert AdvancedFilterEngine.match_single_keyword("The answer is 14.", "4", "whole_word") is False
+    assert AdvancedFilterEngine.match_single_keyword("আমি ভালো আছি!", "ভালো", "whole_word") is True
+    assert AdvancedFilterEngine.match_single_keyword("আমি তোমাকে ভালোবাসি", "ভালো", "whole_word") is False
+    assert AdvancedFilterEngine.match_single_keyword("I like apple.", "apple", "whole_word") is True
+    assert AdvancedFilterEngine.match_single_keyword("I like pineapple.", "apple", "whole_word") is False
+
+    # Partial ("contains") mode should match substrings
+    assert AdvancedFilterEngine.match_single_keyword("আমি তোমাকে ভালোবাসি", "ভালো", "contains") is True
+    assert AdvancedFilterEngine.match_single_keyword("The answer is 14.", "4", "contains") is True
+
+    # Exact mode should match only when the stripped comment equals the keyword
+    assert AdvancedFilterEngine.match_single_keyword("  apple! ", "apple", "exact") is True
+    assert AdvancedFilterEngine.match_single_keyword("I like apple", "apple", "exact") is False
+
+    # Inline Boolean Expression parser
+    assert AdvancedFilterEngine.evaluate_inline_boolean_query(
+        ["তাজা আপেল খেতে মজা"], "(apple OR আপেল) AND তাজা NOT পচা", "whole_word"
+    ) is True
+    assert AdvancedFilterEngine.evaluate_inline_boolean_query(
+        ["পচা আপেল খেতে মজা"], "(apple OR আপেল) AND তাজা NOT পচা", "whole_word"
+    ) is False
+
+    # 2. Full Participant Evaluation & Category Counts
+    profiles = [
+        # P1: Md Rakib (3/3 + Right answer "উত্তর ৪ এবং ডান" -> Qualified!)
+        ShareProfile(name="Md Rakib", profile_url="https://facebook.com/rakib1", action_type="like", source="web", confidence=1.0, session_id="s_flt"),
+        ShareProfile(name="Md Rakib", profile_url="https://facebook.com/rakib1", content="সঠিক উত্তর ৪ এবং ডান!", action_type="comment", source="web", confidence=1.0, session_id="s_flt"),
+        ShareProfile(name="Md Rakib", profile_url="https://facebook.com/rakib1", action_type="share", source="web", confidence=1.0, session_id="s_flt"),
+
+        # P2: Nusrat Jahan (3/3 + Right answer "Answer is 4 done" -> Qualified!)
+        ShareProfile(name="Nusrat Jahan", profile_url="https://facebook.com/nusrat1", action_type="like", source="web", confidence=1.0, session_id="s_flt"),
+        ShareProfile(name="Nusrat Jahan", profile_url="https://facebook.com/nusrat1", content="Answer is 4, done @friend", action_type="comment", source="web", confidence=1.0, session_id="s_flt"),
+        ShareProfile(name="Nusrat Jahan", profile_url="https://facebook.com/nusrat1", action_type="share", source="web", confidence=1.0, session_id="s_flt"),
+
+        # P3: Tanvir Ahmed (3/3 + Wrong answer "14 done" -> Excluded by whole-word & NOT keyword "14")
+        ShareProfile(name="Tanvir Ahmed", profile_url="https://facebook.com/tanvir1", action_type="like", source="web", confidence=1.0, session_id="s_flt"),
+        ShareProfile(name="Tanvir Ahmed", profile_url="https://facebook.com/tanvir1", content="Answer is 14 done", action_type="comment", source="web", confidence=1.0, session_id="s_flt"),
+        ShareProfile(name="Tanvir Ahmed", profile_url="https://facebook.com/tanvir1", action_type="share", source="web", confidence=1.0, session_id="s_flt"),
+
+        # P4: Emoji User (3/3 + Emoji-only comment "🔥🔥❤️❤️")
+        ShareProfile(name="Fatema Akter", profile_url="https://facebook.com/fatema1", action_type="like", source="web", confidence=1.0, session_id="s_flt"),
+        ShareProfile(name="Fatema Akter", profile_url="https://facebook.com/fatema1", content="🔥🔥❤️❤️", action_type="comment", source="web", confidence=1.0, session_id="s_flt"),
+        ShareProfile(name="Fatema Akter", profile_url="https://facebook.com/fatema1", action_type="share", source="web", confidence=1.0, session_id="s_flt"),
+
+        # P5: No Comment User (Likes + Shares only)
+        ShareProfile(name="Sohel Rana", profile_url="https://facebook.com/sohel1", action_type="like", source="web", confidence=1.0, session_id="s_flt"),
+        ShareProfile(name="Sohel Rana", profile_url="https://facebook.com/sohel1", action_type="share", source="web", confidence=1.0, session_id="s_flt"),
+    ]
+
+    participants = ContestValidator.validate_participants(profiles)
+    assert len(participants) == 5
+
+    cfg = AdvancedFilterConfig(
+        or_keywords="4, ৪, চার",
+        and_keywords="done, ডান",  # Wait: AND requires ALL keywords in `and_keywords`; let's test OR + NOT first
+    )
+    # Test OR = "4, ৪, চার", AND = "", NOT = "14, ভুল"
+    cfg = AdvancedFilterConfig(
+        or_keywords="4, ৪, চার",
+        and_keywords="",
+        not_keywords="14, ভুল",
+        match_mode="whole_word",
+        exclude_invalid_emoji=True,
+        quick_category="qualified",
+    )
+    qualified_list, evals, counts = AdvancedFilterEngine.evaluate_all(participants, cfg)
+
+    assert counts["all"] == 5
+    assert counts["qualified"] == 2
+    assert counts["correct"] == 2
+    assert counts["wrong"] == 1      # Tanvir Ahmed ("14 done")
+    assert counts["invalid"] == 1    # Fatema Akter ("🔥🔥❤️❤️")
+    assert counts["no_comments"] == 1  # Sohel Rana
+
+    # Qualified winners get re-numbered #0001 and #0002, while wrong/invalid get "-"
+    assert [p.name for p in qualified_list] == ["Md Rakib", "Nusrat Jahan"]
+    assert qualified_list[0].serial_code == "#0001"
+    assert qualified_list[1].serial_code == "#0002"
+    tanvir = next(p for p in participants if p.name == "Tanvir Ahmed")
+    assert tanvir.serial_code == "-"
+
+    # Now test combining OR ("4, ৪") + AND ("done") -> Only Nusrat Jahan has both ("4" OR "৪") AND "done"
+    cfg_and = AdvancedFilterConfig(
+        or_keywords="4, ৪",
+        and_keywords="done",
+        not_keywords="14",
+        match_mode="whole_word",
+        quick_category="qualified",
+    )
+    qual_and, _, counts_and = AdvancedFilterEngine.evaluate_all(participants, cfg_and)
+    assert counts_and["qualified"] == 1
+    assert qual_and[0].name == "Nusrat Jahan"
+    assert qual_and[0].serial_code == "#0001"
+
+    # Test Gender filter ("female")
+    cfg_female = AdvancedFilterConfig(gender_filter="female", quick_category="all")
+    female_list, _, _ = AdvancedFilterEngine.evaluate_all(participants, cfg_female)
+    assert {p.name for p in female_list} == {"Nusrat Jahan", "Fatema Akter"}
+
+
+
 
 
 

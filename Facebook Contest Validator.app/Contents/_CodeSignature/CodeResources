@@ -18,7 +18,7 @@
 		</data>
 		<key>Resources/app_bundle/app/automation/adb_controller.py</key>
 		<data>
-		IdQKyIyU2H/kiVrOlxFsHy1cQz0=
+		sO1/OAeev22eWFPxCuHln4zq9bs=
 		</data>
 		<key>Resources/app_bundle/app/automation/appium_manager.py</key>
 		<data>
@@ -30,19 +30,23 @@
 		</data>
 		<key>Resources/app_bundle/app/automation/collector_engine.py</key>
 		<data>
-		ipsQhJDD+nbZM06QIUeI3+AagCM=
+		4vblF2YxprzPWQlWaYTkBEvnNA8=
 		</data>
 		<key>Resources/app_bundle/app/automation/device_manager.py</key>
 		<data>
-		NSoFtiluhZA9pdORwkL/dA4aK6k=
+		8xNeyK6jejphlhIe4u606zqLZuo=
 		</data>
 		<key>Resources/app_bundle/app/automation/facebook_detector.py</key>
 		<data>
 		2xhyl1YCY06pZIOsHM4DfrDlFkw=
 		</data>
+		<key>Resources/app_bundle/app/automation/local_bridge_server.py</key>
+		<data>
+		FQ8hxtI+30jnSJ8AEUWnz0tubzk=
+		</data>
 		<key>Resources/app_bundle/app/automation/profile_extractor.py</key>
 		<data>
-		Y4LCAj3gDrpFn7TaeJ/3IzpvkbQ=
+		GqB67QNYFVpGAFsRxDokLvBsxXs=
 		</data>
 		<key>Resources/app_bundle/app/automation/scroll_controller.py</key>
 		<data>
@@ -102,7 +106,7 @@
 		</data>
 		<key>Resources/app_bundle/app/gui/device_panel.py</key>
 		<data>
-		BLjYqZ5OloV4VtX9mUdMvZdpEN8=
+		XBc6NFBMr94b8+Nc28oxg7AGZVU=
 		</data>
 		<key>Resources/app_bundle/app/gui/live_lottery_dialog.py</key>
 		<data>
@@ -114,11 +118,11 @@
 		</data>
 		<key>Resources/app_bundle/app/gui/main_window.py</key>
 		<data>
-		HgGUHr72NgXhDtpw6v4pE/ygpLo=
+		mvLnwvXm7o9veGiSRIlKlep4YFc=
 		</data>
 		<key>Resources/app_bundle/app/gui/results_panel.py</key>
 		<data>
-		zRDsNR71RAjcTTj0j+ksuxVq4WU=
+		DLpV10XP+kbyl2cyI07aPaBJq3s=
 		</data>
 		<key>Resources/app_bundle/app/gui/session_manager_dialog.py</key>
 		<data>
@@ -152,6 +156,10 @@
 		<data>
 		2jmj7l5rSw0yVb/vlWAYkK/YBwk=
 		</data>
+		<key>Resources/app_bundle/app/utils/advanced_filter_engine.py</key>
+		<data>
+		dcMQud4xWyP+Mzcop7uusTxRXWo=
+		</data>
 		<key>Resources/app_bundle/app/utils/avatar_fingerprint.py</key>
 		<data>
 		CEUwI2ilXjve5UonPvCawA5uvyc=
@@ -166,11 +174,11 @@
 		</data>
 		<key>Resources/app_bundle/app/utils/logger.py</key>
 		<data>
-		iHc/xjX4R57iiJgc3Y6I5hP5ZZU=
+		HVIJdjey98jFnFDuchJNl7lb6dQ=
 		</data>
 		<key>Resources/app_bundle/app/utils/platform_binaries.py</key>
 		<data>
-		jUjWzSQXlyHWADaj++vRbPuhDXw=
+		oCZjU+ZMNc1aodXt72VgPWMLokM=
 		</data>
 		<key>Resources/app_bundle/app/utils/profile_sync_engine.py</key>
 		<data>
@@ -184,6 +192,10 @@
 		<data>
 		i1I6m2N6vPJT/qP7zDe3MPS5R2Q=
 		</data>
+		<key>Resources/app_bundle/bin/macos/adb</key>
+		<data>
+		4dP6uZbVBezAgLKSHrVUL4Vl8bM=
+		</data>
 		<key>Resources/app_bundle/bin/windows-arm64/README.txt</key>
 		<data>
 		e9zV/QlHYUvYC46QY/zQuGna8CM=
@@ -196,17 +208,17 @@
 		<data>
 		Qw9ucWmmvdvSYL5EDe4Lb7ZkoeM=
 		</data>
-		<key>Resources/app_bundle/browser_extension/bookmarklet.html</key>
+		<key>Resources/app_bundle/browser_extension/background.js</key>
 		<data>
-		FyG436Ylq5Eh2Ic+SpssFADu4NE=
+		E++/wp3T4SXuSOB+lOEXeW9+p0o=
 		</data>
 		<key>Resources/app_bundle/browser_extension/content.js</key>
 		<data>
-		8IUf4uFBQe1Pm2+dmxyg88DbtUU=
+		zda8ipEDW59V3bZR13oOBORDC3A=
 		</data>
 		<key>Resources/app_bundle/browser_extension/manifest.json</key>
 		<data>
-		szJodXNrsgngytaM/49WMKtJxZA=
+		X1geyaepgzH71R8USllKLPKP0FE=
 		</data>
 		<key>Resources/app_bundle/browser_extension/popup.html</key>
 		<data>
@@ -1706,7 +1718,7 @@
 		</data>
 		<key>Resources/app_bundle/main.py</key>
 		<data>
-		rPp1v4rWTza9y9jrfq9R1NaGTdw=
+		0jiZ3WcP5ksFEcrJfX8NHgtO51c=
 		</data>
 		<key>Resources/app_bundle/run.py</key>
 		<data>
@@ -11752,7 +11764,7 @@
 		<dict>
 			<key>hash2</key>
 			<data>
-			IuXS1dYYLpO6Pf+l/XpGGNfLZzkpaOJZPB0p5GvlUqw=
+			p+ZPtzG7oWIky/EUwB+VcmKfylf6jlzJvrMZZ8l5vJM=
 			</data>
 		</dict>
 		<key>Resources/app_bundle/app/automation/appium_manager.py</key>
@@ -11773,14 +11785,14 @@
 		<dict>
 			<key>hash2</key>
 			<data>
-			Zh0n9m1GUfbkM/+g0WvUBEJhbhP+wfOAtwRffG2nfQg=
+			H8Qa5GigMQDfp3eBxfX59GCtiDGZfo1s0W7fJ6opNjw=
 			</data>
 		</dict>
 		<key>Resources/app_bundle/app/automation/device_manager.py</key>
 		<dict>
 			<key>hash2</key>
 			<data>
-			v0TrAlZJOjadjtgstDSbceQ8Pn/Mwr283bQUuB6pEfg=
+			5o8MUMm53BmDxo+bQtOxMGpFFnoCQnZ0wciqo2R7i9A=
 			</data>
 		</dict>
 		<key>Resources/app_bundle/app/automation/facebook_detector.py</key>
@@ -11790,11 +11802,18 @@
 			AF5nFvkt0caD8EplSzPTvrFXBKpWDnQdBu0ILIqI9O0=
 			</data>
 		</dict>
+		<key>Resources/app_bundle/app/automation/local_bridge_server.py</key>
+		<dict>
+			<key>hash2</key>
+			<data>
+			heHrEY5ws17hyLOPdH0SKTIWAO91n4DH7pAOmmKo6zA=
+			</data>
+		</dict>
 		<key>Resources/app_bundle/app/automation/profile_extractor.py</key>
 		<dict>
 			<key>hash2</key>
 			<data>
-			U9sUv2Um3rhioN6WRAI5++oAyRzsuVs/NbPCWGCmcn8=
+			PJsxlErdz0zMTveXlI7MOIFLTT9C9Q4sNWeiK8THg3A=
 			</data>
 		</dict>
 		<key>Resources/app_bundle/app/automation/scroll_controller.py</key>
@@ -11899,7 +11918,7 @@
 		<dict>
 			<key>hash2</key>
 			<data>
-			hKVgUOtcH+2a9ozj4AzZrevFYDHcrWr7j2iu9cZVWTo=
+			ua/l+1Vrsp8LBSVvXShWYD+UrJ1P1z9jsxk/Pgdlb0Q=
 			</data>
 		</dict>
 		<key>Resources/app_bundle/app/gui/live_lottery_dialog.py</key>
@@ -11920,14 +11939,14 @@
 		<dict>
 			<key>hash2</key>
 			<data>
-			nq0UyqPlPkyijIL5f8RKo3WHXXIJ95vRF9t0wi6ZXpo=
+			2tLQdnPvSgLxsOkC2ZY1jWgfseOiWxlgmdTB3BWflW0=
 			</data>
 		</dict>
 		<key>Resources/app_bundle/app/gui/results_panel.py</key>
 		<dict>
 			<key>hash2</key>
 			<data>
-			7vkcQj72FckEkrmcRMtJfiqHryXM3pkDOmp4vwet+Uw=
+			Q3FkUTqOITSwJQ7KLSMv6ZCoNvHgLu26fJVyN7MU5Ts=
 			</data>
 		</dict>
 		<key>Resources/app_bundle/app/gui/session_manager_dialog.py</key>
@@ -11986,6 +12005,13 @@
 			47DEQpj8HBSa+/TImW+5JCeuQeRkm5NMpJWZG3hSuFU=
 			</data>
 		</dict>
+		<key>Resources/app_bundle/app/utils/advanced_filter_engine.py</key>
+		<dict>
+			<key>hash2</key>
+			<data>
+			F6nDsjGy2mopruNHizAPUJu1inlFIiInY/fBx8yk+7U=
+			</data>
+		</dict>
 		<key>Resources/app_bundle/app/utils/avatar_fingerprint.py</key>
 		<dict>
 			<key>hash2</key>
@@ -12011,14 +12037,14 @@
 		<dict>
 			<key>hash2</key>
 			<data>
-			dngNvdms6vg5icuiK8gGyqKEgpGXKV052c98FQ5qeKQ=
+			gbivVgWC2lK/mZaxu7L2a2+q/UPORfN6dIb2ade7Cqg=
 			</data>
 		</dict>
 		<key>Resources/app_bundle/app/utils/platform_binaries.py</key>
 		<dict>
 			<key>hash2</key>
 			<data>
-			xkrFOqZ7diYyz0kkd9gmOd81paPulEF7hHlei0rkvKI=
+			Le5CrNv6yd89jaKbv7Yr2Hm8ZZL5iYyDqTBG40obkLE=
 			</data>
 		</dict>
 		<key>Resources/app_bundle/app/utils/profile_sync_engine.py</key>
@@ -12042,6 +12068,13 @@
 			gI1AzMOVzPNhws+EIlegkZZJbMR4lah9bC7zXANdmOo=
 			</data>
 		</dict>
+		<key>Resources/app_bundle/bin/macos/adb</key>
+		<dict>
+			<key>hash2</key>
+			<data>
+			GBHiU7IbEsv9pyAeuvhsEOfdy1xganqB98grTEKcLTs=
+			</data>
+		</dict>
 		<key>Resources/app_bundle/bin/windows-arm64/README.txt</key>
 		<dict>
 			<key>hash2</key>
@@ -12063,25 +12096,25 @@
 			1HXqzhSxY3r2fdxId+rrO2LDgO1YccH5roqWbOLU8Tk=
 			</data>
 		</dict>
-		<key>Resources/app_bundle/browser_extension/bookmarklet.html</key>
+		<key>Resources/app_bundle/browser_extension/background.js</key>
 		<dict>
 			<key>hash2</key>
 			<data>
-			lQeGpE3otCJLGWZ8kcRIEtb30p/O9/0/EsCdPdrYp5U=
+			aR4XiMBazOciXPwZvHmttXOrgc/4DN50yIS67SwML00=
 			</data>
 		</dict>
 		<key>Resources/app_bundle/browser_extension/content.js</key>
 		<dict>
 			<key>hash2</key>
 			<data>
-			l1JX9QG+TYGVJ/63LTfYs2KlWi0h6N75GBCwYUlcvJU=
+			zjIBFdKWuVPFoIcNCYFsyVvx3246hr1PO2jMaVVbWO4=
 			</data>
 		</dict>
 		<key>Resources/app_bundle/browser_extension/manifest.json</key>
 		<dict>
 			<key>hash2</key>
 			<data>
-			T19kvGO9oaMvrlA+tKJIFCNHXsULdxcQ+ybEQHIuJlQ=
+			gXJB5ZjutWqN+CuVvcyL8UlU4C82ZVQI4gpmWyJMzQk=
 			</data>
 		</dict>
 		<key>Resources/app_bundle/browser_extension/popup.html</key>
@@ -14706,7 +14739,7 @@
 		<dict>
 			<key>hash2</key>
 			<data>
-			duK844Y4CPzOfiTZwxgvTejTPMbMMm+7bnqA8I0NFcg=
+			nYYcTG8MSzRbfn8+lPn43kvqUA9FfDtz/821+vipTF4=
 			</data>
 		</dict>
 		<key>Resources/app_bundle/run.py</key>

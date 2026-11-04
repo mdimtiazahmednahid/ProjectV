@@ -11,7 +11,7 @@
   window.__FB_CONTEST_SCRAPER_LOADED__ = true;
 
   const BATCH_PREFIX = "FB_CONTEST_BATCH_V1:";
-  const BATCH_FLUSH_SIZE = 15;
+  const BATCH_FLUSH_SIZE = 1;
 
   let isRunning = false;
   let activeAction = "like";
@@ -462,6 +462,7 @@
 
   function resolveTargetWindow(actionType) {
     const dialogs = getClassifiedDialogs();
+    const mainEl = document.querySelector('[role="main"]') || document.body;
 
     if (actionType === "like") {
       for (let i = dialogs.length - 1; i >= 0; i--) {
@@ -474,7 +475,10 @@
           return { root: dialogs[i].el, kind: "like_dialog", label: "👍 Likes Popup Modal" };
         }
       }
-      return null;
+      if (dialogs.length > 0) {
+        return { root: dialogs[dialogs.length - 1].el, kind: "like_dialog", label: "👍 Active Dialog Modal" };
+      }
+      return { root: mainEl, kind: "like_page", label: "👍 Page View" };
     }
 
     if (actionType === "share") {
@@ -488,7 +492,10 @@
           return { root: dialogs[i].el, kind: "share_dialog", label: "🔄 Shares Popup Modal" };
         }
       }
-      return null;
+      if (dialogs.length > 0) {
+        return { root: dialogs[dialogs.length - 1].el, kind: "share_dialog", label: "🔄 Active Dialog Modal" };
+      }
+      return { root: mainEl, kind: "share_page", label: "🔄 Page View" };
     }
 
     if (actionType === "comment") {
@@ -499,27 +506,21 @@
           const rb = b.el.getBoundingClientRect();
           return rb.width * rb.height - ra.width * ra.height;
         });
-        const topDialog = dialogs[dialogs.length - 1];
-        const hasOverlayPopup = topDialog.kind === "like" || topDialog.kind === "share";
         return {
           root: commentDialogs[0].el,
           kind: "comment_dialog",
           label: "💬 Post Comments Modal",
-          blockedByPopup: hasOverlayPopup ? topDialog.kind : null
+          blockedByPopup: null
         };
       }
       if (dialogs.length > 0) {
-        const topKind = dialogs[dialogs.length - 1].kind;
-        if (topKind === "like" || topKind === "share") {
-          return {
-            root: null,
-            kind: "blocked",
-            label: `⚠️ Close ${topKind.toUpperCase()} popup first`,
-            blockedByPopup: topKind
-          };
-        }
+        return {
+          root: dialogs[dialogs.length - 1].el,
+          kind: "comment_dialog",
+          label: "💬 Active Dialog Modal",
+          blockedByPopup: null
+        };
       }
-      const mainEl = document.querySelector('[role="main"]') || document.body;
       return { root: mainEl, kind: "comment_page", label: "💬 Page Comments Section" };
     }
 
@@ -847,8 +848,8 @@
 
   function extractLikesFromDialog(likeDialog) {
     const found = [];
-    const scrollContainer = findSingleScrollableForWindow(likeDialog, "like") || likeDialog;
-    const links = Array.from(scrollContainer.querySelectorAll("a[href]:not([data-fb-scraped='1'])"));
+    triggerHoverHydration(likeDialog);
+    const links = Array.from(likeDialog.querySelectorAll("a[href]:not([data-fb-scraped='1'])"));
     const urlToRecord = new Map();
     const orderedUrls = [];
 
@@ -860,7 +861,7 @@
       if (!cUrl) continue;
 
       const name = extractNameFromAnchor(a);
-      const rowEl = findRowForAnchor(a, scrollContainer);
+      const rowEl = findRowForAnchor(a, likeDialog);
       const avatarUrl = extractAvatarUrlFromContainer(rowEl);
 
       if (!urlToRecord.has(cUrl)) {
@@ -898,8 +899,8 @@
 
   function extractSharesFromDialog(shareDialog) {
     const found = [];
-    const scrollContainer = findSingleScrollableForWindow(shareDialog, "share") || shareDialog;
-    const links = Array.from(scrollContainer.querySelectorAll("a[href]:not([data-fb-scraped='1'])"));
+    triggerHoverHydration(shareDialog);
+    const links = Array.from(shareDialog.querySelectorAll("a[href]:not([data-fb-scraped='1'])"));
     const urlToRecord = new Map();
     const orderedUrls = [];
 
@@ -911,7 +912,7 @@
       if (!cUrl) continue;
 
       const name = extractNameFromAnchor(a);
-      const rowEl = findRowForAnchor(a, scrollContainer);
+      const rowEl = findRowForAnchor(a, shareDialog);
       const avatarUrl = extractAvatarUrlFromContainer(rowEl);
 
       if (!urlToRecord.has(cUrl)) {
@@ -1152,6 +1153,26 @@
     };
     const payloadStr = BATCH_PREFIX + JSON.stringify(payloadObj);
 
+    /* Channel 1: Direct Chrome Extension Background Service Worker -> Desktop App HTTP Bridge (100% immune to focus loss!) */
+    try {
+      if (typeof chrome !== "undefined" && chrome.runtime && chrome.runtime.sendMessage) {
+        chrome.runtime.sendMessage({ cmd: "SEND_BATCH", payloadStr: payloadStr }, () => {
+          void chrome.runtime.lastError;
+        });
+      }
+    } catch (e) {}
+
+    /* Channel 2: Direct localhost HTTP POST (for Bookmarklet / direct browser mode) */
+    try {
+      fetch("http://127.0.0.1:19876/batch", {
+        method: "POST",
+        mode: "cors",
+        headers: { "Content-Type": "text/plain;charset=UTF-8" },
+        body: payloadStr
+      }).catch(() => {});
+    } catch (e) {}
+
+    /* Channel 3: System Clipboard backup */
     const fallbackCopy = () => {
       try {
         const host = document.getElementById("fb-contest-ext-panel") || document.body;
@@ -1177,7 +1198,7 @@
     }
 
     batchesSent += 1;
-    updateUIStatus(`Copied batch #${batchesSent} (${items.length} items) to Desktop App!`);
+    updateUIStatus(`Synced batch #${batchesSent} (${items.length} items) to Desktop App!`);
     return true;
   }
 

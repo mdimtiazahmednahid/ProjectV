@@ -46,10 +46,12 @@ class CollectorEngine(QThread):
 
     def run(self):
         self.is_running = True
+        had_error = False
         self.status_updated.emit(f"COLLECTING ({self.action_type.upper()})")
 
         driver = self.appium.get_driver()
         if not driver:
+            had_error = True
             self.error_occurred.emit("Phone driver not available. Click 'Connect Device' first.")
             self.stop()
             return
@@ -84,6 +86,7 @@ class CollectorEngine(QThread):
 
                 # 2. Verify Facebook foreground (uses xml_source fast-path to avoid false ADB aborts)
                 if not self.fb_detector.is_facebook_foreground(driver, xml_source=xml_source):
+                    had_error = True
                     self.error_occurred.emit("Facebook is not in the foreground on the connected device.")
                     self.stop()
                     break
@@ -131,22 +134,12 @@ class CollectorEngine(QThread):
                         xml_source,
                         self.session.id,
                         action_type=self.action_type,
-                        screenshot_png=screenshot_png
+                        screenshot_png=screenshot_png,
                     )
 
                     detected_win = self.extractor.last_detected_window_type
-                    # Cross-window protection on Android: prevent scraping Comments when user clicked Likes/Shares (or vice versa)
-                    if scrolls == 0 and detected_win not in ("unknown", self.action_type):
-                        self.error_occurred.emit(
-                            f"Wrong window open on phone! You clicked Collect {self.action_type.upper()}S, "
-                            f"but your phone is currently showing the {detected_win.upper()}S screen.\n\n"
-                            f"Please open the {self.action_type.upper()}S popup on your phone first and try again."
-                        )
-                        self.stop()
-                        break
-
                     self.status_updated.emit(
-                        f"COLLECTING ({self.action_type.upper()} — Locked to {detected_win.upper()} list)"
+                        f"COLLECTING ({self.action_type.upper()} — +{len(candidates)} on screen #{scrolls + 1})"
                     )
 
                     for candidate in candidates:
@@ -161,8 +154,11 @@ class CollectorEngine(QThread):
                                 self.auto_save_requested.emit()
                                 self.profiles_since_last_save = 0
 
-                    empty_passes = 0
-                    auto_retries_used = 0
+                    if new_this_pass > 0:
+                        empty_passes = 0
+                        auto_retries_used = 0
+                    else:
+                        empty_passes += 1
 
                 self.stats_updated.emit(self.session.total_profiles, scrolls, new_this_pass)
                 if xml_source:
@@ -181,11 +177,13 @@ class CollectorEngine(QThread):
                 scrolls += 1
                 self.session.total_scrolls = scrolls
         except Exception as e:
+            had_error = True
             logger.error(f"Unexpected error in CollectorEngine: {e}", exc_info=True)
             self.error_occurred.emit(f"Collection stopped due to device error: {e}")
         finally:
             self.stop()
-            self.status_updated.emit("COMPLETED")
+            if not had_error:
+                self.status_updated.emit("COMPLETED")
             self.finished_collection.emit()
 
     def pause(self):

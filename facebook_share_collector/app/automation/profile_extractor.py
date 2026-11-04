@@ -11,14 +11,18 @@ logger = logging.getLogger(__name__)
 
 
 class ProfileExtractor:
-    # Matches "<Author Name> profile picture" or "<Author Name> profile picture, unseen story"
+    # Matches "<Author Name> profile picture", "<Author Name>'s profile picture", or "Profile picture of <Author Name>"
     PROFILE_PIC_DESC_RE = re.compile(
-        r"^(.+?)\s+profile\s+(?:picture|photo)(?:,\s*.*)?$",
-        re.IGNORECASE
+        r"^(?:profile\s+(?:picture|photo)\s+of\s+(.+?)|(.+?)(?:'s|\u2019s)?\s+profile\s+(?:picture|photo)(?:,\s*.*)?)$",
+        re.IGNORECASE,
     )
     REACTION_SUFFIX_RE = re.compile(
-        r"\s+(?:Liked|Loved|Cared|Haha|Wow|Sad|Angry)$",
-        re.IGNORECASE
+        r"(?:\s*[,·•]\s*|\s+)(?:Liked|Loved|Cared|Haha|Wow|Sad|Angry)\.?$",
+        re.IGNORECASE,
+    )
+    INLINE_ACTION_META_RE = re.compile(
+        r"(?:\s*[,·•]\s*|\s+•\s+)(?:Add friend|Cancel request|Follow|Following|Friends|Message|Invite|Invited|\d+\s*mutual\s+friends?|\d+\s*[smhdwy]\b(?:\s+ago)?|just now|yesterday|author|top fan|admin|moderator|rising contributor|top contributor|edited).*$",
+        re.IGNORECASE,
     )
 
     def __init__(self, min_confidence=0.60):
@@ -61,7 +65,13 @@ class ProfileExtractor:
                     r_parts.append(td)
             root_blob = " | ".join(r_parts)
 
-        # 1. Strong Comment indicators inside the container
+        # 1. Explicit Modal Screen Titles take top precedence
+        if "people who shared this" in blob or "people who shared this" in root_blob:
+            return "share"
+        if "people who reacted" in blob or "people who reacted" in root_blob:
+            return "like"
+
+        # 2. Strong Comment indicators inside the container
         if (
             "comment button" in blob
             or "reply to " in blob
@@ -73,28 +83,27 @@ class ProfileExtractor:
         ):
             return "comment"
 
-        # 2. Strong Share indicators
+        # 3. Secondary Share indicators
         if (
-            "people who shared this" in blob
-            or "people who shared this" in root_blob
-            or "shared with: public" in blob
+            "shared with: public" in blob
             or "shared with public" in blob
             or "send in messenger" in blob
         ):
             return "share"
 
-        # 3. Strong Like / Reaction list indicators
-        if (
-            "people who reacted" in blob
-            or "people who reacted" in root_blob
-            or ("add friend" in blob and "comment" not in blob and "shared with" not in blob)
-        ):
+        # 4. Secondary Like / Reaction list indicators
+        if "add friend" in blob and "comment" not in blob and "shared with" not in blob:
             return "like"
 
         return "unknown"
 
     @classmethod
-    def _select_single_active_container(cls, raw_containers: list, action_type: str, root=None) -> Tuple[list, Optional[Tuple[int, int, int, int]], str]:
+    def _select_single_active_container(
+        cls,
+        raw_containers: list,
+        action_type: str,
+        root=None,
+    ) -> Tuple[list, Optional[Tuple[int, int, int, int]], str]:
         """
         1. Excludes tiny horizontal tab bar RecyclerViews (e.g. Reaction tabs with height < 280px or width > height * 2.5).
         2. Classifies each valid scrollable container into 'like', 'comment', 'share', or 'unknown'.
@@ -168,7 +177,7 @@ class ProfileExtractor:
         xml_source: str,
         session_id: str,
         action_type: str = "share",
-        screenshot_png: Optional[bytes] = None
+        screenshot_png: Optional[bytes] = None,
     ) -> List[ShareProfile]:
         profiles = []
         if not xml_source:
@@ -184,16 +193,21 @@ class ProfileExtractor:
             "androidx.recyclerview.widget.RecyclerView",
             "android.widget.ListView",
             "android.widget.ScrollView",
+            "androidx.core.widget.NestedScrollView",
+            "androidx.viewpager.widget.ViewPager",
+            "androidx.viewpager2.widget.ViewPager2",
         }
-        list_containers = [
-            el for el in root.iter()
-            if el.tag in target_classes or el.attrib.get("class") in target_classes
-        ]
-        if not list_containers:
-            list_containers = [
-                el for el in root.iter()
-                if el.attrib.get("scrollable") == "true"
-            ]
+        list_containers = []
+        seen_elems = set()
+        for el in root.iter():
+            if (
+                el.tag in target_classes
+                or el.attrib.get("class") in target_classes
+                or el.attrib.get("scrollable") == "true"
+            ):
+                if id(el) not in seen_elems:
+                    seen_elems.add(id(el))
+                    list_containers.append(el)
 
         if not list_containers:
             logger.warning("No list container found in XML. Returning empty.")
@@ -218,7 +232,7 @@ class ProfileExtractor:
             "care", "haha", "wow", "sad", "angry", "send", "copy", "report",
             "block", "loved by author", "liked by author", "all posts",
             "contact info", "website", "hidden by facebook", "pinned post",
-            "·", "•", "· follow", "• follow"
+            "·", "•", "· follow", "• follow",
         }
         ignore_starts = (
             "like button", "love button", "comment button", "share button",
@@ -227,30 +241,63 @@ class ProfileExtractor:
             "see previous", "see more", "most relevant", "all comments",
             "replied to ", "reply to ", "react to ", "reacted:", "double tap",
             "like ", "downvote ", "upvote ", "more options for ", "shared with:",
-            "pinned post"
+            "pinned post", "profile photo of", "profile picture of",
         )
         ignore_contains = (
             "comment button", "show reaction tray", "downvote ", "upvote ",
-            "change reaction", "unseen story", "seen story", "shared with: public"
+            "change reaction", "unseen story", "seen story", "shared with: public",
         )
 
         counter_pattern = re.compile(
             r"^(?:all\s+)?[0-9KMB,.]+\s*(?:shares?|comments?|reactions?|likes?|views?|replies|mutual\s+friends?|of\s+\d+)?$",
-            re.IGNORECASE
+            re.IGNORECASE,
         )
         timestamp_pattern = re.compile(
-            r"^(\d+\s*[smhdwy]|just now|yesterday.*|(?:jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)\s+\d+(?:,\s+\d{4})?.*)$",
-            re.IGNORECASE
+            r"^(?:[·•\s]*)?(\d+\s*(?:[smhdwy]|sec|min|hr|hrs|day|days|wk|wks|yr|yrs)(?:\s+ago)?|just now|yesterday.*|(?:jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)\s+\d+(?:,\s+\d{4})?.*)$",
+            re.IGNORECASE,
         )
 
+        def _is_noise_line(ln_str: str) -> bool:
+            if not ln_str:
+                return True
+            low = ln_str.lower().strip()
+            if (
+                low in ignore_exact
+                or any(low.startswith(p) for p in ignore_starts)
+                or any(sub in low for sub in ignore_contains)
+            ):
+                return True
+            if counter_pattern.match(ln_str) or timestamp_pattern.match(ln_str):
+                return True
+            return False
+
+        def _clean_candidate_name(raw_str: str) -> str:
+            cand = self.INLINE_ACTION_META_RE.sub("", raw_str).strip()
+            cand = self.REACTION_SUFFIX_RE.sub("", cand).strip()
+            cand = self.INLINE_ACTION_META_RE.sub("", cand).strip()
+            return cand
+
         for container in list_containers:
-            for item in container.findall("./*"):
+            rows = container.findall("./*")
+            # If ScrollView or wrapped RecyclerView has a single child wrapper holding the rows, unwrap it
+            while len(rows) == 1 and len(rows[0].findall("./*")) >= 2:
+                rows = rows[0].findall("./*")
+
+            for item in rows:
                 all_strings = []
+                has_clickable_or_heading = False
+                has_multiline_block = False
                 for el in item.iter():
+                    if el.attrib.get("heading") == "true" or el.attrib.get("clickable") == "true":
+                        t_check = (el.attrib.get("text") or el.attrib.get("content-desc") or "").strip()
+                        if t_check and not _is_noise_line(t_check):
+                            has_clickable_or_heading = True
                     for attr in ("text", "content-desc"):
                         v = (el.attrib.get(attr) or "").strip()
                         if v:
                             all_strings.append(v)
+                            if "\n" in v:
+                                has_multiline_block = True
 
                 joined_lower = " | ".join(all_strings).lower()
 
@@ -273,7 +320,7 @@ class ProfileExtractor:
                 url = None
                 confidence = 0.8
 
-                # First pass on item: check if there's an explicit "<Name> profile picture" node
+                # First pass on item: check if there's an explicit "<Name> profile picture" or "Profile picture of <Name>" node
                 for elem in item.iter():
                     c = (elem.attrib.get("content-desc") or "").strip()
                     t = (elem.attrib.get("text") or "").strip()
@@ -285,7 +332,8 @@ class ProfileExtractor:
                             continue
                         m_pic = self.PROFILE_PIC_DESC_RE.match(candidate_str)
                         if m_pic:
-                            extracted_author = self.REACTION_SUFFIX_RE.sub("", m_pic.group(1).strip()).strip()
+                            raw_author = (m_pic.group(1) or m_pic.group(2) or "").strip()
+                            extracted_author = _clean_candidate_name(raw_author)
                             if self._has_letters(extracted_author):
                                 name = extracted_author
                                 avatar_bounds = bounds
@@ -300,10 +348,17 @@ class ProfileExtractor:
                             avatar_bounds = bounds
 
                 # If collecting comments on a real Facebook screen and the top of the comment
-                # was scrolled off-screen (so only "Reply to X's comment" / "Like X's comment" is visible),
+                # was scrolled off-screen (so only "Reply to X's comment" / "Like X's comment" is visible
+                # with NO avatar, NO heading/clickable name, and NO multiline author+comment block),
                 # skip this cut-off fragment so comment text or buttons aren't mistaken for a user name!
-                if action_type == "comment" and not has_explicit_profile_pic_node:
-                    if ("reply to " in joined_lower or "comment button" in joined_lower or "downvote " in joined_lower):
+                if (
+                    action_type == "comment"
+                    and not has_explicit_profile_pic_node
+                    and not avatar_bounds
+                    and not has_clickable_or_heading
+                    and not has_multiline_block
+                ):
+                    if "reply to " in joined_lower or "comment button" in joined_lower or "downvote " in joined_lower:
                         continue
 
                 for elem in item.iter():
@@ -327,22 +382,15 @@ class ProfileExtractor:
 
                     lower_val = cleaned_val.lower()
 
-                    # 1. Skip explicit UI noise
-                    if (
-                        lower_val in ignore_exact
-                        or any(lower_val.startswith(p) for p in ignore_starts)
-                        or any(sub in lower_val for sub in ignore_contains)
-                    ):
-                        continue
-
-                    if counter_pattern.match(cleaned_val):
+                    # 1. Skip explicit single-line UI noise
+                    if "\n" not in cleaned_val and _is_noise_line(cleaned_val):
                         continue
 
                     # 2. Extract Profile URL if available
                     if "facebook.com/" in lower_val:
                         url = c if c else t
                         if not name and "," in cleaned_val:
-                            possible_name = cleaned_val.split(",", 1)[0].strip()
+                            possible_name = _clean_candidate_name(cleaned_val.split(",", 1)[0].strip())
                             if self._has_letters(possible_name):
                                 name = possible_name
                                 name_bounds = bounds
@@ -359,39 +407,43 @@ class ProfileExtractor:
                             comments = comment_match.group(1).strip()
                         continue
 
-                    # 4. Skip timestamps
-                    if timestamp_pattern.match(cleaned_val):
-                        continue
-
-                    # 5. Extract Name (if not already found via '<Name> profile picture')
+                    # 4. Extract Name (supports both single-line nodes and multiline Litho blocks)
                     if not name:
-                        candidate_name = re.sub(
-                            r",\s*(?:Add friend|Follow|Following|Friends|Message|Invite|Invited)$",
-                            "",
-                            cleaned_val,
-                            flags=re.IGNORECASE
-                        ).strip()
-                        candidate_name = self.REACTION_SUFFIX_RE.sub("", candidate_name).strip()
-
-                        if not self._has_letters(candidate_name):
+                        valid_lines = [
+                            ln.strip()
+                            for ln in cleaned_val.splitlines()
+                            if ln.strip() and not _is_noise_line(ln.strip())
+                        ]
+                        if not valid_lines:
                             continue
 
-                        if h and len(candidate_name) < 55 and not any(char.isdigit() for char in candidate_name):
+                        first_line = valid_lines[0]
+                        candidate_name = _clean_candidate_name(first_line)
+                        if not self._has_letters(candidate_name) or _is_noise_line(candidate_name):
+                            continue
+
+                        if len(candidate_name) < 60 and not candidate_name.startswith(("#", "@")) and "http" not in candidate_name.lower() and ".com" not in candidate_name.lower():
                             name = candidate_name
                             name_bounds = bounds
-                            confidence = 1.0
-                        elif clickable and len(candidate_name) < 55 and not any(char.isdigit() for char in candidate_name):
-                            if not candidate_name.startswith("#") and not candidate_name.startswith("@") and "http" not in lower_val and ".com" not in lower_val:
-                                name = candidate_name
-                                name_bounds = bounds
+                            if h:
+                                confidence = 1.0
+                            elif clickable or len(valid_lines) > 1:
                                 confidence = 0.85
-                        elif len(candidate_name) < 55 and not any(char.isdigit() for char in candidate_name):
-                            if not candidate_name.startswith("#") and not candidate_name.startswith("@") and "http" not in lower_val and ".com" not in lower_val:
-                                name = candidate_name
-                                name_bounds = bounds
+                            else:
                                 confidence = 0.65
+
+                            # If this was a multiline Litho block (e.g. "Author Name\n· Follow\nComment body"),
+                            # capture the remaining clean lines as comment/share content immediately!
+                            if action_type in ("comment", "share") and len(valid_lines) > 1:
+                                rem_lines = [
+                                    ln for ln in valid_lines[1:]
+                                    if normalize_text(ln).lower() != normalize_text(name).lower()
+                                ]
+                                rem_block = "\n".join(rem_lines).strip()
+                                if rem_block and rem_block not in content_parts:
+                                    content_parts.append(rem_block)
                     else:
-                        # 6. Extract clean Content (for comments & shares)
+                        # 5. Extract clean Content (for comments & shares)
                         if action_type in ("comment", "share"):
                             if normalize_text(cleaned_val).lower() != normalize_text(name).lower():
                                 clean_lines = []
@@ -399,14 +451,9 @@ class ProfileExtractor:
                                     ln = line.strip()
                                     if not ln:
                                         continue
-                                    ln_low = ln.lower()
                                     if normalize_text(ln).lower() == normalize_text(name).lower():
                                         continue
-                                    if (
-                                        ln_low in ignore_exact
-                                        or any(ln_low.startswith(p) for p in ignore_starts)
-                                        or any(sub in ln_low for sub in ignore_contains)
-                                    ):
+                                    if _is_noise_line(ln):
                                         continue
                                     clean_lines.append(ln)
 
@@ -415,35 +462,37 @@ class ProfileExtractor:
                                     content_parts.append(cleaned_block)
 
                 if name and confidence >= self.min_confidence:
-                    # On Android Likes (Litho single-ViewGroup rows), infer left-side circular avatar bounds if ImageView was omitted
-                    if not avatar_bounds and action_type == "like":
+                    # On Android Likes/Comments (Litho single-ViewGroup rows), infer left-side circular avatar bounds if ImageView was omitted
+                    if not avatar_bounds:
                         row_rect = parse_bounds(item.attrib.get("bounds", ""))
                         if row_rect:
                             rx1, ry1, rw, rh = row_rect
-                            if rx1 <= 60 and 110 <= rh <= 240 and rw >= 600:
-                                cy = ry1 + (rh // 2)
-                                avatar_bounds = f"[{rx1 + 36},{cy - 54}][{rx1 + 144},{cy + 54}]"
+                            if rx1 <= 80 and 90 <= rh <= 340 and rw >= 500:
+                                cy = ry1 + min(rh // 2, 75)
+                                avatar_bounds = f"[{rx1 + 36},{cy - 50}][{rx1 + 136},{cy + 50}]"
 
                     avatar_hash, avatar_path = None, None
                     if screenshot_png and avatar_bounds:
                         avatar_hash, avatar_path = self.fingerprinter.crop_and_hash(screenshot_png, avatar_bounds)
 
-                    profiles.append(ShareProfile(
-                        name=normalize_text(name),
-                        profile_url=url,
-                        share_url=None,
-                        content="\n".join(content_parts) if content_parts else "",
-                        reactions=reactions,
-                        comments=comments,
-                        action_type=action_type,
-                        avatar_hash=avatar_hash,
-                        avatar_path=avatar_path,
-                        avatar_bounds=avatar_bounds,
-                        name_bounds=name_bounds,
-                        confidence=confidence,
-                        source="facebook_android_ui",
-                        session_id=session_id
-                    ))
+                    profiles.append(
+                        ShareProfile(
+                            name=normalize_text(name),
+                            profile_url=url,
+                            share_url=None,
+                            content="\n".join(content_parts) if content_parts else "",
+                            reactions=reactions,
+                            comments=comments,
+                            action_type=action_type,
+                            avatar_hash=avatar_hash,
+                            avatar_path=avatar_path,
+                            avatar_bounds=avatar_bounds,
+                            name_bounds=name_bounds,
+                            confidence=confidence,
+                            source="facebook_android_ui",
+                            session_id=session_id,
+                        )
+                    )
 
         # Deduplicate within this single screen pass by (normalized_name, action_type, profile_url, avatar_hash)
         unique_profiles = {}

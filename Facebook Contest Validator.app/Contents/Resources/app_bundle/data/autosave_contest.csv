@@ -1,21 +1,329 @@
 ﻿Serial #,Name,Eligible,Actions Completed,Liked,Commented,Shared,Status,Comments Text,Share Content,Profile URL,Avatar Hash,First Seen
--,Abir Hasan,NO,1/3,No,Yes,No,"INCOMPLETE (1/3 - Missing: Like, Share)",❤️ 🔥,,https://www.facebook.com/profile.php?id=61556487625366,,2026-11-02T16:57:00.659925
--,ARafat Khan,NO,1/3,No,Yes,No,"INCOMPLETE (1/3 - Missing: Like, Share)",ওকে,,https://www.facebook.com/arafat.khan.254422,,2026-11-02T16:57:00.660518
--,Ayatullah Mushkan Maryam,NO,1/3,No,Yes,No,"INCOMPLETE (1/3 - Missing: Like, Share)",Redy,,https://www.facebook.com/profile.php?id=100090670220860,,2026-11-02T16:57:00.659974
--,Hadi Uzzaman,NO,1/3,No,Yes,No,"INCOMPLETE (1/3 - Missing: Like, Share)",Inshallah,,https://www.facebook.com/hadi.ujaman.509,,2026-11-02T16:57:00.660270
--,Md Abdur Rahim,NO,1/3,No,Yes,No,"INCOMPLETE (1/3 - Missing: Like, Share)",অপেক্ষায়...,,https://www.facebook.com/md.abdur.rahim.110081,,2026-11-02T16:57:00.660417
--,Md Mazed,NO,1/3,No,Yes,No,"INCOMPLETE (1/3 - Missing: Like, Share)",রেডি আছি,,https://www.facebook.com/profile.php?id=100008465898020,,2026-11-02T16:57:00.660318
--,Minhaz Shakil,NO,1/3,No,Yes,No,"INCOMPLETE (1/3 - Missing: Like, Share)",InshaAllah,,https://www.facebook.com/mdminhaz.shakil,,2026-11-02T16:57:00.660469
--,Mohammad Sobuj Mia H,NO,1/3,No,Yes,No,"INCOMPLETE (1/3 - Missing: Like, Share)",অপেক্ষায়,,https://www.facebook.com/mohammad.sobuj.mia.h.79488,,2026-11-02T16:57:00.660068
--,Moni Mreedha,NO,1/3,No,Yes,No,"INCOMPLETE (1/3 - Missing: Like, Share)",. ইনশাআল্লাহ,,https://www.facebook.com/moni.mreedha,,2026-11-02T16:57:00.659610
--,Mst Ambea Akhter,NO,1/3,No,Yes,No,"INCOMPLETE (1/3 - Missing: Like, Share)",ওকে,,https://www.facebook.com/profile.php?id=100078091213712,,2026-11-02T16:57:00.660173
--,Murad Hussein,NO,1/3,No,Yes,No,"INCOMPLETE (1/3 - Missing: Like, Share)",Ok,,https://www.facebook.com/profile.php?id=100075606649181,,2026-11-02T16:57:00.660225
--,Muyeen Islam,NO,1/3,No,Yes,No,"INCOMPLETE (1/3 - Missing: Like, Share)",বিজয়ী কতজন,,https://www.facebook.com/profile.php?id=61581732017873,,2026-11-02T16:57:00.660364
--,Palash Sikder,NO,1/3,No,Yes,No,"INCOMPLETE (1/3 - Missing: Like, Share)",Done,,https://www.facebook.com/palash.sikder.524,,2026-11-02T16:57:00.659870
--,Sayma Jahan,NO,1/3,No,Yes,No,"INCOMPLETE (1/3 - Missing: Like, Share)",Inshallah,,https://www.facebook.com/sayma.jahan.615490,,2026-11-02T16:57:00.659691
--,Sikder Palash,NO,1/3,No,Yes,No,"INCOMPLETE (1/3 - Missing: Like, Share)",Done,,https://www.facebook.com/profile.php?id=61592707018024,,2026-11-02T16:57:00.659821
--,Sohel Mahmud,NO,1/3,No,Yes,No,"INCOMPLETE (1/3 - Missing: Like, Share)",ওকে,,https://www.facebook.com/sohel.mahmud.865407,,2026-11-02T16:57:00.660569
--,Supriya Sarker,NO,1/3,No,Yes,No,"INCOMPLETE (1/3 - Missing: Like, Share)",Okay,,https://www.facebook.com/sudibe.sristey,,2026-11-02T16:57:00.660020
--,মোঃ মনিরুল ইসলাম,NO,1/3,No,Yes,No,"INCOMPLETE (1/3 - Missing: Like, Share)",ওকে,,https://www.facebook.com/profile.php?id=61592645432854,,2026-11-02T16:57:00.660124
--,মোঃ সাআদাত আরিফীন,NO,1/3,No,Yes,No,"INCOMPLETE (1/3 - Missing: Like, Share)",অপেক্ষায়...,,https://www.facebook.com/mdsahdadarifin.sikder.3,,2026-11-02T16:57:00.659762
--,সাদিয়া ফাইরুজ,NO,1/3,No,Yes,No,"INCOMPLETE (1/3 - Missing: Like, Share)",Inshaallah আরত্রিকা প্রমি মেহনাজ অবন্তিকা,,https://www.facebook.com/profile.php?id=61594991516492,,2026-11-02T16:57:00.660632
+#0001,Asfia Jahan,YES,3/3,Yes,Yes,Yes,ELIGIBLE (3/3),💓 💓 | 💓💓,,https://www.facebook.com/profile.php?id=61578871343686,f0c4ca9a3a72f0f0,2026-11-02T02:08:22.430997
+#0002,Hadi Uzzaman,YES,3/3,Yes,Yes,Yes,ELIGIBLE (3/3),Inshallah,,https://www.facebook.com/hadi.ujaman.509,f0e0f2626aa0e0f0,2026-11-02T02:06:48.843311
+#0003,Imtiaz Ahmed Nahid,YES,3/3,Yes,Yes,Yes,ELIGIBLE (3/3),Yooo | 🔥 | Yooo | 🔥,,https://www.facebook.com/a2ein3d,f8dcdc9c3c9c9cc8,2026-11-02T02:07:44.030129
+#0004,Md Sakib,YES,3/3,Yes,Yes,Yes,ELIGIBLE (3/3),রেডি আছি | রেডি আছি 🖐️,,https://www.facebook.com/md.sakib.633385,d8d8cae657d5cce0,2026-11-02T02:07:47.670369
+#0005,Mohammad Forhad,YES,3/3,Yes,Yes,Yes,ELIGIBLE (3/3),অপেক্ষায় | অপেক্ষায়,"অনেক অনেক শুভ কামনা Champa Akter  আপু
+এবং Vejal Nai . ভেজাল নাই  অনেক অনেক বড় হবে ইনশাআল্লাহ।
+Champa Akter
+Vejal Nai . ভেজাল নাই",https://www.facebook.com/forhaduni,f0ecac86a286c4f0,2026-11-02T02:08:22.431135
+#0006,Mohammad Sobuj Mia H,YES,3/3,Yes,Yes,Yes,ELIGIBLE (3/3),অপেক্ষায় | অপেক্ষায়,,https://www.facebook.com/mohammad.sobuj.mia.h.79488,f8b4ec5966e6e4f0,2026-11-02T02:06:48.843921
+#0007,Nafisa Tabassum,YES,3/3,Yes,Yes,Yes,ELIGIBLE (3/3),রেডি | রেডি Sticker,,https://www.facebook.com/mehrunnesa.athoi,e4c6c692929a88e0,2026-11-02T02:08:22.431266
+#0008,Soniya Islam,YES,3/3,Yes,Yes,Yes,ELIGIBLE (3/3),,"দোয়া ও ভালোবাসা Champa Akter আপু।এই  ভাবেই এগিয়ে যাবে আমাদের Vejal Nai . ভেজাল নাই
+Champa Akter
+Vejal Nai . ভেজাল নাই",https://www.facebook.com/soniya.islam.457859,f0b0e07155968cd4,2026-11-02T02:10:23.633839
+#0009,Tamim Islam,YES,3/3,Yes,Yes,Yes,ELIGIBLE (3/3),রেডি | রেডি 🙌,,https://www.facebook.com/tamimislamshuvo20,f0e6b6a6e6c2c8e8,2026-11-02T02:07:47.670162
+#0010,UMme Mab Rur,YES,3/3,Yes,Yes,Yes,ELIGIBLE (3/3),দারুণ,,https://www.facebook.com/developer.ummemabrur,f0b4a464e4c4e0f0,2026-11-02T02:08:22.430001
+#0011,Umme Miqdad,YES,3/3,Yes,Yes,Yes,ELIGIBLE (3/3),রেডি,,https://www.facebook.com/manum.sumcul,f0e0ccd4e4e6c4f0,2026-11-02T02:07:47.670587
+#0012,মোঃ মনিরুল ইসলাম,YES,3/3,Yes,Yes,Yes,ELIGIBLE (3/3),ওকে,,https://www.facebook.com/profile.php?id=61592645432854,f0e064ed7166f2e0,2026-11-02T02:07:44.030305
+#0013,সালমা আক্তার,YES,3/3,Yes,Yes,Yes,ELIGIBLE (3/3),ইনশাআল্লাহ,,https://www.facebook.com/profile.php?id=100083005670720,f0d0d0a0b2c6c2e0,2026-11-02T02:07:47.670518
+-,Abdul Al Mamun,NO,2/3,Yes,Yes,No,INCOMPLETE (2/3 - Missing: Share),প্রস্তুত,,https://www.facebook.com/md.abdul.al.mamun.100893,f0ecece4ecece4f0,2026-11-02T02:06:48.843624
+-,Abir Hasan,NO,2/3,Yes,Yes,No,INCOMPLETE (2/3 - Missing: Share),❤️ 🔥 | ❤️🔥,,https://www.facebook.com/profile.php?id=61556487625366,f0d4d6d2da92b0f0,2026-11-02T02:06:48.843846
+-,Abul Kalam Azad,NO,2/3,Yes,Yes,No,INCOMPLETE (2/3 - Missing: Share),রেড়ি | রেড়ি Well Done Applause Sticker,,https://www.facebook.com/abul.kalam.azad.540776,f0f8ec286cf4b4f0,2026-11-02T02:06:48.843996
+-,Adrita Jahan,NO,2/3,Yes,Yes,No,INCOMPLETE (2/3 - Missing: Share),,,https://www.facebook.com/adrita.jahan.722027,,2026-11-02T02:10:47.647670
+-,ARafat Khan,NO,2/3,Yes,Yes,No,INCOMPLETE (2/3 - Missing: Share),ওকে,,https://www.facebook.com/arafat.khan.254422,f09cb8c3ce8edcf0,2026-11-02T02:06:48.843769
+-,Armanul Arju,NO,2/3,Yes,No,Yes,INCOMPLETE (2/3 - Missing: Comment),,,https://www.facebook.com/profile.php?id=100083278592103,f0f0feeee2eaf8f8,2026-11-02T02:09:50.034436
+-,Champa Akter,NO,2/3,No,Yes,Yes,INCOMPLETE (2/3 - Missing: Like),,Vejal Nai . ভেজাল নাই,https://www.facebook.com/champa.akter.593480,f0ecac86a286c4f0,2026-11-02T02:18:16.629904
+-,Dweep Chandra Sarkar,NO,2/3,Yes,No,Yes,INCOMPLETE (2/3 - Missing: Comment),,,https://www.facebook.com/dweep.chandra.sarkar,,2026-11-02T02:11:45.237449
+-,HM Mutasim Rahaman Fahim,NO,2/3,Yes,Yes,No,INCOMPLETE (2/3 - Missing: Share),আমি প্রতি টা প্রশ্নের সঠিক উত্তর দিয়েছিলাম কিন্তু আফসোস পুরস্কার আমি পাইনি। | আমি প্রতি টা প্রশ্নের সঠিক উত্তর দিয়েছিলাম কিন্তু আফসোস পুরস্কার আমি পাইনি।😄,,https://www.facebook.com/hm.mutasim.rahaman.fahim,f0e4aa3ab898dcf0,2026-11-02T02:08:22.430351
+-,Jahirul Islam Robi,NO,2/3,Yes,Yes,No,INCOMPLETE (2/3 - Missing: Share),,,https://www.facebook.com/jahirul.robi17,,2026-11-02T02:11:17.636860
+-,JT Jannat,NO,2/3,Yes,Yes,No,INCOMPLETE (2/3 - Missing: Share),শুভ কামনা রইলো Vejal Nai . ভেজাল নাই,,https://www.facebook.com/jt.jannat.580352,,2026-11-02T02:18:16.630789
+-,Jubayer Mahmud,NO,2/3,Yes,Yes,No,INCOMPLETE (2/3 - Missing: Share),ওকে রেডি,,https://www.facebook.com/hellojubu,f0e0ecc4dcdcf0f0,2026-11-02T02:08:22.430807
+-,Lamia Akter,NO,2/3,Yes,Yes,No,INCOMPLETE (2/3 - Missing: Share),শুভ কামনা রইলো Vejal Nai . ভেজাল নাই,,https://www.facebook.com/saba.sheikh.684777,,2026-11-02T02:18:37.029561
+-,Limon Islam Ovi,NO,2/3,Yes,Yes,No,INCOMPLETE (2/3 - Missing: Share),Ready.. | Ready.. 💖,,https://www.facebook.com/limon.islam.ovi.2024,f0f0f0b0ec6cf8d4,2026-11-02T02:08:22.430425
+-,Marjan Mariyam,NO,2/3,Yes,Yes,No,INCOMPLETE (2/3 - Missing: Share),অপেক্ষায় রইলাম | অপেক্ষায় রইলাম 🥰🥰,,https://www.facebook.com/marjan.mariyam.7,f0c4dc5c58d8ece8,2026-11-02T02:08:22.431072
+-,MD A A Rocky,NO,2/3,Yes,Yes,No,INCOMPLETE (2/3 - Missing: Share),সব সময় শুভকামনা,,https://www.facebook.com/mdaarocky,,2026-11-02T02:10:23.634440
+-,Md Abdur Rahim,NO,2/3,Yes,Yes,No,INCOMPLETE (2/3 - Missing: Share),অপেক্ষায়... | অপেক্ষায়...,,https://www.facebook.com/md.abdur.rahim.110081,f8e4e4acece8e8f0,2026-11-02T02:06:48.844336
+-,Md Arfat,NO,2/3,Yes,Yes,No,INCOMPLETE (2/3 - Missing: Share),শেষ প্রান্ত থেকে | শেষ প্রান্ত থেকে GIF,,https://www.facebook.com/md.arfat.151326,f0d0f0f0f8f0f0e0,2026-11-02T02:08:22.430580
+-,Md Mazed,NO,2/3,Yes,Yes,No,INCOMPLETE (2/3 - Missing: Share),রেডি আছি,,https://www.facebook.com/profile.php?id=100008465898020,f0cccc9c96dcc4f0,2026-11-02T02:06:48.844270
+-,MD Rajib Miya,NO,2/3,Yes,Yes,No,INCOMPLETE (2/3 - Missing: Share),R,,https://www.facebook.com/md.rajib.miya.387067,,2026-11-02T02:18:37.030427
+-,Md Sagor Ahmed,NO,2/3,Yes,No,Yes,INCOMPLETE (2/3 - Missing: Comment),,,https://www.facebook.com/sagorahmed4694,,2026-11-02T02:11:17.638283
+-,Md Zakir Hasan Shovan,NO,2/3,Yes,Yes,No,INCOMPLETE (2/3 - Missing: Share),৪ জন বিজয়ী করেন | ৪ জন বিজয়ী করেন,,https://www.facebook.com/mdzakirhasan.shovon,f0d4aae2f2f2f0e0,2026-11-02T02:07:47.670659
+-,Md. Easin Ahamed,NO,2/3,Yes,Yes,No,INCOMPLETE (2/3 - Missing: Share),প্রস্তুত,,https://www.facebook.com/md.easin.ahamed47,f0f0ba928e86a6f0,2026-11-02T02:06:48.843555
+-,Md. Mahmudul Hassan Tanvir,NO,2/3,Yes,No,Yes,INCOMPLETE (2/3 - Missing: Comment),,,https://www.facebook.com/mahmudulhassantanvir.9847,f0c486a1f1cecaf8,2026-11-02T02:10:03.001611
+-,Mdnurul haque,NO,2/3,Yes,No,Yes,INCOMPLETE (2/3 - Missing: Comment),,,https://www.facebook.com/profile.php?id=61590102803435,e8d8b4353d38b8f0,2026-11-02T02:18:59.287808
+-,Mohammad Sharif,NO,2/3,Yes,Yes,No,INCOMPLETE (2/3 - Missing: Share),রেডি | শুভ কামনা রইলো,,https://www.facebook.com/sharif.s.73744,f0f4cac6ceccc8f0,2026-11-02T02:06:48.843190
+-,Moni Mreedha,NO,2/3,Yes,Yes,No,INCOMPLETE (2/3 - Missing: Share),. ইনশাআল্লাহ,,https://www.facebook.com/moni.mreedha,f8fcfee6c2c6ccf0,2026-11-02T02:08:22.431204
+-,Mst Ambea Akhter,NO,2/3,Yes,Yes,No,INCOMPLETE (2/3 - Missing: Share),ওকে,,https://www.facebook.com/profile.php?id=100078091213712,f090b03070f0c4f0,2026-11-02T02:08:22.431332
+-,Muhammad Shakil,NO,2/3,Yes,No,Yes,INCOMPLETE (2/3 - Missing: Comment),,,https://www.facebook.com/muhammad.shakil.931331,,2026-11-02T02:11:45.238185
+-,Murad Hussein,NO,2/3,Yes,Yes,No,INCOMPLETE (2/3 - Missing: Share),Ok,,https://www.facebook.com/profile.php?id=100075606649181,f8f0e4b6b2fcf8f0,2026-11-02T02:08:22.430744
+-,Nabidul Haque,NO,2/3,Yes,Yes,No,INCOMPLETE (2/3 - Missing: Share),❤️,,https://www.facebook.com/profile.php?id=61595763703380,f090b03070f0c4f0,2026-11-02T02:07:44.030370
+-,Palash Sikder,NO,2/3,Yes,Yes,No,INCOMPLETE (2/3 - Missing: Share),Done,,https://www.facebook.com/palash.sikder.524,f0e8ca921591a8e0,2026-11-02T02:08:22.430168
+-,Saiful Islam Rimon,NO,2/3,Yes,No,Yes,INCOMPLETE (2/3 - Missing: Comment),,,https://www.facebook.com/gaizrimon,,2026-11-02T02:11:45.237799
+-,Sajin Ahmed,NO,2/3,Yes,No,Yes,INCOMPLETE (2/3 - Missing: Comment),,,https://www.facebook.com/ahmed.sajin.733,,2026-11-02T02:11:45.238098
+-,Sayma Jahan,NO,2/3,Yes,Yes,No,INCOMPLETE (2/3 - Missing: Share),Inshallah | Inshallah♥️,,https://www.facebook.com/sayma.jahan.615490,f0e0e0e189c8d8f8,2026-11-02T02:08:22.430243
+-,Sd Akash,NO,2/3,Yes,Yes,No,INCOMPLETE (2/3 - Missing: Share),কিভাবে অংশগ্রহণ করতে হবে | অভিনন্দন | কিভাবে অংশগ্রহণ করতে হবে❤️🌹,,https://www.facebook.com/sdakashacc,f0b255f0e465f0f0,2026-11-02T02:07:47.670306
+-,Sikder Palash,NO,2/3,Yes,Yes,No,INCOMPLETE (2/3 - Missing: Share),Done,,https://www.facebook.com/profile.php?id=61592707018024,d8ccce96c486e8f0,2026-11-02T02:08:22.430087
+-,Suborna Akter Niha,NO,2/3,Yes,Yes,No,INCOMPLETE (2/3 - Missing: Share),In sha allah,,https://www.facebook.com/profile.php?id=61588512639711,f0a4e2f0d0b0d8f0,2026-11-02T02:06:48.844139
+-,Supriya Sarker,NO,2/3,Yes,Yes,No,INCOMPLETE (2/3 - Missing: Share),Okay,,https://www.facebook.com/sudibe.sristey,f0c48e1a9696acf8,2026-11-02T02:08:22.430934
+-,Tamim AhMed,NO,2/3,Yes,Yes,No,INCOMPLETE (2/3 - Missing: Share),ইনশাআল্লাহ | ❤️ ইনশাআল্লাহ,,https://www.facebook.com/tamim.ahmed.143654,f0e090c29adae0f0,2026-11-02T02:06:48.843482
+-,Tamim Hossain,NO,2/3,Yes,Yes,No,INCOMPLETE (2/3 - Missing: Share),শুভ কামনা রইলো আপু....,,https://www.facebook.com/tamimhossain23,,2026-11-02T02:07:44.030049
+-,Tarekur Rahman,NO,2/3,Yes,No,Yes,INCOMPLETE (2/3 - Missing: Comment),,,https://www.facebook.com/tarekur1,,2026-11-02T02:11:45.237635
+-,মোঃ সাআদাত আরিফীন,NO,2/3,Yes,Yes,No,INCOMPLETE (2/3 - Missing: Share),অপেক্ষায়... | অপেক্ষায়...,,https://www.facebook.com/mdsahdadarifin.sikder.3,f0eccecc8cfad8f0,2026-11-02T02:08:22.429907
+-,হাসিনা আক্তার,NO,2/3,Yes,Yes,No,INCOMPLETE (2/3 - Missing: Share),আমি নতুন ভাইয়া আমাকে সাপোর্ট দিবেন,,https://www.facebook.com/profile.php?id=61563158071556,,2026-11-02T02:17:53.842769
+-,Abdul Ajij Rifat,NO,1/3,No,Yes,No,"INCOMPLETE (1/3 - Missing: Like, Share)",ভেজাল নাই এর সাথেই আছি,,https://www.facebook.com/abdulajijrifat10,,2026-11-02T02:18:37.030588
+-,Abdul Hashem,NO,1/3,Yes,No,No,"INCOMPLETE (1/3 - Missing: Comment, Share)",,,https://www.facebook.com/abdul.hashem.7906932,,2026-11-02T02:20:09.431475
+-,Abdul Mannan Chowkider,NO,1/3,Yes,No,No,"INCOMPLETE (1/3 - Missing: Comment, Share)",,,https://www.facebook.com/mdjony.mannan.5,,2026-11-02T02:20:25.032214
+-,Abdullah Al Mamun,NO,1/3,Yes,No,No,"INCOMPLETE (1/3 - Missing: Comment, Share)",,,https://www.facebook.com/mamun.khan.429713,,2026-11-02T02:09:27.235204
+-,Abida Khan,NO,1/3,Yes,No,No,"INCOMPLETE (1/3 - Missing: Comment, Share)",,,https://www.facebook.com/abida.khan.389936,,2026-11-02T02:09:50.034738
+-,Abir Hossain,NO,1/3,No,Yes,No,"INCOMPLETE (1/3 - Missing: Like, Share)",,,https://www.facebook.com/abira.hosena.817454,,2026-11-02T02:18:37.030212
+-,Abu Ahamad Kabir,NO,1/3,Yes,No,No,"INCOMPLETE (1/3 - Missing: Comment, Share)",,,https://www.facebook.com/kabir.bbaria,,2026-11-02T02:21:40.636552
+-,Abu Bokkor Siddik,NO,1/3,Yes,No,No,"INCOMPLETE (1/3 - Missing: Comment, Share)",,,https://www.facebook.com/profile.php?id=100065116253659,,2026-11-02T02:20:20.231461
+-,Abu Sufian,NO,1/3,Yes,No,No,"INCOMPLETE (1/3 - Missing: Comment, Share)",,,https://www.facebook.com/abu.sufian.52035,,2026-11-02T02:21:17.835648
+-,Abul Kasem,NO,1/3,Yes,No,No,"INCOMPLETE (1/3 - Missing: Comment, Share)",,,https://www.facebook.com/AbulKasem0101,,2026-11-02T02:09:50.034640
+-,Adhuri Islam Nila,NO,1/3,Yes,No,No,"INCOMPLETE (1/3 - Missing: Comment, Share)",,,https://www.facebook.com/profile.php?id=100081329352573,,2026-11-02T02:18:50.230596
+-,Adiyan Shameem,NO,1/3,Yes,No,No,"INCOMPLETE (1/3 - Missing: Comment, Share)",,,https://www.facebook.com/abirhasanshameem143,,2026-11-02T02:10:47.646374
+-,Adv Rupayan,NO,1/3,Yes,No,No,"INCOMPLETE (1/3 - Missing: Comment, Share)",,,https://www.facebook.com/adv.rupayan,,2026-11-02T02:18:50.230846
+-,Afroja Mony,NO,1/3,Yes,No,No,"INCOMPLETE (1/3 - Missing: Comment, Share)",,,https://www.facebook.com/afroja.mony.2025,,2026-11-02T02:21:17.836528
+-,Afsana Akter Riya,NO,1/3,No,Yes,No,"INCOMPLETE (1/3 - Missing: Like, Share)",,,https://www.facebook.com/rubaakter.riya,,2026-11-02T02:18:16.630581
+-,Afsana Ritu,NO,1/3,Yes,No,No,"INCOMPLETE (1/3 - Missing: Comment, Share)",,,https://www.facebook.com/afsana.ritu.320856,,2026-11-02T02:10:47.646650
+-,Afsar Sowdagor,NO,1/3,Yes,No,No,"INCOMPLETE (1/3 - Missing: Comment, Share)",,,https://www.facebook.com/afsar.sowdagor,,2026-11-02T02:21:17.835733
+-,AH AnaMul Haqu,NO,1/3,Yes,No,No,"INCOMPLETE (1/3 - Missing: Comment, Share)",,,https://www.facebook.com/profile.php?id=61592896889262,,2026-11-02T02:09:27.233842
+-,Ahmmed Redwan,NO,1/3,Yes,No,No,"INCOMPLETE (1/3 - Missing: Comment, Share)",,,https://www.facebook.com/profile.php?id=61590616311202,,2026-11-02T02:09:50.035205
+-,Akhil Kumar,NO,1/3,Yes,No,No,"INCOMPLETE (1/3 - Missing: Comment, Share)",,,https://www.facebook.com/profile.php?id=61590325411103,,2026-11-02T02:09:04.431713
+-,Aklima Akter,NO,1/3,Yes,No,No,"INCOMPLETE (1/3 - Missing: Comment, Share)",,,https://www.facebook.com/aklima.akter.329409,,2026-11-02T02:20:25.031970
+-,Akram Ali,NO,1/3,Yes,No,No,"INCOMPLETE (1/3 - Missing: Comment, Share)",,,https://www.facebook.com/akram.hosaine,,2026-11-02T02:10:23.634102
+-,Al Muzzafir Mahi,NO,1/3,Yes,No,No,"INCOMPLETE (1/3 - Missing: Comment, Share)",,,https://www.facebook.com/profile.php?id=100091386882269,,2026-11-02T02:20:25.031467
+-,Alam Cox,NO,1/3,No,Yes,No,"INCOMPLETE (1/3 - Missing: Like, Share)",সবসময় শুভকামনা রইল,,https://www.facebook.com/alam.cox.97044,,2026-11-02T02:18:37.030665
+-,Alif Anmol,NO,1/3,Yes,No,No,"INCOMPLETE (1/3 - Missing: Comment, Share)",,,https://www.facebook.com/alif.anmol,,2026-11-02T02:10:47.647521
+-,Aman Hossain,NO,1/3,Yes,No,No,"INCOMPLETE (1/3 - Missing: Comment, Share)",,,https://www.facebook.com/profile.php?id=100023950179862,,2026-11-02T02:21:40.636022
+-,Amdad Natural Shop,NO,1/3,Yes,No,No,"INCOMPLETE (1/3 - Missing: Comment, Share)",,,https://www.facebook.com/amdadnaturalshop,,2026-11-02T02:09:50.035847
+-,Anila Rakab,NO,1/3,Yes,No,No,"INCOMPLETE (1/3 - Missing: Comment, Share)",,,https://www.facebook.com/anila.rakab.2025,,2026-11-02T02:10:23.634767
+-,Ansarul Hoque,NO,1/3,No,Yes,No,"INCOMPLETE (1/3 - Missing: Like, Share)",মাশাআল্লাহ,,https://www.facebook.com/ansarul.hoque.995687,,2026-11-02T02:18:37.030901
+-,Anwar Ullah,NO,1/3,Yes,No,No,"INCOMPLETE (1/3 - Missing: Comment, Share)",,,https://www.facebook.com/anwar.ullah.91972,,2026-11-02T02:21:17.836662
+-,AR Abdur Rahman,NO,1/3,Yes,No,No,"INCOMPLETE (1/3 - Missing: Comment, Share)",,,https://www.facebook.com/AR10062005,,2026-11-02T02:18:50.230682
+-,Arafat Shimul,NO,1/3,Yes,No,No,"INCOMPLETE (1/3 - Missing: Comment, Share)",,,https://www.facebook.com/arafat.shimul.2024,,2026-11-02T02:22:15.436845
+-,Arefin Parvez,NO,1/3,Yes,No,No,"INCOMPLETE (1/3 - Missing: Comment, Share)",,,https://www.facebook.com/arefin.parvez.75,,2026-11-02T02:17:53.842516
+-,Arman Hasan,NO,1/3,Yes,No,No,"INCOMPLETE (1/3 - Missing: Comment, Share)",,,https://www.facebook.com/arman.hasan.9803,,2026-11-02T02:21:17.834621
+-,Arman Hossain,NO,1/3,Yes,No,No,"INCOMPLETE (1/3 - Missing: Comment, Share)",,,https://www.facebook.com/WriterArmanHossain,,2026-11-02T02:21:17.836109
+-,AS Milon Dhali,NO,1/3,Yes,No,No,"INCOMPLETE (1/3 - Missing: Comment, Share)",,,https://www.facebook.com/as.milon.dhali,,2026-11-02T02:21:17.836179
+-,Asha Amin Tunny,NO,1/3,Yes,No,No,"INCOMPLETE (1/3 - Missing: Comment, Share)",,,https://www.facebook.com/asha.amin.tunny,,2026-11-02T02:07:44.030630
+-,Asma Haque,NO,1/3,Yes,No,No,"INCOMPLETE (1/3 - Missing: Comment, Share)",,,https://www.facebook.com/asma.haque.395,,2026-11-02T02:20:25.031780
+-,Atif Ahmed Shakil,NO,1/3,Yes,No,No,"INCOMPLETE (1/3 - Missing: Comment, Share)",,,https://www.facebook.com/atif.ahmed.shakil.2025,,2026-11-02T02:10:23.635012
+-,Atiq Mehmandi,NO,1/3,No,Yes,No,"INCOMPLETE (1/3 - Missing: Like, Share)",তোর জন্য দোয়া ও শুভ কামনা রইলো,,https://www.facebook.com/atiq.mehamandi,,2026-11-02T02:18:37.030139
+-,Awlad Hossain,NO,1/3,Yes,No,No,"INCOMPLETE (1/3 - Missing: Comment, Share)",,,https://www.facebook.com/awlad.hossain.998675,,2026-11-02T02:18:50.231215
+-,Ayatullah Mushkan Maryam,NO,1/3,No,Yes,No,"INCOMPLETE (1/3 - Missing: Like, Share)",Redy,,https://www.facebook.com/profile.php?id=100090670220860,f0c498dedea6a4f8,2026-11-02T02:08:22.430873
+-,Azimur Rahman,NO,1/3,Yes,No,No,"INCOMPLETE (1/3 - Missing: Comment, Share)",,,https://www.facebook.com/azimul.rahman.2024,,2026-11-02T02:22:15.437466
+-,Azit Kumar,NO,1/3,No,Yes,No,"INCOMPLETE (1/3 - Missing: Like, Share)",সব সময়ের জন্য শুভকামনা রইল,,https://www.facebook.com/azit.kumar.5872,,2026-11-02T02:18:16.630292
+-,Bibi Khadija Mina,NO,1/3,Yes,No,No,"INCOMPLETE (1/3 - Missing: Comment, Share)",,,https://www.facebook.com/bibikhadija.mina,,2026-11-02T02:09:27.234656
+-,Binoy Rajbongshi Poran,NO,1/3,No,No,Yes,"INCOMPLETE (1/3 - Missing: Like, Comment)",,,,e0c086cfe7e6eaf0,2026-11-02T02:10:03.172646
+-,Bokul Khan,NO,1/3,Yes,No,No,"INCOMPLETE (1/3 - Missing: Comment, Share)",,,https://www.facebook.com/bokul.khan.854270,,2026-11-02T02:22:15.436675
+-,Bonna Mojumder,NO,1/3,Yes,No,No,"INCOMPLETE (1/3 - Missing: Comment, Share)",,,https://www.facebook.com/profile.php?id=100082123560300,,2026-11-02T02:21:40.636178
+-,Chadny Islam,NO,1/3,Yes,No,No,"INCOMPLETE (1/3 - Missing: Comment, Share)",,,https://www.facebook.com/annika.islam.chadny.2024,,2026-11-02T02:07:44.030442
+-,Dawd Hosen Tahsan,NO,1/3,Yes,No,No,"INCOMPLETE (1/3 - Missing: Comment, Share)",,,https://www.facebook.com/profile.php?id=100086887891351,,2026-11-02T02:22:15.436937
+-,Enam Ahmed,NO,1/3,Yes,No,No,"INCOMPLETE (1/3 - Missing: Comment, Share)",,,https://www.facebook.com/profile.php?id=61587552457409,,2026-11-02T02:21:17.834525
+-,Engr Md Rayhan Uddin,NO,1/3,Yes,No,No,"INCOMPLETE (1/3 - Missing: Comment, Share)",,,https://www.facebook.com/rayhanuddin.engr,,2026-11-02T02:09:50.034055
+-,Etihas Sarkar,NO,1/3,Yes,No,No,"INCOMPLETE (1/3 - Missing: Comment, Share)",,,https://www.facebook.com/etihas.sarkar,,2026-11-02T02:09:50.036264
+-,Eva Sarin,NO,1/3,Yes,No,No,"INCOMPLETE (1/3 - Missing: Comment, Share)",,,https://www.facebook.com/eva.sarin.87,,2026-11-02T02:21:17.836021
+-,F H Rony,NO,1/3,Yes,No,No,"INCOMPLETE (1/3 - Missing: Comment, Share)",,,https://www.facebook.com/f.h.rony.596321,,2026-11-02T02:22:15.437170
+-,F.I. Rahad,NO,1/3,Yes,No,No,"INCOMPLETE (1/3 - Missing: Comment, Share)",,,https://www.facebook.com/f.i.rahad.2024,,2026-11-02T02:21:17.835565
+-,Faisal Shamim,NO,1/3,Yes,No,No,"INCOMPLETE (1/3 - Missing: Comment, Share)",,,https://www.facebook.com/faisal.shamim.2024,,2026-11-02T02:20:25.031876
+-,Faiyaz,NO,1/3,Yes,No,No,"INCOMPLETE (1/3 - Missing: Comment, Share)",,,https://www.facebook.com/profile.php?id=61564220472665,,2026-11-02T02:21:17.834435
+-,Farhana Samiya,NO,1/3,Yes,No,No,"INCOMPLETE (1/3 - Missing: Comment, Share)",,,https://www.facebook.com/profile.php?id=61557757979062,,2026-11-02T02:20:20.231752
+-,Farzana Islam Mashfiya,NO,1/3,Yes,No,No,"INCOMPLETE (1/3 - Missing: Comment, Share)",,,https://www.facebook.com/mashfiyaismail.mim.3,,2026-11-02T02:10:47.646316
+-,Fatema Akter,NO,1/3,Yes,No,No,"INCOMPLETE (1/3 - Missing: Comment, Share)",,,https://www.facebook.com/fatema.akter.227280,,2026-11-02T02:21:17.836461
+-,Fatema Khatun,NO,1/3,Yes,No,No,"INCOMPLETE (1/3 - Missing: Comment, Share)",,,https://www.facebook.com/profile.php?id=61572121644732,,2026-11-02T02:21:17.834344
+-,Fatema Lima,NO,1/3,Yes,No,No,"INCOMPLETE (1/3 - Missing: Comment, Share)",,,https://www.facebook.com/profile.php?id=61589933193699,,2026-11-02T02:09:27.234583
+-,Fk Chaity,NO,1/3,Yes,No,No,"INCOMPLETE (1/3 - Missing: Comment, Share)",,,https://www.facebook.com/fk.chaity,,2026-11-02T02:10:47.646194
+-,H M Rezaul Karim,NO,1/3,Yes,No,No,"INCOMPLETE (1/3 - Missing: Comment, Share)",,,https://www.facebook.com/h.m.rezaul.karim.491906,,2026-11-02T02:20:20.231937
+-,H. Khairul Shikder Muaj,NO,1/3,Yes,No,No,"INCOMPLETE (1/3 - Missing: Comment, Share)",,,https://www.facebook.com/h.khairul.shikder.muaj,,2026-11-02T02:10:23.634188
+-,Habiba Akter,NO,1/3,Yes,No,No,"INCOMPLETE (1/3 - Missing: Comment, Share)",,,https://www.facebook.com/profile.php?id=61594885423500,,2026-11-02T02:20:25.032067
+-,Hafsa Chowdhury,NO,1/3,Yes,No,No,"INCOMPLETE (1/3 - Missing: Comment, Share)",,,https://www.facebook.com/profile.php?id=61578063099440,,2026-11-02T02:10:47.647013
+-,Hafsa Jahan Juhin,NO,1/3,No,Yes,No,"INCOMPLETE (1/3 - Missing: Like, Share)",শুভ কামনা রইলো,,https://www.facebook.com/Juhin.866647,,2026-11-02T02:18:37.030745
+-,HM Emon,NO,1/3,Yes,No,No,"INCOMPLETE (1/3 - Missing: Comment, Share)",,,https://www.facebook.com/hm.emon.104,,2026-11-02T02:20:20.231693
+-,HM Jahidul Islam Jahid,NO,1/3,Yes,No,No,"INCOMPLETE (1/3 - Missing: Comment, Share)",,,https://www.facebook.com/hmjahidulislam.jahid.33,,2026-11-02T02:09:04.432009
+-,Hm Jakir Hossain,NO,1/3,Yes,No,No,"INCOMPLETE (1/3 - Missing: Comment, Share)",,,https://www.facebook.com/mhjakir.hossain.3,,2026-11-02T02:09:04.432221
+-,Hossain Ali,NO,1/3,Yes,No,No,"INCOMPLETE (1/3 - Missing: Comment, Share)",,,https://www.facebook.com/profile.php?id=61581882770769,,2026-11-02T02:18:50.230762
+-,Hum Vai,NO,1/3,Yes,No,No,"INCOMPLETE (1/3 - Missing: Comment, Share)",,,https://www.facebook.com/profile.php?id=100090284814559,,2026-11-02T02:10:23.634276
+-,Imran Hossain,NO,1/3,Yes,No,No,"INCOMPLETE (1/3 - Missing: Comment, Share)",,,https://www.facebook.com/imran.hossain.245153,,2026-11-02T02:21:40.636934
+-,Israt Jahan Ivaa,NO,1/3,Yes,No,No,"INCOMPLETE (1/3 - Missing: Comment, Share)",,,https://www.facebook.com/profile.php?id=61556226789601,,2026-11-02T02:10:47.647310
+-,Israt Jahan Mun,NO,1/3,Yes,No,No,"INCOMPLETE (1/3 - Missing: Comment, Share)",,,https://www.facebook.com/profile.php?id=61581761626509,,2026-11-02T02:21:17.836387
+-,It'z Sany,NO,1/3,Yes,No,No,"INCOMPLETE (1/3 - Missing: Comment, Share)",,,https://www.facebook.com/profile.php?id=61584004531844,,2026-11-02T02:09:04.431932
+-,Jakaria Sarker,NO,1/3,Yes,No,No,"INCOMPLETE (1/3 - Missing: Comment, Share)",,,https://www.facebook.com/JakariaSarkerOfficial,,2026-11-02T02:11:17.637981
+-,Jany Alam Nirob,NO,1/3,Yes,No,No,"INCOMPLETE (1/3 - Missing: Comment, Share)",,,https://www.facebook.com/mdnerob.bos,,2026-11-02T02:21:40.636714
+-,Jasem Alam,NO,1/3,Yes,No,No,"INCOMPLETE (1/3 - Missing: Comment, Share)",,,https://www.facebook.com/jasu.j4SU,,2026-11-02T02:11:17.637136
+-,Jawad Afnan,NO,1/3,Yes,No,No,"INCOMPLETE (1/3 - Missing: Comment, Share)",,,https://www.facebook.com/jwad.afnan,,2026-11-02T02:09:50.035117
+-,Jhumu Putul,NO,1/3,Yes,No,No,"INCOMPLETE (1/3 - Missing: Comment, Share)",,,https://www.facebook.com/profile.php?id=61581388147942,,2026-11-02T02:10:47.646962
+-,Khairul Hasan Hira,NO,1/3,Yes,No,No,"INCOMPLETE (1/3 - Missing: Comment, Share)",,,https://www.facebook.com/khairul.hasan.hira.2025,,2026-11-02T02:11:17.637430
+-,Khukan Ahmed,NO,1/3,Yes,No,No,"INCOMPLETE (1/3 - Missing: Comment, Share)",,,https://www.facebook.com/khukan.ahmed.39,,2026-11-02T02:17:53.842179
+-,Kolim Ullah,NO,1/3,Yes,No,No,"INCOMPLETE (1/3 - Missing: Comment, Share)",,,https://www.facebook.com/mdkolim.ullah.90475,,2026-11-02T02:20:20.231577
+-,Komol Chandra Das,NO,1/3,Yes,No,No,"INCOMPLETE (1/3 - Missing: Comment, Share)",,,https://www.facebook.com/komol.c.das,,2026-11-02T02:10:47.647467
+-,Limon Mahfuz,NO,1/3,Yes,No,No,"INCOMPLETE (1/3 - Missing: Comment, Share)",,,https://www.facebook.com/limonmahfuz221,,2026-11-02T02:17:53.842098
+-,Lipson Akter,NO,1/3,Yes,No,No,"INCOMPLETE (1/3 - Missing: Comment, Share)",,,https://www.facebook.com/lipson.akter.2024,,2026-11-02T02:20:09.431535
+-,Litu Shakhaoath,NO,1/3,Yes,No,No,"INCOMPLETE (1/3 - Missing: Comment, Share)",,,https://www.facebook.com/litu.shakhaoath,,2026-11-02T02:10:23.635256
+-,Long Mro,NO,1/3,Yes,No,No,"INCOMPLETE (1/3 - Missing: Comment, Share)",,,https://www.facebook.com/profile.php?id=61584832303624,,2026-11-02T02:20:09.431225
+-,M D Rashidul Islam,NO,1/3,Yes,No,No,"INCOMPLETE (1/3 - Missing: Comment, Share)",,,https://www.facebook.com/rkrashed420.2,,2026-11-02T02:21:40.636791
+-,M Sumon,NO,1/3,Yes,No,No,"INCOMPLETE (1/3 - Missing: Comment, Share)",,,https://www.facebook.com/m.sumon.470796,,2026-11-02T02:22:15.437311
+-,MA Hamid,NO,1/3,Yes,No,No,"INCOMPLETE (1/3 - Missing: Comment, Share)",,,https://www.facebook.com/ma.hamid.440520,,2026-11-02T02:20:09.431098
+-,MA RI YA,NO,1/3,Yes,No,No,"INCOMPLETE (1/3 - Missing: Comment, Share)",,,https://www.facebook.com/ma.ri.ya.400529,,2026-11-02T02:22:15.436570
+-,Marufa Akter Mile,NO,1/3,Yes,No,No,"INCOMPLETE (1/3 - Missing: Comment, Share)",,,https://www.facebook.com/marufa.akter.mile.2025,,2026-11-02T02:22:15.437243
+-,Marufur Rahman,NO,1/3,No,No,Yes,"INCOMPLETE (1/3 - Missing: Like, Comment)",,,,f0e0b466cacacce0,2026-11-02T02:10:03.036610
+-,Masus Rana,NO,1/3,No,Yes,No,"INCOMPLETE (1/3 - Missing: Like, Share)",রেডি আছি,,https://www.facebook.com/masus.rana.54922,f0f0ac86868ec6c4,2026-11-02T02:06:48.843398
+-,MD Abdul Korim,NO,1/3,Yes,No,No,"INCOMPLETE (1/3 - Missing: Comment, Share)",,,https://www.facebook.com/rhidoy.khan.12979,,2026-11-02T02:09:50.035305
+-,Md Aminul Islam,NO,1/3,Yes,No,No,"INCOMPLETE (1/3 - Missing: Comment, Share)",,,https://www.facebook.com/md.aminul.islam.480173,,2026-11-02T02:20:09.431891
+-,Md Atikur Rohman,NO,1/3,Yes,No,No,"INCOMPLETE (1/3 - Missing: Comment, Share)",,,https://www.facebook.com/md.atikur.rohman.595238,,2026-11-02T02:21:40.635828
+-,Md Badsha,NO,1/3,Yes,No,No,"INCOMPLETE (1/3 - Missing: Comment, Share)",,,https://www.facebook.com/MDbadshah652630,,2026-11-02T02:20:09.431768
+-,Md Belal Hossain,NO,1/3,No,Yes,No,"INCOMPLETE (1/3 - Missing: Like, Share)",শুভ কামনা রইলো আপু,,https://www.facebook.com/md.belal.hossain.455210,,2026-11-02T02:18:16.630489
+-,Md Gias Uddin,NO,1/3,Yes,No,No,"INCOMPLETE (1/3 - Missing: Comment, Share)",,,https://www.facebook.com/md.giasuddin.54772728,,2026-11-02T02:17:53.842637
+-,Md Habibur Rahman,NO,1/3,Yes,No,No,"INCOMPLETE (1/3 - Missing: Comment, Share)",,,https://www.facebook.com/mdhabiburrahman.rahman.9809672,,2026-11-02T02:20:09.432073
+-,MD Jahid Hasan,NO,1/3,Yes,No,No,"INCOMPLETE (1/3 - Missing: Comment, Share)",,,https://www.facebook.com/jbjahid.khan.5,,2026-11-02T02:20:25.031828
+-,Md Jisan,NO,1/3,Yes,No,No,"INCOMPLETE (1/3 - Missing: Comment, Share)",,,https://www.facebook.com/md.jisan.320161,,2026-11-02T02:20:20.231400
+-,Md Kawsar,NO,1/3,Yes,No,No,"INCOMPLETE (1/3 - Missing: Comment, Share)",,,https://www.facebook.com/profile.php?id=100076635252681,,2026-11-02T02:17:53.842697
+-,Md Khalid Al Mamun,NO,1/3,Yes,No,No,"INCOMPLETE (1/3 - Missing: Comment, Share)",,,https://www.facebook.com/mdkhalidal.mamun.7,,2026-11-02T02:18:50.231069
+-,Md Kobir Khan,NO,1/3,Yes,No,No,"INCOMPLETE (1/3 - Missing: Comment, Share)",,,https://www.facebook.com/mdkober.khan.56,,2026-11-02T02:20:20.231869
+-,Md Liton,NO,1/3,Yes,No,No,"INCOMPLETE (1/3 - Missing: Comment, Share)",,,https://www.facebook.com/md.liton.374,,2026-11-02T02:09:50.035394
+-,MD Mahmodul Hossain,NO,1/3,Yes,No,No,"INCOMPLETE (1/3 - Missing: Comment, Share)",,,https://www.facebook.com/md.mahmodul.hossain.2024,,2026-11-02T02:21:17.834902
+-,Md Mehedi Hasan,NO,1/3,No,Yes,No,"INCOMPLETE (1/3 - Missing: Like, Share)",শুভ কামনা ও দোয়া রইলো আপু | ❤️ ❤️ ❤,,https://www.facebook.com/md.mehedi.hasan.340130,,2026-11-02T02:18:37.030984
+-,Md Nadim Khan,NO,1/3,Yes,No,No,"INCOMPLETE (1/3 - Missing: Comment, Share)",,,https://www.facebook.com/md.nadim.khan.702560,,2026-11-02T02:10:47.646547
+-,MD Nahid,NO,1/3,Yes,No,No,"INCOMPLETE (1/3 - Missing: Comment, Share)",,,https://www.facebook.com/md.nahid.618375,,2026-11-02T02:09:04.432149
+-,Md Nayeem,NO,1/3,Yes,No,No,"INCOMPLETE (1/3 - Missing: Comment, Share)",,,https://www.facebook.com/md.shamim.467878,,2026-11-02T02:09:27.234881
+-,Md Nazrul Islam,NO,1/3,No,No,Yes,"INCOMPLETE (1/3 - Missing: Like, Comment)",,,,f8ccc4ccccc4e4e0,2026-11-02T02:19:05.238086
+-,Md Nisad Hossain,NO,1/3,Yes,No,No,"INCOMPLETE (1/3 - Missing: Comment, Share)",,,https://www.facebook.com/md.nisad.hossain.269644,,2026-11-02T02:10:47.647233
+-,Md Nishad Khan,NO,1/3,Yes,No,No,"INCOMPLETE (1/3 - Missing: Comment, Share)",,,https://www.facebook.com/md.nishad.khan.652006,,2026-11-02T02:20:09.432011
+-,Md Noor Islam,NO,1/3,Yes,No,No,"INCOMPLETE (1/3 - Missing: Comment, Share)",,,https://www.facebook.com/mdnoor.islam.7505468,,2026-11-02T02:20:09.431948
+-,Md Nuruddin Islam,NO,1/3,Yes,No,No,"INCOMPLETE (1/3 - Missing: Comment, Share)",,,https://www.facebook.com/profile.php?id=61551576611678,,2026-11-02T02:20:20.231162
+-,Md Rakib Islam,NO,1/3,No,Yes,No,"INCOMPLETE (1/3 - Missing: Like, Share)",শুভকামনা রইল আপু,,https://www.facebook.com/md.rakib.islam.899051,,2026-11-02T02:18:37.030824
+-,MD Rayhan Khan,NO,1/3,No,Yes,No,"INCOMPLETE (1/3 - Missing: Like, Share)",শুভ কামনা রইল আপু,,https://www.facebook.com/rayhankhantamim.limon,,2026-11-02T02:18:37.030507
+-,MD Robbani Islam,NO,1/3,Yes,No,No,"INCOMPLETE (1/3 - Missing: Comment, Share)",,,https://www.facebook.com/mdrobbani.islam.775,,2026-11-02T02:09:50.036120
+-,MD Sadat Hussen,NO,1/3,Yes,No,No,"INCOMPLETE (1/3 - Missing: Comment, Share)",,,https://www.facebook.com/md.sadat.hussen.2007,,2026-11-02T02:21:40.637011
+-,Md Safin Mahmud Rifat,NO,1/3,Yes,No,No,"INCOMPLETE (1/3 - Missing: Comment, Share)",,,https://www.facebook.com/mdsafin.mahmud.56,,2026-11-02T02:21:17.836316
+-,Md Sahajan Miji,NO,1/3,Yes,No,No,"INCOMPLETE (1/3 - Missing: Comment, Share)",,,https://www.facebook.com/md.sahajan.miji.2024,,2026-11-02T02:20:25.031520
+-,MD Saikat,NO,1/3,Yes,No,No,"INCOMPLETE (1/3 - Missing: Comment, Share)",,,https://www.facebook.com/profile.php?id=61554811180335,,2026-11-02T02:09:27.234008
+-,Md Sirajul Haque Siraj,NO,1/3,No,Yes,No,"INCOMPLETE (1/3 - Missing: Like, Share)",আপু আমাকে আপনার পন্য গোলার লিষ্ট অথবা ছবি দিবেন,,https://www.facebook.com/mdsirajulhaque.siraj.94,,2026-11-02T02:18:37.029659
+-,MD Sopiqul Islam Rasheal,NO,1/3,Yes,No,No,"INCOMPLETE (1/3 - Missing: Comment, Share)",,,https://www.facebook.com/md.sopiqul.islam.rasheal,,2026-11-02T02:18:50.231145
+-,Md Tanvir,NO,1/3,No,Yes,No,"INCOMPLETE (1/3 - Missing: Like, Share)",,,https://www.facebook.com/mdtanvirhosen805,,2026-11-02T02:18:16.630939
+-,Md Tanvir Hossen Fuad,NO,1/3,Yes,No,No,"INCOMPLETE (1/3 - Missing: Comment, Share)",,,https://www.facebook.com/faud203,,2026-11-02T02:09:50.035486
+-,Md Wasim,NO,1/3,Yes,No,No,"INCOMPLETE (1/3 - Missing: Comment, Share)",,,https://www.facebook.com/md.wasim.529026,,2026-11-02T02:17:53.842832
+-,MD Yeanur Rahaman,NO,1/3,Yes,No,No,"INCOMPLETE (1/3 - Missing: Comment, Share)",,,https://www.facebook.com/md.yeanur.rahaman.624544,,2026-11-02T02:09:50.036419
+-,Md. Ahadul Islam,NO,1/3,Yes,No,No,"INCOMPLETE (1/3 - Missing: Comment, Share)",,,https://www.facebook.com/ahadul.arif,,2026-11-02T02:09:27.234731
+-,Md. S. Rony,NO,1/3,Yes,No,No,"INCOMPLETE (1/3 - Missing: Comment, Share)",,,https://www.facebook.com/mdsrony01916,,2026-11-02T02:10:23.635101
+-,Md. Sahedul Alam Sorder,NO,1/3,Yes,No,No,"INCOMPLETE (1/3 - Missing: Comment, Share)",,,https://www.facebook.com/sahedul.alam.142,,2026-11-02T02:21:17.835084
+-,Mdanwar Khan,NO,1/3,Yes,No,No,"INCOMPLETE (1/3 - Missing: Comment, Share)",,,https://www.facebook.com/profile.php?id=61594456072126,,2026-11-02T02:17:53.842577
+-,MdFazlur Rehman,NO,1/3,Yes,No,No,"INCOMPLETE (1/3 - Missing: Comment, Share)",,,https://www.facebook.com/profile.php?id=61582824346377,,2026-11-02T02:20:09.431414
+-,Mehedi Hasan Rakib,NO,1/3,Yes,No,No,"INCOMPLETE (1/3 - Missing: Comment, Share)",,,https://www.facebook.com/mehedihasan.rakib.5205622,,2026-11-02T02:21:40.637170
+-,MH Habib,NO,1/3,Yes,No,No,"INCOMPLETE (1/3 - Missing: Comment, Share)",,,https://www.facebook.com/mh.habib.172002,,2026-11-02T02:21:17.836245
+-,Mijanur Rahman,NO,1/3,Yes,No,No,"INCOMPLETE (1/3 - Missing: Comment, Share)",,,https://www.facebook.com/mijanurrahman12199,,2026-11-02T02:11:17.637911
+-,Minhaz Shakil,NO,1/3,No,Yes,No,"INCOMPLETE (1/3 - Missing: Like, Share)",InshaAllah,,https://www.facebook.com/mdminhaz.shakil,f0e0b82cf0f4ecf8,2026-11-02T02:06:48.844201
+-,Minu Akter,NO,1/3,Yes,No,No,"INCOMPLETE (1/3 - Missing: Comment, Share)",,,https://www.facebook.com/minu.akter.714049,,2026-11-02T02:09:50.035575
+-,Mohammad Solaiman,NO,1/3,Yes,No,No,"INCOMPLETE (1/3 - Missing: Comment, Share)",,,https://www.facebook.com/profile.php?id=61586327792910,,2026-11-02T02:21:40.636332
+-,Mohammed Kawsar,NO,1/3,Yes,No,No,"INCOMPLETE (1/3 - Missing: Comment, Share)",,,https://www.facebook.com/m.kawsar.520766,,2026-11-02T02:21:17.834991
+-,Mohin Khan,NO,1/3,Yes,No,No,"INCOMPLETE (1/3 - Missing: Comment, Share)",,,https://www.facebook.com/profile.php?id=61593658094502,,2026-11-02T02:20:20.230842
+-,Mokhlesur Rahman,NO,1/3,Yes,No,No,"INCOMPLETE (1/3 - Missing: Comment, Share)",,,https://www.facebook.com/md.mokhesurrahmanmilon9x,,2026-11-02T02:22:15.437748
+-,Moriom Islam Mim,NO,1/3,Yes,No,No,"INCOMPLETE (1/3 - Missing: Comment, Share)",,,https://www.facebook.com/Jubaida143mim,,2026-11-02T02:20:25.031924
+-,Mst Rima Khatun,NO,1/3,Yes,No,No,"INCOMPLETE (1/3 - Missing: Comment, Share)",,,https://www.facebook.com/profile.php?id=61580447969669,,2026-11-02T02:10:47.646101
+-,Mst Sadiya Akther,NO,1/3,Yes,No,No,"INCOMPLETE (1/3 - Missing: Comment, Share)",,,https://www.facebook.com/mst.sadiya.akther.398993,,2026-11-02T02:09:50.034834
+-,Mst Ummay Salma,NO,1/3,No,Yes,No,"INCOMPLETE (1/3 - Missing: Like, Share)",দোয়া ও শুভকামনা,,https://www.facebook.com/ummay.salma.5815,,2026-11-02T02:18:37.030057
+-,Muhammad Jaberul Islam,NO,1/3,Yes,No,No,"INCOMPLETE (1/3 - Missing: Comment, Share)",,,https://www.facebook.com/muhammad.jaberul.islam,,2026-11-02T02:20:09.431595
+-,Mumith Milon,NO,1/3,Yes,No,No,"INCOMPLETE (1/3 - Missing: Comment, Share)",,,https://www.facebook.com/mdmumithhassan.milon,,2026-11-02T02:11:17.637721
+-,Musfika Amatullah Adrita,NO,1/3,Yes,No,No,"INCOMPLETE (1/3 - Missing: Comment, Share)",,,https://www.facebook.com/Musfika.Amatullah.Adrita,,2026-11-02T02:11:17.638055
+-,Mustafizur Rahaman,NO,1/3,Yes,No,No,"INCOMPLETE (1/3 - Missing: Comment, Share)",,,https://www.facebook.com/mustafizur.rahaman.947080,,2026-11-02T02:21:17.835173
+-,Muyeen Islam,NO,1/3,No,Yes,No,"INCOMPLETE (1/3 - Missing: Like, Share)",বিজয়ী কতজন,,https://www.facebook.com/profile.php?id=61581732017873,f0d0b2d2e686cce8,2026-11-02T02:06:48.843702
+-,Naimul Islam Chowdhury,NO,1/3,Yes,No,No,"INCOMPLETE (1/3 - Missing: Comment, Share)",,,https://www.facebook.com/hdudjbdish,,2026-11-02T02:09:27.233631
+-,Nayem Islam,NO,1/3,No,Yes,No,"INCOMPLETE (1/3 - Missing: Like, Share)",শুভ কামনা ও দোয়া রইলো আপু,,https://www.facebook.com/sapno.khan,,2026-11-02T02:18:37.029454
+-,Nayon Salma Nayon Salma,NO,1/3,Yes,No,No,"INCOMPLETE (1/3 - Missing: Comment, Share)",,,https://www.facebook.com/nayon.salma.nayon.salma,,2026-11-02T02:20:25.031574
+-,Nazmun Nahar,NO,1/3,Yes,No,No,"INCOMPLETE (1/3 - Missing: Comment, Share)",,,https://www.facebook.com/profile.php?id=61563792883990,,2026-11-02T02:09:04.432079
+-,Nk Noyon,NO,1/3,Yes,No,No,"INCOMPLETE (1/3 - Missing: Comment, Share)",,,https://www.facebook.com/nk.noyon.98977,,2026-11-02T02:21:40.635610
+-,Noyon R Rahman,NO,1/3,Yes,No,No,"INCOMPLETE (1/3 - Missing: Comment, Share)",,,https://www.facebook.com/Mohammad.Noyon.399516,,2026-11-02T02:11:17.637048
+-,Numan Ahmad,NO,1/3,Yes,No,No,"INCOMPLETE (1/3 - Missing: Comment, Share)",,,https://www.facebook.com/numan.ahmad.54,,2026-11-02T02:07:44.030504
+-,Nur Alam,NO,1/3,Yes,No,No,"INCOMPLETE (1/3 - Missing: Comment, Share)",,,https://www.facebook.com/mdnur.nur.71,,2026-11-02T02:20:09.431654
+-,Nusrat Jahan Rupu,NO,1/3,Yes,No,No,"INCOMPLETE (1/3 - Missing: Comment, Share)",,,https://www.facebook.com/nusratjahan.561537,,2026-11-02T02:10:23.635405
+-,Odhora Islam,NO,1/3,Yes,No,No,"INCOMPLETE (1/3 - Missing: Comment, Share)",,,https://www.facebook.com/profile.php?id=61581394082323,,2026-11-02T02:09:27.233923
+-,Omar Farok,NO,1/3,Yes,No,No,"INCOMPLETE (1/3 - Missing: Comment, Share)",,,https://www.facebook.com/mohammad.omarfarouk.1,,2026-11-02T02:10:47.647569
+-,Orpita Akter,NO,1/3,Yes,No,No,"INCOMPLETE (1/3 - Missing: Comment, Share)",,,https://www.facebook.com/jaima.rahman.165,,2026-11-02T02:20:20.230746
+-,Pm Siam Hossen Sagor,NO,1/3,Yes,No,No,"INCOMPLETE (1/3 - Missing: Comment, Share)",,,https://www.facebook.com/siam.bdclean.volunteer,,2026-11-02T02:21:40.636864
+-,Porshanto Sharma,NO,1/3,Yes,No,No,"INCOMPLETE (1/3 - Missing: Comment, Share)",,,https://www.facebook.com/porshanto.sharma,,2026-11-02T02:20:25.031624
+-,Prianka Rani,NO,1/3,Yes,No,No,"INCOMPLETE (1/3 - Missing: Comment, Share)",,,https://www.facebook.com/profile.php?id=100055822639928,,2026-11-02T02:20:25.031412
+-,Rabeya Akther Jui,NO,1/3,Yes,No,No,"INCOMPLETE (1/3 - Missing: Comment, Share)",,,https://www.facebook.com/ordun.safa.shardar,,2026-11-02T02:22:15.437099
+-,Rafsan Mahamud,NO,1/3,Yes,No,No,"INCOMPLETE (1/3 - Missing: Comment, Share)",,,https://www.facebook.com/profile.php?id=61592097013952,,2026-11-02T02:09:50.034253
+-,Rakib Ahmed Rizvi,NO,1/3,Yes,No,No,"INCOMPLETE (1/3 - Missing: Comment, Share)",,,https://www.facebook.com/rakibulla.zadran,,2026-11-02T02:11:17.637322
+-,Rakibul Islam Kawsar,NO,1/3,Yes,No,No,"INCOMPLETE (1/3 - Missing: Comment, Share)",,,https://www.facebook.com/profile.php?id=100077564282932,,2026-11-02T02:21:17.834713
+-,Rana Shohel,NO,1/3,Yes,No,No,"INCOMPLETE (1/3 - Missing: Comment, Share)",,,https://www.facebook.com/rana.shohel.7165,,2026-11-02T02:20:25.031733
+-,Rehana Akter Koli,NO,1/3,Yes,No,No,"INCOMPLETE (1/3 - Missing: Comment, Share)",,,https://www.facebook.com/profile.php?id=61595116216816,,2026-11-02T02:17:53.842454
+-,Ridoy Hossan,NO,1/3,Yes,No,No,"INCOMPLETE (1/3 - Missing: Comment, Share)",,,https://www.facebook.com/hridoy.ahmed.118757,,2026-11-02T02:21:40.636255
+-,Riduanul Isalm Ujjol,NO,1/3,Yes,No,No,"INCOMPLETE (1/3 - Missing: Comment, Share)",,,https://www.facebook.com/roduankhan.shovo,,2026-11-02T02:10:47.646756
+-,Rifa T,NO,1/3,Yes,No,No,"INCOMPLETE (1/3 - Missing: Comment, Share)",,,https://www.facebook.com/profile.php?id=61592599174697,,2026-11-02T02:20:20.230996
+-,Rishab Dey,NO,1/3,Yes,No,No,"INCOMPLETE (1/3 - Missing: Comment, Share)",,,https://www.facebook.com/good.parson.39,,2026-11-02T02:09:04.431633
+-,Robi Ghosh,NO,1/3,Yes,No,No,"INCOMPLETE (1/3 - Missing: Comment, Share)",,,https://www.facebook.com/robi.gosh.9,,2026-11-02T02:10:47.647182
+-,Roduan Khan,NO,1/3,Yes,No,No,"INCOMPLETE (1/3 - Missing: Comment, Share)",,,https://www.facebook.com/roduan.khan,,2026-11-02T02:22:15.437676
+-,Rupa Sarkar,NO,1/3,Yes,No,No,"INCOMPLETE (1/3 - Missing: Comment, Share)",,,https://www.facebook.com/rupa.sarkar.626003,,2026-11-02T02:09:27.234084
+-,SA Nesheta,NO,1/3,Yes,No,No,"INCOMPLETE (1/3 - Missing: Comment, Share)",,,https://www.facebook.com/mn.jpi,,2026-11-02T02:10:23.634023
+-,Sabbir Ahmed,NO,1/3,Yes,No,No,"INCOMPLETE (1/3 - Missing: Comment, Share)",,,https://www.facebook.com/sk.sabbir.46624,,2026-11-02T02:21:17.834810
+-,Sabuj Chowdhury,NO,1/3,Yes,No,No,"INCOMPLETE (1/3 - Missing: Comment, Share)",,,https://www.facebook.com/profile.php?id=61575390862321,,2026-11-02T02:20:20.231809
+-,Safwan Sadik,NO,1/3,Yes,No,No,"INCOMPLETE (1/3 - Missing: Comment, Share)",,,https://www.facebook.com/profile.php?id=61581507672367,,2026-11-02T02:10:23.634932
+-,Sahdeb Mozumder,NO,1/3,Yes,No,No,"INCOMPLETE (1/3 - Missing: Comment, Share)",,,https://www.facebook.com/sahdeb.mozumder,,2026-11-02T02:11:17.636662
+-,Saiful Ferdous,NO,1/3,Yes,No,No,"INCOMPLETE (1/3 - Missing: Comment, Share)",,,https://www.facebook.com/saiful.ferdous.33,,2026-11-02T02:10:47.646597
+-,Sakib Alom,NO,1/3,Yes,No,No,"INCOMPLETE (1/3 - Missing: Comment, Share)",,,https://www.facebook.com/sakib.alom.255276,,2026-11-02T02:21:17.835818
+-,Sakib Hasan,NO,1/3,Yes,No,No,"INCOMPLETE (1/3 - Missing: Comment, Share)",,,https://www.facebook.com/profile.php?id=61595672289097,,2026-11-02T02:09:27.234437
+-,Salma Begum,NO,1/3,Yes,No,No,"INCOMPLETE (1/3 - Missing: Comment, Share)",,,https://www.facebook.com/salma.begum.842916,,2026-11-02T02:09:27.234159
+-,Samir Ahmed Shamim,NO,1/3,Yes,No,No,"INCOMPLETE (1/3 - Missing: Comment, Share)",,,https://www.facebook.com/samir.ahmed.79733,,2026-11-02T02:21:17.836731
+-,Samiya Islam,NO,1/3,Yes,No,No,"INCOMPLETE (1/3 - Missing: Comment, Share)",,,https://www.facebook.com/profile.php?id=61573296037518,,2026-11-02T02:20:09.431033
+-,Samsul Arefin Tauhid,NO,1/3,Yes,No,No,"INCOMPLETE (1/3 - Missing: Comment, Share)",,,https://www.facebook.com/arefin.tauhid.5,,2026-11-02T02:20:25.032019
+-,Sanjida Akter,NO,1/3,Yes,No,No,"INCOMPLETE (1/3 - Missing: Comment, Share)",,,https://www.facebook.com/profile.php?id=61570690351095,,2026-11-02T02:18:50.230996
+-,Sanjida Mirza Easha,NO,1/3,Yes,No,No,"INCOMPLETE (1/3 - Missing: Comment, Share)",,,https://www.facebook.com/profile.php?id=61576231815455,,2026-11-02T02:10:47.646860
+-,Sapno Reka,NO,1/3,Yes,No,No,"INCOMPLETE (1/3 - Missing: Comment, Share)",,,https://www.facebook.com/sapno.reka,,2026-11-02T02:20:09.431710
+-,Save post,NO,1/3,No,Yes,No,"INCOMPLETE (1/3 - Missing: Like, Share)",,,,,2026-11-02T01:49:45.138179
+-,Shafiqul Islam,NO,1/3,No,No,Yes,"INCOMPLETE (1/3 - Missing: Like, Comment)",,,,d09682ccc4c2ece0,2026-11-02T02:18:53.292446
+-,Shafiqul Rony,NO,1/3,Yes,No,No,"INCOMPLETE (1/3 - Missing: Comment, Share)",,,https://www.facebook.com/SHAFIQULRONY9696,,2026-11-02T02:20:20.231635
+-,Shah Md Mohiuddin Rahim,NO,1/3,Yes,No,No,"INCOMPLETE (1/3 - Missing: Comment, Share)",,,https://www.facebook.com/shah.md.mohiuddin.rahim,,2026-11-02T02:20:25.032117
+-,Shahida Akter,NO,1/3,Yes,No,No,"INCOMPLETE (1/3 - Missing: Comment, Share)",,,https://www.facebook.com/shahida.akter.419081,,2026-11-02T02:22:15.437535
+-,Shahnaj Alam,NO,1/3,Yes,No,No,"INCOMPLETE (1/3 - Missing: Comment, Share)",,,https://www.facebook.com/shahnaj.alam.148,,2026-11-02T02:20:09.431166
+-,Shajeda Akter Shaju,NO,1/3,Yes,No,No,"INCOMPLETE (1/3 - Missing: Comment, Share)",,,https://www.facebook.com/sumaiyaakter.sumaiyaakter.3511,,2026-11-02T02:22:15.437605
+-,Shamima Akter,NO,1/3,Yes,No,No,"INCOMPLETE (1/3 - Missing: Comment, Share)",,,https://www.facebook.com/shamima.akter.703378,,2026-11-02T02:20:25.032164
+-,Shariful Islam,NO,1/3,No,Yes,No,"INCOMPLETE (1/3 - Missing: Like, Share)",৫০০গ্রাম দিন তবু বিজয়ী ৩জন নিন | ৫০০গ্রাম দিনতবু বিজয়ী ৩জন নিন,,https://www.facebook.com/profile.php?id=61583148464047,f0b8a9a287e4e4e0,2026-11-02T02:07:47.670092
+-,Sharmin Ahamed,NO,1/3,Yes,No,No,"INCOMPLETE (1/3 - Missing: Comment, Share)",,,https://www.facebook.com/nahar.ontora,,2026-11-02T02:09:27.234234
+-,Shayon Debborma Sonjit,NO,1/3,Yes,No,No,"INCOMPLETE (1/3 - Missing: Comment, Share)",,,https://www.facebook.com/shayon.debborma.sonjit,,2026-11-02T02:21:17.835480
+-,Shereen Sultana,NO,1/3,Yes,No,No,"INCOMPLETE (1/3 - Missing: Comment, Share)",,,https://www.facebook.com/shereen.sultana.122439,,2026-11-02T02:18:50.230921
+-,Shipon Hasan,NO,1/3,Yes,No,No,"INCOMPLETE (1/3 - Missing: Comment, Share)",,,https://www.facebook.com/shipon.hasan.568294,,2026-11-02T02:09:27.233743
+-,Shohan Mahmud,NO,1/3,No,Yes,No,"INCOMPLETE (1/3 - Missing: Like, Share)",প্রস্তুত ইনশা-আল্লাহ,,https://www.facebook.com/shohan.mahmud.773,d4aa5571e049b2d0,2026-11-02T02:07:47.670236
+-,Shoreful Islam,NO,1/3,Yes,No,No,"INCOMPLETE (1/3 - Missing: Comment, Share)",,,https://www.facebook.com/profile.php?id=100080863032139,,2026-11-02T02:20:20.231070
+-,Shuvo Kumar Shill,NO,1/3,Yes,No,No,"INCOMPLETE (1/3 - Missing: Comment, Share)",,,https://www.facebook.com/dollar.kumar.73,,2026-11-02T02:09:50.034347
+-,Sinthiya Islam,NO,1/3,Yes,No,No,"INCOMPLETE (1/3 - Missing: Comment, Share)",,,https://www.facebook.com/profile.php?id=61578217927178,,2026-11-02T02:09:04.431862
+-,Sohana Biswas,NO,1/3,Yes,No,No,"INCOMPLETE (1/3 - Missing: Comment, Share)",,,https://www.facebook.com/sohana.biswas.27503,,2026-11-02T02:10:23.635331
+-,Sohana Sara Shukh,NO,1/3,Yes,No,No,"INCOMPLETE (1/3 - Missing: Comment, Share)",,,https://www.facebook.com/Aahel.Ershad.Sukh,,2026-11-02T02:22:15.437996
+-,Sorna Razzak,NO,1/3,Yes,No,No,"INCOMPLETE (1/3 - Missing: Comment, Share)",,,https://www.facebook.com/profile.php?id=100076123636792,,2026-11-02T02:20:20.231281
+-,Sourav Saha,NO,1/3,Yes,No,No,"INCOMPLETE (1/3 - Missing: Comment, Share)",,,https://www.facebook.com/profile.php?id=61564189302084,,2026-11-02T02:11:17.637230
+-,Subal Mozumder,NO,1/3,Yes,No,No,"INCOMPLETE (1/3 - Missing: Comment, Share)",,,https://www.facebook.com/rocking.b.subalmozumder,,2026-11-02T02:20:20.231998
+-,Sudev Bishwas,NO,1/3,Yes,No,No,"INCOMPLETE (1/3 - Missing: Comment, Share)",,,https://www.facebook.com/sudevbishwas96,,2026-11-02T02:17:53.842245
+-,Sunjida Islam Dipa,NO,1/3,No,Yes,No,"INCOMPLETE (1/3 - Missing: Like, Share)",আমিও ৫০০ এর মধ্যে একজন। এখন আমার কাছে ভেজাল নাই একটি আস্থার যায়গা আপনাদের মশলা এতো ভালো লেগেছে পুরোনো দিনের ফ্লেভার,,https://www.facebook.com/sunjida.islam.dipa.2025,,2026-11-02T02:18:16.630186
+-,Tabassum Jim,NO,1/3,Yes,No,No,"INCOMPLETE (1/3 - Missing: Comment, Share)",,,https://www.facebook.com/profile.php?id=61593991727942,,2026-11-02T02:10:47.646704
+-,Tahamina Akter Pakhi,NO,1/3,Yes,No,No,"INCOMPLETE (1/3 - Missing: Comment, Share)",,,https://www.facebook.com/tahamina.khan.pakhi,,2026-11-02T02:09:50.033934
+-,Tahmina Hossain,NO,1/3,Yes,No,No,"INCOMPLETE (1/3 - Missing: Comment, Share)",,,https://www.facebook.com/tahmina.hossain.5815,,2026-11-02T02:20:20.231342
+-,Tamal Hossain,NO,1/3,Yes,No,No,"INCOMPLETE (1/3 - Missing: Comment, Share)",,,https://www.facebook.com/iamtamal1,,2026-11-02T02:21:17.836595
+-,Tamanna Ahmed,NO,1/3,Yes,No,No,"INCOMPLETE (1/3 - Missing: Comment, Share)",,,https://www.facebook.com/profile.php?id=61580603226759,,2026-11-02T02:07:44.030764
+-,Tamil Al Helal,NO,1/3,Yes,No,No,"INCOMPLETE (1/3 - Missing: Comment, Share)",,,https://www.facebook.com/tamil.al.helal.2024,,2026-11-02T02:20:09.430874
+-,Tanha Islam,NO,1/3,Yes,No,No,"INCOMPLETE (1/3 - Missing: Comment, Share)",,,https://www.facebook.com/tanha527,,2026-11-02T02:21:17.835390
+-,Tanvir Rahman,NO,1/3,Yes,No,No,"INCOMPLETE (1/3 - Missing: Comment, Share)",,,https://www.facebook.com/tanvir.rahman.952383,,2026-11-02T02:20:09.431356
+-,Tanzim Hasan Shamim,NO,1/3,Yes,No,No,"INCOMPLETE (1/3 - Missing: Comment, Share)",,,https://www.facebook.com/ShamimAhamedJihad,,2026-11-02T02:10:47.647622
+-,Tariquzzaman Toha,NO,1/3,No,Yes,No,"INCOMPLETE (1/3 - Missing: Like, Share)",শুভ কামনা রইলো আপু,,https://www.facebook.com/tariquzzaman.toha,,2026-11-02T02:18:37.029975
+-,Tasbih Eva,NO,1/3,Yes,No,No,"INCOMPLETE (1/3 - Missing: Comment, Share)",,,https://www.facebook.com/tasbih.eva,,2026-11-02T02:10:23.634547
+-,Taslima Akter,NO,1/3,Yes,No,No,"INCOMPLETE (1/3 - Missing: Comment, Share)",,,https://www.facebook.com/taslima.akter.227910,,2026-11-02T02:20:20.231520
+-,Taspiya Sumaiya,NO,1/3,Yes,No,No,"INCOMPLETE (1/3 - Missing: Comment, Share)",,,https://www.facebook.com/profile.php?id=61560190254931,,2026-11-02T02:10:23.634851
+-,Vejal Nai . ভেজাল নাই,NO,1/3,Yes,No,No,"INCOMPLETE (1/3 - Missing: Comment, Share)",,,https://www.facebook.com/vejalnaibd,,2026-11-02T02:07:44.029938
+-,অচীনপুরের রাজকন্যা,NO,1/3,Yes,No,No,"INCOMPLETE (1/3 - Missing: Comment, Share)",,,https://www.facebook.com/acinapurera.rajakan.ya.205202,,2026-11-02T02:09:50.035029
+-,ইভা আক্তার,NO,1/3,Yes,No,No,"INCOMPLETE (1/3 - Missing: Comment, Share)",,,https://www.facebook.com/khusabura.jahana.ibha,,2026-11-02T02:10:47.647367
+-,ইমন মৃধা,NO,1/3,Yes,No,No,"INCOMPLETE (1/3 - Missing: Comment, Share)",,,https://www.facebook.com/imana.mrdha.730470,,2026-11-02T02:20:25.032270
+-,ইমাম হোচাইন আসাদুল,NO,1/3,Yes,No,No,"INCOMPLETE (1/3 - Missing: Comment, Share)",,,https://www.facebook.com/imama.hoca.ina.asadula,,2026-11-02T02:20:25.031685
+-,এইচ এম আহমাদুল্লাহ্,NO,1/3,Yes,No,No,"INCOMPLETE (1/3 - Missing: Comment, Share)",,,https://www.facebook.com/e.ica.ema.ahamadullah,,2026-11-02T02:22:15.438078
+-,কাজী মুশফিকুর রহমান তামিম,NO,1/3,Yes,No,No,"INCOMPLETE (1/3 - Missing: Comment, Share)",,,https://www.facebook.com/profile.php?id=61551006584687,,2026-11-02T02:09:27.234360
+-,কামরুন নাহার তিথি,NO,1/3,Yes,No,No,"INCOMPLETE (1/3 - Missing: Comment, Share)",,,https://www.facebook.com/kamaruna.nahara.tithi.2024,,2026-11-02T02:22:15.437393
+-,গ্রামের গড় সুন্দর,NO,1/3,Yes,No,No,"INCOMPLETE (1/3 - Missing: Comment, Share)",,,https://www.facebook.com/gramera.gara.sundara,,2026-11-02T02:09:50.034545
+-,জারিন তাসনিম,NO,1/3,Yes,No,No,"INCOMPLETE (1/3 - Missing: Comment, Share)",,,https://www.facebook.com/jareentasneem.tasneem,,2026-11-02T02:21:40.636638
+-,ফারিয়া ইসলাম রুপা,NO,1/3,Yes,No,No,"INCOMPLETE (1/3 - Missing: Comment, Share)",,,https://www.facebook.com/phariya.isalama.rupa,,2026-11-02T02:21:17.835927
+-,মমতাময়ী মম,NO,1/3,Yes,No,No,"INCOMPLETE (1/3 - Missing: Comment, Share)",,,https://www.facebook.com/mamatamayi.mama,,2026-11-02T02:20:09.431831
+-,মানবসেবা ফাউন্ডেশন জগন্নাথপুর,NO,1/3,Yes,No,No,"INCOMPLETE (1/3 - Missing: Comment, Share)",,,https://www.facebook.com/profile.php?id=61577210145999,,2026-11-02T02:21:17.835298
+-,মাহফুজ হোসেন সকাল,NO,1/3,No,Yes,No,"INCOMPLETE (1/3 - Missing: Like, Share)",,,https://www.facebook.com/mahfuz.hosen.sokal,,2026-11-02T02:19:02.231536
+-,মোঃ ওমর ফারুক ফারুক,NO,1/3,Yes,No,No,"INCOMPLETE (1/3 - Missing: Comment, Share)",,,https://www.facebook.com/profile.php?id=61576496887740,,2026-11-02T02:20:09.430967
+-,মোঃ মেহেরাজ,NO,1/3,Yes,No,No,"INCOMPLETE (1/3 - Missing: Comment, Share)",,,https://www.facebook.com/mo.meheraja.289884,,2026-11-02T02:22:15.437022
+-,মোঃ রিফাত বিশ্বাস,NO,1/3,Yes,No,No,"INCOMPLETE (1/3 - Missing: Comment, Share)",,,https://www.facebook.com/moh.riphata.bisbasa.2025,,2026-11-02T02:09:27.235125
+-,মোঃ রেজাউল কাজি,NO,1/3,Yes,No,No,"INCOMPLETE (1/3 - Missing: Comment, Share)",,,https://www.facebook.com/profile.php?id=61584514079461,,2026-11-02T02:20:09.431293
+-,মোঃ সুমন আহমদ,NO,1/3,Yes,No,No,"INCOMPLETE (1/3 - Missing: Comment, Share)",,,https://www.facebook.com/ariyanalsumon,,2026-11-02T02:21:40.635922
+-,মোল্লা মোঃ নাজমুল হক,NO,1/3,Yes,No,No,"INCOMPLETE (1/3 - Missing: Comment, Share)",,,https://www.facebook.com/nazmul.a.hassan.7,,2026-11-02T02:21:40.635739
+-,রসকণা,NO,1/3,No,Yes,No,"INCOMPLETE (1/3 - Missing: Like, Share)",ready,,https://www.facebook.com/profile.php?id=61595702862438,c4e4e8c47c72b2d8,2026-11-02T02:08:22.430501
+-,রাবেয়া আখতার,NO,1/3,Yes,No,No,"INCOMPLETE (1/3 - Missing: Comment, Share)",,,https://www.facebook.com/rabeya.aktara.387987,,2026-11-02T02:11:17.637633
+-,রিমঝিম কিছু কথা,NO,1/3,Yes,No,No,"INCOMPLETE (1/3 - Missing: Comment, Share)",,,https://www.facebook.com/rimajhima.kichu.katha.2025,,2026-11-02T02:11:17.637536
+-,শায়লা হক,NO,1/3,Yes,No,No,"INCOMPLETE (1/3 - Missing: Comment, Share)",,,https://www.facebook.com/nidhila.yehan,,2026-11-02T02:10:23.634675
+-,শারমিন আকতার,NO,1/3,Yes,No,No,"INCOMPLETE (1/3 - Missing: Comment, Share)",,,https://www.facebook.com/saramina.akatara.213751,,2026-11-02T02:10:23.634365
+-,শাহরিয়ার তাহমিদ শাকিল,NO,1/3,Yes,No,No,"INCOMPLETE (1/3 - Missing: Comment, Share)",,,https://www.facebook.com/Shakilhassan4242,,2026-11-02T02:22:15.437838
+-,শাহরিয়ার স্বপ্ন,NO,1/3,Yes,No,No,"INCOMPLETE (1/3 - Missing: Comment, Share)",,,https://www.facebook.com/sahariyara.sbapna,,2026-11-02T02:21:40.637096
+-,সাইমুল সোহাগ,NO,1/3,Yes,No,No,"INCOMPLETE (1/3 - Missing: Comment, Share)",,,https://www.facebook.com/saimul.islamshohagh,,2026-11-02T02:10:47.647077
+-,সুপ্রিয়া সরকার,NO,1/3,Yes,No,No,"INCOMPLETE (1/3 - Missing: Comment, Share)",,,https://www.facebook.com/profile.php?id=100037037439374,,2026-11-02T02:07:44.030703

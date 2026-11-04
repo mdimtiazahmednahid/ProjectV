@@ -1,9 +1,74 @@
-from PySide6.QtWidgets import (QWidget, QVBoxLayout, QHBoxLayout,
-                                 QLabel, QComboBox, QPushButton, QGroupBox, QLineEdit, QMessageBox)
-from PySide6.QtCore import Signal, QTimer
-from app.automation.device_manager import DeviceManager
-from app.automation.appium_manager import AppiumManager
+from PySide6.QtCore import QTimer, Signal
+from PySide6.QtWidgets import (
+    QComboBox,
+    QDialog,
+    QFormLayout,
+    QGroupBox,
+    QHBoxLayout,
+    QLabel,
+    QLineEdit,
+    QMessageBox,
+    QPushButton,
+    QVBoxLayout,
+    QWidget,
+)
 from app.automation.adb_controller import ADBManager
+from app.automation.appium_manager import AppiumManager
+from app.automation.device_manager import DeviceManager
+from app.utils.platform_binaries import get_os_arch_info
+
+
+class WirelessAdbDialog(QDialog):
+    """
+    1-Click Wireless ADB Connection Dialog (Android 11+ Wireless Debugging or TCP/IP 5555).
+    Works even when Windows is missing OEM USB drivers or the USB cable is charge-only!
+    """
+
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self.setWindowTitle("📶 Connect Phone via Wi-Fi (No USB Cable / Driver Needed)")
+        self.setMinimumWidth(480)
+
+        layout = QVBoxLayout(self)
+        instructions = QLabel(
+            "<b>How to connect your Android phone over Wi-Fi (takes 15 seconds):</b><br>"
+            "1. Connect your phone and computer to the <b>same Wi-Fi network</b>.<br>"
+            "2. On your phone, open <b>Settings → Developer Options → Wireless debugging</b> and turn it <b>ON</b>.<br>"
+            "3. Tap <b>'Wireless debugging'</b> text:<br>"
+            "   • Copy the <b>IP address & Port</b> shown on the main screen into the first box below.<br>"
+            "   • <i>(First time only)</i> Tap <b>'Pair device with pairing code'</b> and enter the Pairing IP:Port and 6-digit code below."
+        )
+        instructions.setWordWrap(True)
+        instructions.setStyleSheet("color: #e2e8f0; font-size: 12px; padding-bottom: 8px;")
+        layout.addWidget(instructions)
+
+        form = QFormLayout()
+        self.input_connect_ip = QLineEdit()
+        self.input_connect_ip.setPlaceholderText("e.g. 192.168.1.50:41235")
+
+        self.input_pair_ip = QLineEdit()
+        self.input_pair_ip.setPlaceholderText("Optional (first time): e.g. 192.168.1.50:38199")
+
+        self.input_pair_code = QLineEdit()
+        self.input_pair_code.setPlaceholderText("Optional (first time): e.g. 482910")
+
+        form.addRow("Phone IP & Port (Required):", self.input_connect_ip)
+        form.addRow("Pairing IP & Port (Optional):", self.input_pair_ip)
+        form.addRow("6-Digit Pairing Code (Optional):", self.input_pair_code)
+        layout.addLayout(form)
+
+        btn_row = QHBoxLayout()
+        self.btn_connect = QPushButton("📶 Pair & Connect Phone")
+        self.btn_connect.setStyleSheet(
+            "background-color: #16a34a; color: white; font-weight: bold; padding: 8px 16px;"
+        )
+        self.btn_cancel = QPushButton("Cancel")
+        self.btn_connect.clicked.connect(self.accept)
+        self.btn_cancel.clicked.connect(self.reject)
+        btn_row.addStretch()
+        btn_row.addWidget(self.btn_cancel)
+        btn_row.addWidget(self.btn_connect)
+        layout.addLayout(btn_row)
 
 
 class DevicePanel(QGroupBox):
@@ -27,18 +92,27 @@ class DevicePanel(QGroupBox):
         self.refresh_btn = QPushButton("Refresh Devices")
         self.refresh_btn.clicked.connect(lambda: self.refresh_devices(manual=True))
 
-        self.restart_adb_btn = QPushButton("🔄 Fix / Restart ADB")
+        self.restart_adb_btn = QPushButton("🔄 Fix / Install ADB")
         self.restart_adb_btn.setToolTip(
-            "Restarts the ADB USB daemon (adb kill-server && adb start-server) "
-            "if your plugged-in phone is not showing up."
+            "Automatically downloads official ADB if missing, restarts the ADB USB daemon, "
+            "and scans for your plugged-in phone."
         )
         self.restart_adb_btn.clicked.connect(self.restart_adb_and_refresh)
 
+        self.wifi_adb_btn = QPushButton("📶 Wi-Fi Phone")
+        self.wifi_adb_btn.setStyleSheet("font-weight: bold; color: #38bdf8;")
+        self.wifi_adb_btn.setToolTip(
+            "Connect your phone over Wi-Fi (Wireless Debugging) — works without any USB cable or Windows USB driver!"
+        )
+        self.wifi_adb_btn.clicked.connect(self.open_wireless_adb_dialog)
+
         self.mode_combo = QComboBox()
-        self.mode_combo.addItems([
-            "Direct ADB Mode (Zero-Setup — No Appium Needed)",
-            "Appium Server Mode (127.0.0.1:4723)"
-        ])
+        self.mode_combo.addItems(
+            [
+                "Direct ADB Mode (Zero-Setup — No Appium Needed)",
+                "Appium Server Mode (127.0.0.1:4723)",
+            ]
+        )
 
         adb_layout.addWidget(QLabel("Device:"))
         adb_layout.addWidget(self.device_combo, 1)
@@ -46,6 +120,7 @@ class DevicePanel(QGroupBox):
         adb_layout.addWidget(self.mode_combo)
         adb_layout.addWidget(self.refresh_btn)
         adb_layout.addWidget(self.restart_adb_btn)
+        adb_layout.addWidget(self.wifi_adb_btn)
 
         # Connect Button
         conn_layout = QHBoxLayout()
@@ -94,6 +169,10 @@ class DevicePanel(QGroupBox):
         self.refresh_devices(manual=False)
 
     def refresh_devices(self, manual: bool = False):
+        if manual and not DeviceManager.is_adb_binary_present():
+            self.status_label.setText("Status: DOWNLOADING OFFICIAL GOOGLE ADB...")
+            self.status_label.setStyleSheet("color: #fbbf24; font-weight: bold;")
+
         devices = DeviceManager.get_connected_devices(auto_reconnect=manual)
         sig = tuple((d.get("serial"), d.get("state"), d.get("model")) for d in devices)
         if not manual and sig == self._last_device_signature and self.device_combo.count() > 0:
@@ -114,13 +193,13 @@ class DevicePanel(QGroupBox):
             elif state == "unauthorized":
                 self.device_combo.addItem(
                     f"⚠️ {serial} (UNAUTHORIZED — Tap 'Allow USB Debugging' on phone)",
-                    serial
+                    serial,
                 )
                 pending_states.append("unauthorized")
             elif state == "offline":
                 self.device_combo.addItem(
-                    f"⚠️ {serial} (OFFLINE — Click '🔄 Fix / Restart ADB' or re-plug USB)",
-                    serial
+                    f"⚠️ {serial} (OFFLINE — Click '🔄 Fix / Install ADB' or re-plug USB)",
+                    serial,
                 )
                 pending_states.append("offline")
             else:
@@ -128,10 +207,22 @@ class DevicePanel(QGroupBox):
                 pending_states.append(state)
 
         if self.device_combo.count() == 0:
-            self.device_combo.addItem("No devices found (Check USB File Transfer mode & USB Debugging)", None)
-            if not self._is_connected:
-                self.status_label.setText("Status: NO USB DEVICE DETECTED")
-                self.status_label.setStyleSheet("color: #f87171; font-weight: bold;")
+            if not DeviceManager.is_adb_binary_present():
+                self.device_combo.addItem(
+                    "ADB not installed yet — Click '🔄 Fix / Install ADB' to auto-install",
+                    None,
+                )
+                if not self._is_connected:
+                    self.status_label.setText("Status: CLICK '🔄 Fix / Install ADB' TO ENABLE PHONE CONNECTION")
+                    self.status_label.setStyleSheet("color: #fbbf24; font-weight: bold;")
+            else:
+                self.device_combo.addItem(
+                    "No phone detected (Check USB Debugging / File Transfer, or click '📶 Wi-Fi Phone')",
+                    None,
+                )
+                if not self._is_connected:
+                    self.status_label.setText("Status: NO USB PHONE DETECTED (Try '🔄 Fix / Install ADB' or '📶 Wi-Fi Phone')")
+                    self.status_label.setStyleSheet("color: #f87171; font-weight: bold;")
         elif not self._is_connected:
             if ready_count > 0:
                 self.status_label.setText("Status: PHONE DETECTED — Click 'Connect Device'")
@@ -140,39 +231,81 @@ class DevicePanel(QGroupBox):
                 self.status_label.setText("Status: TAP 'ALLOW USB DEBUGGING' ON PHONE SCREEN")
                 self.status_label.setStyleSheet("color: #fb923c; font-weight: bold;")
             else:
-                self.status_label.setText(f"Status: DEVICE {pending_states[0].upper()} — Click '🔄 Fix / Restart ADB'")
+                self.status_label.setText(
+                    f"Status: DEVICE {pending_states[0].upper()} — Click '🔄 Fix / Install ADB'"
+                )
                 self.status_label.setStyleSheet("color: #fb923c; font-weight: bold;")
 
     def restart_adb_and_refresh(self):
-        self.status_label.setText("Status: RESTARTING ADB DAEMON...")
+        self.status_label.setText("Status: PREPARING & RESTARTING ADB DAEMON...")
         self.status_label.setStyleSheet("color: #fbbf24; font-weight: bold;")
         ok, log_msg, devices = DeviceManager.restart_adb_server()
         self._last_device_signature = None
         self.refresh_devices(manual=True)
 
         if not devices:
+            info = get_os_arch_info()
+            os_label = "Windows" if info["is_windows"] else "macOS"
             extra_hint = ""
-            if "e00002be" in log_msg or "Unable to create an interface plug-in" in log_msg:
+            if info["is_windows"]:
+                extra_hint = (
+                    "\n\n💡 Windows Tip (No USB Driver Needed!):\n"
+                    "If Windows is missing your phone brand's USB ADB driver (Samsung/Xiaomi/Oppo/Vivo), "
+                    "click the '📶 Wi-Fi Phone' button next to this button to connect over Wi-Fi in 15 seconds!"
+                )
+            elif "e00002be" in log_msg or "Unable to create an interface plug-in" in log_msg:
                 extra_hint = (
                     "\n\n⚠️ macOS USB Exclusive Lock Detected (e00002be):\n"
                     "Another app (like Chrome 'chrome://inspect', Android File Transfer, or Photos) "
                     "is holding exclusive access to your phone's USB port.\n"
                     "• Close any 'chrome://inspect' tab or Android File Transfer app, OR\n"
-                    "• Unplug and re-plug the USB cable and select 'File Transfer (MTP)'."
+                    "• Click '📶 Wi-Fi Phone' to connect over Wi-Fi without USB!"
                 )
             QMessageBox.information(
                 self,
-                "ADB Restarted — Still No Device Detected",
-                "ADB Server was restarted, but macOS still sees 0 Android ADB devices.\n\n"
-                "Quick Checklist for your plugged-in phone:\n"
+                "ADB Ready — No Phone Detected Yet",
+                f"ADB Server is active, but {os_label} currently sees 0 Android ADB devices.\n\n"
+                "Quick Checklist for your phone:\n"
                 "1. Unlock your phone screen.\n"
                 "2. Swipe down the top notification bar → tap the 'USB Charging this device' notification "
                 "→ switch USB mode to 'File Transfer / Android Auto' or 'PTP'.\n"
-                "3. Go to Settings → Developer Options → turn 'USB Debugging' OFF and back ON.\n"
+                "3. Go to Settings → Developer Options → turn 'USB Debugging' ON.\n"
                 "4. Tap 'Allow' on the 'Allow USB debugging?' popup on your phone.\n"
-                "5. Make sure your USB cable is a data cable (not power-only)."
-                f"{extra_hint}"
+                "5. Or click '📶 Wi-Fi Phone' to connect wirelessly over Wi-Fi!"
+                f"{extra_hint}",
             )
+
+    def open_wireless_adb_dialog(self):
+        dlg = WirelessAdbDialog(self)
+        if dlg.exec():
+            conn_ip = dlg.input_connect_ip.text().strip()
+            pair_ip = dlg.input_pair_ip.text().strip()
+            pair_code = dlg.input_pair_code.text().strip()
+            if not conn_ip:
+                QMessageBox.warning(self, "Missing IP:Port", "Please enter your phone's Wireless Debugging IP:Port.")
+                return
+            self.status_label.setText(f"Status: CONNECTING WI-FI ADB ({conn_ip})...")
+            self.status_label.setStyleSheet("color: #fbbf24; font-weight: bold;")
+            ok, log_msg, _devices = DeviceManager.connect_wireless_adb(conn_ip, pair_ip, pair_code)
+            self._last_device_signature = None
+            self.refresh_devices(manual=True)
+            if ok:
+                QMessageBox.information(
+                    self,
+                    "Wi-Fi Phone Connected!",
+                    f"Successfully connected to phone over Wi-Fi ({conn_ip})!\n\n"
+                    "Now click 'Connect Device' to activate Direct ADB Mode.",
+                )
+            else:
+                QMessageBox.warning(
+                    self,
+                    "Wi-Fi ADB Connection Failed",
+                    f"Could not connect to {conn_ip}.\n\nDetails:\n{log_msg}\n\n"
+                    "Make sure:\n"
+                    "• Phone and PC are on the same Wi-Fi network.\n"
+                    "• Wireless Debugging is ON in Developer Options.\n"
+                    "• If connecting for the first time, fill in the Pairing IP:Port and 6-digit Pairing Code.",
+                )
 
     def get_active_manager(self):
         return self.active_manager
@@ -180,7 +313,7 @@ class DevicePanel(QGroupBox):
     def connect_appium(self):
         serial = self.device_combo.currentData()
         if not serial:
-            # Try refreshing once in case the phone was just plugged in
+            # Try refreshing once (with auto-download of ADB if missing)
             self.refresh_devices(manual=True)
             serial = self.device_combo.currentData()
             if not serial:
@@ -188,11 +321,11 @@ class DevicePanel(QGroupBox):
                     self,
                     "No Android Device Detected",
                     "Your phone is not currently visible to ADB.\n\n"
-                    "• If you want to use your Phone: Click '🔄 Fix / Restart ADB', unlock your phone, "
-                    "switch USB mode from 'Charging' to 'File Transfer', and ensure 'USB Debugging' is enabled.\n\n"
-                    "• If you are scraping from Chrome/Edge (on the left of your screen): "
-                    "You do NOT need to connect a phone! Just use the Browser Extension or '🔖 Get Browser Bookmark' "
-                    "and batches will import automatically."
+                    "• For USB Connection: Click '🔄 Fix / Install ADB', unlock your phone, "
+                    "switch USB mode from 'Charging' to 'File Transfer', and enable 'USB Debugging'.\n\n"
+                    "• For Wi-Fi Connection (No cable/driver needed): Click '📶 Wi-Fi Phone' and enter the IP:Port from "
+                    "Settings → Developer Options → Wireless Debugging.\n\n"
+                    "• Using Chrome/Edge on PC? You do NOT need a phone connected — just use the Browser Extension!",
                 )
                 return
 

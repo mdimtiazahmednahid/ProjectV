@@ -13,7 +13,12 @@ from app.gui.logs_panel import LogsPanel
 from app.automation.appium_manager import AppiumManager
 from app.automation.adb_controller import ADBManager
 from app.automation.collector_engine import CollectorEngine
-from app.automation.browser_dom_extractor import BrowserDOMExtractor, CLIPBOARD_BATCH_PREFIX
+from app.automation.browser_dom_extractor import (
+    BackgroundHTMLExtractor,
+    BrowserDOMExtractor,
+    CLIPBOARD_BATCH_PREFIX,
+)
+from app.automation.local_bridge_server import LocalBridgeServer
 from app.automation.scroll_controller import ScrollController
 from app.automation.ui_inspector import UIInspector
 from app.models.collection_session import CollectionSession
@@ -65,6 +70,8 @@ class MainWindow(QMainWindow):
         )
         self.adb_manager = ADBManager()
         self.db = DatabaseRepository()
+        self.bridge_server = LocalBridgeServer()
+        self.bridge_server.start()
         self.engine = None
         self.search_worker = None
         self._retired_threads = []
@@ -87,10 +94,9 @@ class MainWindow(QMainWindow):
             )
 
     def _setup_clipboard_bridge(self):
-        # Poll every 1.2s on the Main GUI Thread so background clipboard writes from Chrome
-        # are picked up cleanly without macOS pasteboard notification re-entrancy crashes.
+        # Poll every 1.0s on the Main GUI Thread for Local HTTP Bridge batches & Clipboard batches
         self._clipboard_timer = QTimer(self)
-        self._clipboard_timer.setInterval(1200)
+        self._clipboard_timer.setInterval(1000)
         self._clipboard_timer.timeout.connect(lambda: self._check_clipboard_for_extension_batch(manual=False))
         self._clipboard_timer.start()
 
@@ -115,11 +121,63 @@ class MainWindow(QMainWindow):
         if self.collector_panel.chk_auto_save.isChecked():
             self._do_auto_save()
 
+    def _ingest_extension_profiles(self, batch_id: str, profiles: list, manual: bool = False):
+        if not profiles:
+            return
+        self._processed_clipboard_batches.add(batch_id)
+        self._db_write_buffer.extend(profiles)
+        self._flush_db_buffer()
+        self.results_panel.add_profiles_batch(profiles)
+
+        total_raw = len(self.results_panel.profiles)
+        if self.current_session:
+            self.current_session.total_profiles = total_raw
+            self.db.update_session(self.current_session)
+
+        enriched = 0
+        if total_raw <= 3000 or manual:
+            sync_rows = self.sync_profile_panel.sync_engine.build_sync_checklist(self.results_panel.profiles)
+            enriched = self.sync_profile_panel.sync_engine.apply_synced_urls_to_profiles(sync_rows)
+            if enriched > 0:
+                self.results_panel.rebuild_from_profiles()
+                self.db.save_profiles_batch(self.results_panel.profiles)
+            else:
+                self.results_panel.refresh_table()
+            if self.tabs.currentIndex() == 1:
+                self.sync_profile_panel.rebuild_checklist()
+            if self.collector_panel.chk_auto_save.isChecked():
+                self._do_auto_save()
+        else:
+            self._deferred_sync_timer.start()
+
+        self.collector_panel.update_stats(total_raw, self.current_device_scroll_index, len(profiles))
+        self.collector_panel.lbl_status.setText(f"Status: EXT BATCH IMPORTED (+{len(profiles)} with links)")
+        logger.info(
+            f"Auto-imported Browser Extension batch '{batch_id}' ({len(profiles)} profiles with links; {enriched} hybrid records synced)."
+        )
+        if manual:
+            QMessageBox.information(
+                self,
+                "Extension Batch Imported",
+                f"Imported {len(profiles)} profiles (with canonical Facebook profile links)!",
+            )
+
     def _check_clipboard_for_extension_batch(self, manual: bool = False):
         if self._checking_clipboard:
             return
         self._checking_clipboard = True
         try:
+            # 1. Always drain batches streamed directly over localhost HTTP Bridge (127.0.0.1:19876)
+            http_batches = self.bridge_server.pop_batches()
+            if http_batches:
+                session_id = self._ensure_session_id()
+                for raw_batch_str in http_batches:
+                    parsed_http = BrowserDOMExtractor.parse_clipboard_batch(raw_batch_str, session_id=session_id)
+                    if parsed_http:
+                        b_id, profs = parsed_http
+                        if b_id not in self._processed_clipboard_batches and profs:
+                            self._ingest_extension_profiles(b_id, profs, manual=False)
+
             if not manual and not self.collector_panel.chk_clipboard_sync.isChecked():
                 return
 
@@ -129,7 +187,22 @@ class MainWindow(QMainWindow):
 
             text = clipboard.text() or ""
             if not text.strip().startswith(CLIPBOARD_BATCH_PREFIX):
+                # If manual Paste clicked and user copied raw HTML from Facebook (Ctrl+C), extract profiles from HTML
                 if manual:
+                    mime = clipboard.mimeData()
+                    raw_html = mime.html() if mime and mime.hasHtml() else ""
+                    if raw_html and "facebook.com" in raw_html.lower():
+                        session_id = self._ensure_session_id()
+                        html_profs = BackgroundHTMLExtractor.extract_from_html(
+                            raw_html, session_id=session_id, action_type="comment"
+                        )
+                        if not html_profs:
+                            html_profs = BackgroundHTMLExtractor.extract_from_html(
+                                raw_html, session_id=session_id, action_type="like"
+                            )
+                        if html_profs:
+                            self._ingest_extension_profiles(f"html_{len(raw_html)}", html_profs, manual=True)
+                            return
                     QMessageBox.information(
                         self,
                         "No Extension Batch in Clipboard",
@@ -154,46 +227,7 @@ class MainWindow(QMainWindow):
                     )
                 return
 
-            self._processed_clipboard_batches.add(batch_id)
-            self._db_write_buffer.extend(profiles)
-            self._flush_db_buffer()
-            self.results_panel.add_profiles_batch(profiles)
-
-            total_raw = len(self.results_panel.profiles)
-            if self.current_session:
-                self.current_session.total_profiles = total_raw
-                self.db.update_session(self.current_session)
-
-            # For normal loads (<= 3,000 raw records) or manual click, cross-sync immediately;
-            # for mass loads (20k+ users / > 3,000 raw records), debounce cross-sync + CSV write
-            # so streaming 800 clipboard batches stays 60fps smooth!
-            enriched = 0
-            if total_raw <= 3000 or manual:
-                sync_rows = self.sync_profile_panel.sync_engine.build_sync_checklist(self.results_panel.profiles)
-                enriched = self.sync_profile_panel.sync_engine.apply_synced_urls_to_profiles(sync_rows)
-                if enriched > 0:
-                    self.results_panel.rebuild_from_profiles()
-                    self.db.save_profiles_batch(self.results_panel.profiles)
-                else:
-                    self.results_panel.refresh_table()
-                if self.tabs.currentIndex() == 1:
-                    self.sync_profile_panel.rebuild_checklist()
-                if self.collector_panel.chk_auto_save.isChecked():
-                    self._do_auto_save()
-            else:
-                self._deferred_sync_timer.start()
-
-            self.collector_panel.update_stats(total_raw, self.current_device_scroll_index, len(profiles))
-            self.collector_panel.lbl_status.setText(f"Status: EXT BATCH IMPORTED (+{len(profiles)} with links)")
-            logger.info(
-                f"Auto-imported Browser Extension batch '{batch_id}' ({len(profiles)} profiles with links; {enriched} hybrid records synced)."
-            )
-            if manual:
-                QMessageBox.information(
-                    self,
-                    "Extension Batch Imported",
-                    f"Imported {len(profiles)} profiles (with canonical Facebook profile links) from clipboard!"
-                )
+            self._ingest_extension_profiles(batch_id, profiles, manual=manual)
         except Exception as e:
             logger.error(f"Clipboard batch import error: {e}", exc_info=True)
         finally:
@@ -504,6 +538,7 @@ class MainWindow(QMainWindow):
             self.engine.stop()
             self.engine.wait()
         self._flush_db_buffer()
+        self.bridge_server.stop()
         self.appium_manager.disconnect()
         self.adb_manager.disconnect()
         super().closeEvent(event)

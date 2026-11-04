@@ -1,0 +1,30 @@
+{
+  "manifest_version": 3,
+  "name": "FB Contest Validator & Lottery Scraper (Clipboard Bridge)",
+  "version": "1.0.0",
+  "description": "Auto-scrapes Facebook Post Likes, Comments, and Shares with exact Profile Links and syncs batches via Clipboard to the Desktop App.",
+  "permissions": [
+    "clipboardWrite",
+    "storage",
+    "activeTab"
+  ],
+  "host_permissions": [
+    "*://*.facebook.com/*"
+  ],
+  "action": {
+    "default_title": "FB Contest Scraper",
+    "default_popup": "popup.html"
+  },
+  "content_scripts": [
+    {
+      "matches": [
+        "*://*.facebook.com/*"
+      ],
+      "js": [
+        "content.js"
+      ],
+      "run_at": "document_idle"
+    }
+  ]
+}
+
