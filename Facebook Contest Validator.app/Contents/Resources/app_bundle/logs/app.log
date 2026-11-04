@@ -120,3 +120,4 @@ AttributeError: type object 'ContestValidator' has no attribute '_normalize_name
 22:27:59 INFO app.exporters.csv_exporter Successfully exported 201 contest participants to data/autosave_contest.csv
 22:27:59 INFO app.gui.main_window Auto-saved contest validation to data/autosave_contest.csv
 22:27:59 INFO app.gui.main_window Auto-imported Browser Extension batch '1793809678097_fshkgs' (10 profiles with links; 57 hybrid records synced).
+22:28:02 DEBUG app.automation.profile_extractor Extracted 13 'share' candidates from source (window=unknown).
