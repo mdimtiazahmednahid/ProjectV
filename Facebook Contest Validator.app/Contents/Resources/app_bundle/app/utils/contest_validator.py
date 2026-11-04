@@ -49,6 +49,10 @@ class IncrementalContestAggregator:
         return cleaned
 
     @staticmethod
+    def _normalize_name(raw_name: str) -> str:
+        return IncrementalContestAggregator._clean_author_name(raw_name).lower()
+
+    @staticmethod
     def _clean_comment_text(raw_content: str, author_name: str) -> str:
         if not raw_content:
             return ""
@@ -120,14 +124,15 @@ class IncrementalContestAggregator:
         action_type: str = "share",
         clean_text: str = "",
         asset_id: Optional[str] = None,
+        identity_key: Optional[str] = None,
     ) -> Optional[ContestParticipant]:
-        identity_key = extract_canonical_identity_key(norm_url) if norm_url else None
-
         # 1. Exact Profile URL or Canonical Identity Token match (100% Vital Origin certainty, even if photo or name changed across days!)
-        if identity_key and identity_key in self._by_url:
-            return self._by_url[identity_key]
         if norm_url and norm_url in self._by_url:
             return self._by_url[norm_url]
+        if identity_key is None and norm_url:
+            identity_key = extract_canonical_identity_key(norm_url)
+        if identity_key and identity_key in self._by_url:
+            return self._by_url[identity_key]
 
         # 2. Check existing candidates with the same normalized name
         candidates = self._by_name_buckets.get(norm_name, [])
@@ -135,8 +140,14 @@ class IncrementalContestAggregator:
             return None
 
         for cand in candidates:
-            cand_url = normalize_url(cand.profile_url).lower() if cand.profile_url else None
-            cand_id_key = extract_canonical_identity_key(cand.profile_url) if cand.profile_url else None
+            cand_url = getattr(cand, "_norm_url", None)
+            if cand_url is None and cand.profile_url:
+                cand_url = normalize_url(cand.profile_url).lower()
+                cand._norm_url = cand_url
+            cand_id_key = getattr(cand, "_id_key", None)
+            if cand_id_key is None and cand.profile_url:
+                cand_id_key = extract_canonical_identity_key(cand.profile_url)
+                cand._id_key = cand_id_key
 
             # Case A: Both have Profile URLs / Identity Keys -> must match strictly (never merge two different profile links!)
             if (identity_key or norm_url) and (cand_id_key or cand_url):
@@ -233,14 +244,15 @@ class IncrementalContestAggregator:
         canon_url = normalize_url(p.profile_url) if p.profile_url else None
         norm_url = canon_url.lower() if canon_url else None
         identity_key = extract_canonical_identity_key(canon_url) if canon_url else None
-        asset_id = extract_avatar_asset_id(getattr(p, "share_url", None))
+        raw_share_url = getattr(p, "share_url", None)
+        asset_id = extract_avatar_asset_id(raw_share_url) if raw_share_url else None
         avatar_hash = self._sanitize_avatar_hash(getattr(p, "avatar_hash", None))
         avatar_path = getattr(p, "avatar_path", None) if avatar_hash else None
         action = (getattr(p, "action_type", "share") or "share").lower().strip()
         clean_text = self._clean_comment_text(p.content, clean_name) if (p.content and p.content.strip()) else ""
 
         participant = self._find_matching_participant(
-            norm_name, norm_url, avatar_hash, getattr(p, "scroll_index", 0), action, clean_text, asset_id=asset_id
+            norm_name, norm_url, avatar_hash, getattr(p, "scroll_index", 0), action, clean_text, asset_id=asset_id, identity_key=identity_key
         )
 
         if participant is None:
@@ -255,6 +267,8 @@ class IncrementalContestAggregator:
                 first_seen_at=p.first_seen_at,
                 scroll_index=p.scroll_index,
             )
+            participant._norm_url = norm_url
+            participant._id_key = identity_key
             participant._last_action = action
             participant._scroll_by_action = {action: getattr(p, "scroll_index", 0)}
             participant._known_hashes = {avatar_hash} if avatar_hash else set()
@@ -291,6 +305,8 @@ class IncrementalContestAggregator:
             # Upgrade Profile URL if missing or canonicalized
             if canon_url and (not participant.profile_url or "/people/" in participant.profile_url.lower()):
                 participant.profile_url = canon_url
+                participant._norm_url = norm_url
+                participant._id_key = identity_key
                 bucket = self._by_name_buckets.get(norm_name, [])
                 if len(bucket) > 1:
                     for idx, same_name_p in enumerate(bucket, 1):
@@ -438,6 +454,14 @@ class ContestValidator:
     """
     Stateless facade wrapping IncrementalContestAggregator for batch validation.
     """
+
+    @staticmethod
+    def _clean_author_name(raw_name: str) -> str:
+        return IncrementalContestAggregator._clean_author_name(raw_name)
+
+    @staticmethod
+    def _normalize_name(raw_name: str) -> str:
+        return IncrementalContestAggregator._clean_author_name(raw_name).lower()
 
     @classmethod
     def validate_participants(cls, profiles: List[ShareProfile]) -> List[ContestParticipant]:

@@ -90,7 +90,7 @@
 		</data>
 		<key>Resources/app_bundle/app/exporters/lottery_print_exporter.py</key>
 		<data>
-		xwP7OH0xa5oUFYBCRokrBM2ZjIA=
+		oCbJzCiOnh51MUgXvwUeMLkUPok=
 		</data>
 		<key>Resources/app_bundle/app/exporters/xlsx_exporter.py</key>
 		<data>
@@ -126,7 +126,7 @@
 		</data>
 		<key>Resources/app_bundle/app/gui/results_panel.py</key>
 		<data>
-		UTL1ygRiEOegpg233hT3SpA+v3s=
+		S3SpZ2qLV1oRPyOtewcbsJaq/xg=
 		</data>
 		<key>Resources/app_bundle/app/gui/session_manager_dialog.py</key>
 		<data>
@@ -134,7 +134,7 @@
 		</data>
 		<key>Resources/app_bundle/app/gui/sync_profile_panel.py</key>
 		<data>
-		tA1vNVL9L2UW6iKlfcv6iWsTwH8=
+		MiTXUPjFeEWDrLa2DB3r5JsDsrg=
 		</data>
 		<key>Resources/app_bundle/app/models/__init__.py</key>
 		<data>
@@ -170,7 +170,7 @@
 		</data>
 		<key>Resources/app_bundle/app/utils/contest_validator.py</key>
 		<data>
-		dSPDVSCT8CX7iPCus1a2iUcBYYk=
+		WBF280hT6bsKavBsFGjRgXykxZE=
 		</data>
 		<key>Resources/app_bundle/app/utils/deduplicator.py</key>
 		<data>
@@ -1719,6 +1719,18 @@
 		<key>Resources/app_bundle/data/avatars/fc9686864e66e6e4.png</key>
 		<data>
 		7I0id06Be7/1jEINLP+YF3/sBt8=
+		</data>
+		<key>Resources/app_bundle/data/facebook_contest_results_2026-11-01_22-13.csv</key>
+		<data>
+		CIqkKvpNHK5tpPrbr9rwlIBS/5g=
+		</data>
+		<key>Resources/app_bundle/data/facebook_lottery_tickets_2026-11-02_01-34.html</key>
+		<data>
+		F886miIpDliCUrmthofGbbyCxOI=
+		</data>
+		<key>Resources/app_bundle/data/facebook_lottery_tickets_2026-11-04_22-33.html</key>
+		<data>
+		NUnUEaqbP9TwEyKUQ2b4KqIoT8Y=
 		</data>
 		<key>Resources/app_bundle/data/facebook_shares.sqlite</key>
 		<data>
@@ -7226,7 +7238,7 @@
 		<dict>
 			<key>hash2</key>
 			<data>
-			GMUCpHKCzApDrGDw8GUSfqQR4YWa4QmCO4cWwIXMWIo=
+			iw04qvolB2rTuWmZHzE2+P+c/oOn4nyWQ14TLlvOe3o=
 			</data>
 		</dict>
 		<key>Resources/app_bundle/app/exporters/xlsx_exporter.py</key>
@@ -7289,7 +7301,7 @@
 		<dict>
 			<key>hash2</key>
 			<data>
-			m/xR9G7NI4XPqeA6gB7XF/yxBy8vQFNlvUmdbrBZ0tQ=
+			dGcD6d7t5BP3DRkttQMUHNrYmoZkX1CJDH5KvLSf4UA=
 			</data>
 		</dict>
 		<key>Resources/app_bundle/app/gui/session_manager_dialog.py</key>
@@ -7303,7 +7315,7 @@
 		<dict>
 			<key>hash2</key>
 			<data>
-			Nr3NFEUjPwuCRgKzDdJZtWkS4FY7ednzPLuIrAIptsE=
+			2YuE40C0NxxLNJQ1IIcIJjvwqEPuvhLbkd/TF1Ch7so=
 			</data>
 		</dict>
 		<key>Resources/app_bundle/app/models/__init__.py</key>
@@ -7366,7 +7378,7 @@
 		<dict>
 			<key>hash2</key>
 			<data>
-			ocuhESAVt5SCY9uaPGj3rOpo1cHLp6nd4C4c+zuZySU=
+			0N0ko1CoAgAR2Fswn/t2udW+bx0I5kqav2+q7cWw5Tg=
 			</data>
 		</dict>
 		<key>Resources/app_bundle/app/utils/deduplicator.py</key>
@@ -10076,6 +10088,27 @@
 			<key>hash2</key>
 			<data>
 			UBMXYf0iHXJCaLlN+itt1ndZ3+9LyIZdkcHzYcxXaTY=
+			</data>
+		</dict>
+		<key>Resources/app_bundle/data/facebook_contest_results_2026-11-01_22-13.csv</key>
+		<dict>
+			<key>hash2</key>
+			<data>
+			5yKiM4iYtzD7WepJuhnRJnPXlaHnvCpPMELaPAkjPaQ=
+			</data>
+		</dict>
+		<key>Resources/app_bundle/data/facebook_lottery_tickets_2026-11-02_01-34.html</key>
+		<dict>
+			<key>hash2</key>
+			<data>
+			o7QWolD8xOj8WEp3VYbp7nW/Kq1D8OGMo3j3VvvP6zs=
+			</data>
+		</dict>
+		<key>Resources/app_bundle/data/facebook_lottery_tickets_2026-11-04_22-33.html</key>
+		<dict>
+			<key>hash2</key>
+			<data>
+			wI61iZtKZq0t70DIznTs9hL8S1bMxwuMMF+27j80Mrs=
 			</data>
 		</dict>
 		<key>Resources/app_bundle/data/facebook_shares.sqlite</key>

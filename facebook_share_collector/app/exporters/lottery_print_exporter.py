@@ -3,7 +3,7 @@ import datetime
 import html
 import logging
 import os
-from typing import List
+from typing import List, Optional, Dict, Set
 from app.models.share_profile import ContestParticipant
 
 logger = logging.getLogger(__name__)
@@ -29,38 +29,90 @@ class LotteryPrintExporter:
         return ""
 
     @classmethod
-    def export_printable_tickets(cls, participants: List[ContestParticipant], output_path: str) -> bool:
+    def export_printable_tickets(
+        cls,
+        participants: List[ContestParticipant],
+        output_path: str,
+        qualified_keys: Optional[Set[str]] = None,
+        evaluations: Optional[Dict[str, object]] = None,
+        default_scope: str = "all",
+    ) -> bool:
         try:
             if os.path.dirname(output_path):
                 os.makedirs(os.path.dirname(output_path), exist_ok=True)
 
-            # Filter to qualified participants with assigned serial numbers first (or 3/3 eligible); if none, include provided list
-            qualified_serial = [p for p in participants if p.serial_number is not None]
-            eligible = qualified_serial or [p for p in participants if p.is_eligible]
-            target_list = eligible if eligible else participants
+            target_list = list(participants)
 
-            # Ensure sequential serial numbers (#0001, #0002, ...)
-            for idx, p in enumerate(target_list, 1):
-                if p.serial_number is None:
-                    p.serial_number = idx
+            # Determine which participants are Qualified vs Disqualified/Incomplete
+            has_explicit_serials = any(p.serial_number is not None for p in target_list)
+            has_eligible = any(p.is_eligible for p in target_list)
+
+            def _is_participant_qualified(p: ContestParticipant) -> bool:
+                if qualified_keys is not None:
+                    return p.normalized_key in qualified_keys
+                if has_explicit_serials:
+                    return p.serial_number is not None
+                if has_eligible:
+                    return bool(p.is_eligible)
+                return True
+
+            qual_Flags = [_is_participant_qualified(p) for p in target_list]
+            qual_count = sum(1 for q in qual_Flags if q)
+            disq_count = len(target_list) - qual_count
+            total_count = len(target_list)
+
+            if default_scope == "qualified" and qual_count == 0:
+                default_scope = "all"
+            elif default_scope == "disqualified" and disq_count == 0:
+                default_scope = "all"
+            elif default_scope not in ("all", "qualified", "disqualified"):
+                default_scope = "all"
 
             generated_at = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
             tickets_html = []
             rows_html = []
 
-            for p in target_list:
-                serial_str = f"#{p.serial_number:04d}"
+            all_idx = 0
+            qual_idx = 0
+            disq_idx = 0
+
+            for p, is_qual in zip(target_list, qual_Flags):
+                all_idx += 1
+                serial_all_str = f"#{all_idx:04d}"
+                if is_qual:
+                    qual_idx += 1
+                    serial_qual_str = f"#{qual_idx:04d}"
+                    serial_disq_str = "-"
+                    if p.serial_number is None:
+                        p.serial_number = qual_idx
+                else:
+                    disq_idx += 1
+                    serial_qual_str = "-"
+                    serial_disq_str = f"#{disq_idx:04d}"
+
+                if default_scope == "qualified":
+                    initial_serial_str = serial_qual_str if is_qual else serial_all_str
+                elif default_scope == "disqualified":
+                    initial_serial_str = serial_disq_str if not is_qual else serial_all_str
+                else:
+                    initial_serial_str = serial_all_str
+
+                status_attr = "qualified" if is_qual else "disqualified"
                 safe_name = html.escape(p.display_name)
                 full_comment_raw = " | ".join(c for c in p.comment_texts if c and c.strip()) if p.comment_texts else ""
+                if not full_comment_raw and getattr(p, "share_contents", None):
+                    full_comment_raw = " | ".join(s for s in p.share_contents if s and s.strip())
+
                 if full_comment_raw:
                     short_raw = full_comment_raw[:135] + ("..." if len(full_comment_raw) > 135 else "")
                     safe_short = f'"{html.escape(short_raw)}"'
                     safe_full = f'"{html.escape(full_comment_raw)}"'
                     is_truncated = "1" if len(full_comment_raw) > 135 else "0"
                 else:
-                    safe_short = '"Verified Entry"'
-                    safe_full = '"Verified Entry"'
+                    fallback_comment = '"Verified Entry"' if p.commented else '"No comment"'
+                    safe_short = fallback_comment
+                    safe_full = fallback_comment
                     is_truncated = "0"
 
                 avatar_uri = cls._encode_avatar_data_uri(p.avatar_path or "")
@@ -81,7 +133,30 @@ class LotteryPrintExporter:
                     footer_html = f'<span class="profile-ref">{id_hint}</span>'
                     table_url_html = id_hint
 
-                badge_label = "ELIGIBLE 3/3 ✓" if p.is_eligible else f"QUALIFIED ({p.actions_completed}/3) ✓"
+                missing_actions = []
+                if not p.liked:
+                    missing_actions.append("No Like")
+                if not p.commented:
+                    missing_actions.append("No Comment")
+                if not p.shared:
+                    missing_actions.append("No Share")
+
+                ev = evaluations.get(p.normalized_key) if evaluations else None
+                ev_status = getattr(ev, "status_label", "") if ev else ""
+
+                if is_qual:
+                    badge_cls = "badge badge-qual"
+                    badge_label = "ELIGIBLE 3/3 ✓" if p.is_eligible else f"QUALIFIED ({p.actions_completed}/3) ✓"
+                else:
+                    badge_cls = "badge badge-disq"
+                    if ev_status and ("WRONG" in ev_status.upper() or "DISQUALIFIED" in ev_status.upper()):
+                        clean_ev = ev_status.replace("❌", "").strip()
+                        badge_label = f"{html.escape(clean_ev)} ✗"
+                    elif missing_actions:
+                        badge_label = f"DISQUALIFIED ({', '.join(missing_actions)}) ✗"
+                    else:
+                        badge_label = f"DISQUALIFIED ({p.actions_completed}/3) ✗"
+
                 like_cls = "act-done" if p.liked else "act-missing"
                 like_sign = "✅" if p.liked else "❌"
                 comment_cls = "act-done" if p.commented else "act-missing"
@@ -101,10 +176,10 @@ class LotteryPrintExporter:
                 )
 
                 tickets_html.append(f"""
-                <div class="ticket">
+                <div class="ticket" data-status="{status_attr}" data-serial-all="{serial_all_str}" data-serial-qual="{serial_qual_str}" data-serial-disq="{serial_disq_str}">
                     <div class="ticket-header">
-                        <span class="serial">{serial_str}</span>
-                        <span class="badge">{badge_label}</span>
+                        <span class="serial">{initial_serial_str}</span>
+                        <span class="{badge_cls}">{badge_label}</span>
                     </div>
                     <div class="ticket-body">
                         {avatar_tag}
@@ -119,16 +194,28 @@ class LotteryPrintExporter:
                 """)
 
                 rows_html.append(f"""
-                <tr>
-                    <td class="col-serial"><strong>{serial_str}</strong></td>
+                <tr data-status="{status_attr}" data-serial-all="{serial_all_str}" data-serial-qual="{serial_qual_str}" data-serial-disq="{serial_disq_str}">
+                    <td class="col-serial"><strong class="row-serial">{initial_serial_str}</strong></td>
                     <td class="notranslate" translate="no">{safe_name}</td>
-                    <td>{'Yes' if p.liked else 'No'}</td>
-                    <td>{'Yes' if p.commented else 'No'} ({len(p.comment_texts)})</td>
-                    <td>{'Yes' if p.shared else 'No'}</td>
+                    <td>{'✅ Yes' if p.liked else '❌ No'}</td>
+                    <td>{'✅ Yes' if p.commented else '❌ No'} ({len(p.comment_texts)})</td>
+                    <td>{'✅ Yes' if p.shared else '❌ No'}</td>
+                    <td>{badge_label}</td>
                     <td class="notranslate" translate="no">{html.escape(full_comment_raw[:140])}</td>
                     <td class="col-url">{table_url_html}</td>
                 </tr>
                 """)
+
+            if default_scope == "qualified":
+                initial_visible_count = qual_count
+            elif default_scope == "disqualified":
+                initial_visible_count = disq_count
+            else:
+                initial_visible_count = total_count
+
+            sel_all = "selected" if default_scope == "all" else ""
+            sel_qual = "selected" if default_scope == "qualified" else ""
+            sel_disq = "selected" if default_scope == "disqualified" else ""
 
             doc = f"""<!DOCTYPE html>
 <html lang="bn" translate="no" class="notranslate">
@@ -252,19 +339,37 @@ class LotteryPrintExporter:
         padding: 2px 6px;
         border-radius: 4px;
         margin-left: 8px;
+        white-space: nowrap;
+    }}
+    .badge-disq {{
+        background: #fee2e2;
+        color: #991b1b;
     }}
     body.show-badge .badge {{
         display: inline-block;
     }}
+    /* Ticket Scope Filtering (All / Qualified Only / Disqualified Only) */
+    body[data-scope="qualified"] .ticket[data-status="disqualified"] {{
+        display: none !important;
+    }}
+    body[data-scope="disqualified"] .ticket[data-status="qualified"] {{
+        display: none !important;
+    }}
+    body[data-scope="qualified"] tr[data-status="disqualified"] {{
+        display: none !important;
+    }}
+    body[data-scope="disqualified"] tr[data-status="qualified"] {{
+        display: none !important;
+    }}
     .ticket-body {{
         display: flex;
         align-items: flex-start;
-        gap: 9px;
+        gap: 8px;
         min-width: 0;
     }}
     .avatar, .avatar-placeholder {{
-        width: 40px;
-        height: 40px;
+        width: 38px;
+        height: 38px;
         border-radius: 50%;
         flex-shrink: 0;
         object-fit: cover;
@@ -286,22 +391,29 @@ class LotteryPrintExporter:
         min-width: 0;
     }}
     .name {{
-        font-size: 13.5px;
+        font-size: 13px;
         font-weight: 700;
         white-space: nowrap;
         overflow: hidden;
         text-overflow: ellipsis;
     }}
     .meta {{
-        font-size: 10.5px;
+        font-size: 10px;
         font-weight: 600;
         margin-top: 2px;
         display: flex;
-        flex-wrap: wrap;
+        flex-wrap: nowrap;
+        white-space: nowrap;
         align-items: center;
-        gap: 2px;
+        gap: 1px;
+        letter-spacing: -0.1px;
+        overflow: hidden;
     }}
     .act-item {{
+        display: inline-flex;
+        align-items: center;
+        white-space: nowrap;
+        flex-shrink: 0;
         cursor: pointer;
         user-select: none;
     }}
@@ -310,11 +422,12 @@ class LotteryPrintExporter:
     }}
     .act-missing {{
         color: #b91c1c;
-        opacity: 0.85;
+        opacity: 0.9;
     }}
     .act-sep {{
         color: #9ca3af;
         margin: 0 2px;
+        flex-shrink: 0;
     }}
     /* Action Display Customization Modes */
     body.actions-done-icons .act-missing {{
@@ -467,7 +580,7 @@ class LotteryPrintExporter:
         text-overflow: ellipsis;
     }}
     @page {{
-        margin: 8mm;
+        margin: 7mm;
     }}
     @media print {{
         body {{
@@ -480,7 +593,35 @@ class LotteryPrintExporter:
         }}
         .ticket-grid {{
             grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
-            gap: 8px !important;
+            gap: 7px !important;
+        }}
+        .ticket {{
+            padding: 7px 8px !important;
+        }}
+        .ticket-body {{
+            gap: 6px !important;
+        }}
+        .avatar, .avatar-placeholder {{
+            width: 32px !important;
+            height: 32px !important;
+            font-size: 11px !important;
+        }}
+        .name {{
+            font-size: 12px !important;
+        }}
+        .meta {{
+            font-size: 8.8px !important;
+            flex-wrap: nowrap !important;
+            white-space: nowrap !important;
+            gap: 1px !important;
+            letter-spacing: -0.15px !important;
+        }}
+        .act-sep {{
+            margin: 0 1px !important;
+        }}
+        .comment {{
+            font-size: 10px !important;
+            line-height: 1.32 !important;
         }}
         body.border-none .ticket {{
             box-shadow: none !important;
@@ -488,6 +629,51 @@ class LotteryPrintExporter:
     }}
 </style>
 <script>
+    function setTicketScope(scopeVal) {{
+        document.body.setAttribute("data-scope", scopeVal);
+        let visibleCount = 0;
+        document.querySelectorAll(".ticket").forEach(function(ticketEl) {{
+            const status = ticketEl.getAttribute("data-status");
+            const isVisible = (
+                scopeVal === "all" ||
+                (scopeVal === "qualified" && status === "qualified") ||
+                (scopeVal === "disqualified" && status === "disqualified")
+            );
+            if (isVisible) {{
+                visibleCount++;
+                const serialAttr = (
+                    scopeVal === "qualified" ? "data-serial-qual" :
+                    scopeVal === "disqualified" ? "data-serial-disq" :
+                    "data-serial-all"
+                );
+                const sVal = ticketEl.getAttribute(serialAttr) || ("#" + String(visibleCount).padStart(4, "0"));
+                const serialSpan = ticketEl.querySelector(".serial");
+                if (serialSpan) {{
+                    serialSpan.textContent = sVal;
+                }}
+            }}
+        }});
+        document.querySelectorAll("tbody tr").forEach(function(rowEl) {{
+            const serialAttr = (
+                scopeVal === "qualified" ? "data-serial-qual" :
+                scopeVal === "disqualified" ? "data-serial-disq" :
+                "data-serial-all"
+            );
+            const sVal = rowEl.getAttribute(serialAttr);
+            const rowSerial = rowEl.querySelector(".row-serial");
+            if (rowSerial && sVal) {{
+                rowSerial.textContent = sVal;
+            }}
+        }});
+        const titleCountEl = document.getElementById("toolbarTicketCount");
+        if (titleCountEl) {{
+            titleCountEl.textContent = "Contest Lottery Slips (" + visibleCount + " Tickets)";
+        }}
+        const sheetCountEl = document.getElementById("sheetTicketCount");
+        if (sheetCountEl) {{
+            sheetCountEl.textContent = "Verification Sheet (" + visibleCount + " Contestants)";
+        }}
+    }}
     function setBorderStyle(styleVal) {{
         document.body.classList.remove("border-solid", "border-dashed", "border-none");
         document.body.classList.add("border-" + styleVal);
@@ -545,13 +731,20 @@ class LotteryPrintExporter:
     }}
 </script>
 </head>
-<body class="border-solid id-center actions-all-icons comment-lines-2">
+<body class="border-solid id-center actions-all-icons comment-lines-2" data-scope="{default_scope}">
     <div class="toolbar no-print">
         <div>
-            <strong>Contest Lottery Slips ({len(target_list)} Tickets)</strong>
+            <strong id="toolbarTicketCount">Contest Lottery Slips ({initial_visible_count} Tickets)</strong>
             <span style="font-size:12px;opacity:0.9;margin-left:8px;">({generated_at})</span>
         </div>
         <div class="toolbar-controls">
+            <label>Show:
+                <select id="scopeSelect" onchange="setTicketScope(this.value)">
+                    <option value="all" {sel_all}>All Participants ({total_count}) — Include ❌ Disqualified</option>
+                    <option value="qualified" {sel_qual}>Verified / Qualified Only ({qual_count} ✅)</option>
+                    <option value="disqualified" {sel_disq}>Disqualified / Incomplete Only ({disq_count} ❌)</option>
+                </select>
+            </label>
             <label>Border:
                 <select onchange="setBorderStyle(this.value)">
                     <option value="solid" selected>Total Border Line (Solid)</option>
@@ -598,7 +791,7 @@ class LotteryPrintExporter:
     </div>
 
     <div class="judge-sheet-section">
-        <h3 style="margin:0 0 8px 0;">Verification Sheet ({len(target_list)} Contestants)</h3>
+        <h3 id="sheetTicketCount" style="margin:0 0 8px 0;">Verification Sheet ({initial_visible_count} Contestants)</h3>
         <table>
             <thead>
                 <tr>
@@ -607,6 +800,7 @@ class LotteryPrintExporter:
                     <th>Liked</th>
                     <th>Commented</th>
                     <th>Shared</th>
+                    <th>Contest Status / Reason</th>
                     <th>Comments Text</th>
                     <th>Profile Reference</th>
                 </tr>

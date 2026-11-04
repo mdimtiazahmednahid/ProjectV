@@ -1515,7 +1515,14 @@ class ResultsPanel(QWidget):
             QMessageBox.information(self, "No Data", "Collect Likes, Comments, and Shares first to generate lottery tickets.")
             return
         qualified = self.get_qualified_winners()
-        target_pool = qualified if qualified else self._get_filtered_participants()
+        qualified_keys = {p.normalized_key for p in qualified}
+        if self._active_quick_category == "qualified" or self.filter_combo.currentIndex() == 1:
+            default_scope = "qualified" if qualified else "all"
+        elif self._active_quick_category in ("disqualified", "wrong", "no_comments"):
+            default_scope = "disqualified"
+        else:
+            default_scope = "all"
+
         filename = self._get_default_filename("html", prefix="facebook_lottery_tickets")
         path, _ = QFileDialog.getSaveFileName(
             self,
@@ -1524,12 +1531,21 @@ class ResultsPanel(QWidget):
             "HTML Printable Document (*.html)"
         )
         if path:
-            if LotteryPrintExporter.export_printable_tickets(target_pool, path):
+            if LotteryPrintExporter.export_printable_tickets(
+                self.participants,
+                path,
+                qualified_keys=qualified_keys,
+                evaluations=self._last_evaluations,
+                default_scope=default_scope,
+            ):
                 QDesktopServices.openUrl(QUrl.fromLocalFile(os.path.abspath(path)))
                 QMessageBox.information(
                     self,
                     "Lottery Tickets Ready",
-                    f"Printable Lottery Slips & Judge Verification Sheet opened in your browser!\n\nClick 'Print Tickets / Save as PDF' at the top of the page.\nSaved to: {path}"
+                    f"Printable Lottery Slips & Judge Verification Sheet opened in your browser!\n\n"
+                    f"• Total Participants Embedded: {len(self.participants)} ({len(qualified)} Qualified ✅, {len(self.participants) - len(qualified)} Disqualified/Incomplete ❌)\n"
+                    f"• Use the 'Show:' dropdown at the top of the page to switch between All Participants, Qualified Only, or Disqualified Only.\n\n"
+                    f"Saved to: {path}"
                 )
             else:
                 QMessageBox.critical(self, "Export Error", "Failed to generate printable lottery tickets.")

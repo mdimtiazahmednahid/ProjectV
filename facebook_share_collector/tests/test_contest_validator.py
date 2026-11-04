@@ -93,6 +93,9 @@ def test_printable_lottery_tickets_export():
         ShareProfile(name="Winner One", profile_url="https://www.facebook.com/profile.php?id=100078091213712", source="ui", confidence=0.9, session_id="s1", action_type="like", avatar_hash="1234567890abcdef"),
         ShareProfile(name="Winner One", profile_url="https://www.facebook.com/profile.php?id=100078091213712", source="ui", confidence=0.9, session_id="s1", action_type="comment", content=long_comment, avatar_hash="1234567890abcdef"),
         ShareProfile(name="Winner One", profile_url="https://www.facebook.com/profile.php?id=100078091213712", source="ui", confidence=0.9, session_id="s1", action_type="share", avatar_hash="1234567890abcdef"),
+        # Second user missing Like (❌ Like · ✅ Comment · ✅ Share) so admin can print/show why they were disqualified
+        ShareProfile(name="Disqualified NoLike", profile_url="https://www.facebook.com/nolike.user", source="ui", confidence=0.9, session_id="s1", action_type="comment", content="Answered but forgot to like"),
+        ShareProfile(name="Disqualified NoLike", profile_url="https://www.facebook.com/nolike.user", source="ui", confidence=0.9, session_id="s1", action_type="share"),
     ]
     participants = ContestValidator.validate_participants(profiles)
 
@@ -103,17 +106,25 @@ def test_printable_lottery_tickets_export():
         assert os.path.isfile(out_html)
         html_text = open(out_html, encoding="utf-8").read()
         assert "#0001" in html_text
+        assert "#0002" in html_text
         assert "Winner One" in html_text
+        assert "Disqualified NoLike" in html_text
         # 1. Default solid border ("border-solid"), centered serial ID ("id-center"), 2-line default ("comment-lines-2"), and 3-column grid
         assert 'class="border-solid id-center actions-all-icons comment-lines-2"' in html_text
         assert "grid-template-columns: repeat(3, minmax(0, 1fr))" in html_text
+        assert "setTicketScope(this.value)" in html_text
         assert "setBorderStyle(this.value)" in html_text
         assert "setIdPosition(this.value)" in html_text
         assert "setCommentLines(this.value)" in html_text
-        # 2. Action row shows ✅ / ❌ status per action (and no 👍 / 💬 / 🔄 emojis)
+        # 2. Action row stays on a single row (flex-wrap: nowrap; white-space: nowrap) and shows ✅ / ❌ status per action
+        assert "flex-wrap: nowrap" in html_text
         assert '<span class="act-icon">✅ </span>Like' in html_text
+        assert '<span class="act-icon">❌ </span>Like' in html_text
         assert '<span class="act-icon">✅ </span>Comment' in html_text
         assert '<span class="act-icon">✅ </span>Share' in html_text
+        assert 'data-status="qualified"' in html_text
+        assert 'data-status="disqualified"' in html_text
+        assert "DISQUALIFIED (No Like) ✗" in html_text
         assert "👍" not in html_text and "💬" not in html_text and "🔄" not in html_text
         # 3. Long comment has click-to-expand toggleCommentText(this) with full comment in data-full
         assert 'onclick="toggleCommentText(this)"' in html_text
@@ -1425,6 +1436,55 @@ def test_multi_day_daily_scraping_upsert_and_conflict_resolution():
         "https://www.facebook.com/md.rahim.one",
         "https://www.facebook.com/md.rahim.two",
     }
+
+
+def test_sync_profile_batch_worker_only_eligible_names_and_normalize_name():
+    """
+    Ensure ContestValidator._normalize_name, IncrementalContestAggregator._normalize_name,
+    and ProfileSyncBatchWorker.run(only_eligible_names=...) work without AttributeError.
+    """
+    from app.gui.sync_profile_panel import ProfileSyncBatchWorker
+    from app.utils.profile_sync_engine import ProfileSyncEngine
+    from app.utils.contest_validator import IncrementalContestAggregator
+
+    assert ContestValidator._normalize_name("  Mst Ambea Akhter profile picture  ") == "mst ambea akhter"
+    assert IncrementalContestAggregator._normalize_name("  Tanvir Hasan Liked ") == "tanvir hasan"
+
+    engine = ProfileSyncEngine()
+    # Mock fetch_and_hash_web_avatar so no network call is made during test
+    engine.fetch_and_hash_web_avatar = lambda url, timeout=6.0: ("123456789abcdef0", "/tmp/mock_avatar.png")
+
+    profiles = [
+        ShareProfile(
+            name="Mst Ambea Akhter",
+            profile_url="https://www.facebook.com/profile.php?id=100078091213712",
+            share_url="https://scontent.fdac14-1.fna.fbcdn.net/v/t39.30808-1/458123456_10123456789012345_7890123456789012345_n.jpg",
+            action_type="comment",
+            source="facebook_browser_extension",
+            confidence=0.98,
+            session_id="test",
+        ),
+        ShareProfile(
+            name="Unqualified User",
+            profile_url="https://www.facebook.com/unqualified.user",
+            share_url="https://scontent.fdac14-1.fna.fbcdn.net/v/t39.30808-1/999999999_11111111111111111_2222222222222222222_n.jpg",
+            action_type="comment",
+            source="facebook_browser_extension",
+            confidence=0.98,
+            session_id="test",
+        ),
+    ]
+
+    worker = ProfileSyncBatchWorker(
+        sync_engine=engine,
+        profiles=profiles,
+        only_eligible_names={"mst ambea akhter"},
+    )
+    worker.run()
+
+    assert profiles[0].avatar_hash == "123456789abcdef0"
+    assert profiles[1].avatar_hash is None
+
 
 
 

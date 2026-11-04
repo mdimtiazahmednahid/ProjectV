@@ -1,123 +1,17 @@
-22:20:02 INFO __main__ Starting Facebook Contest Validator & Live Lottery Prep...
-22:20:02 INFO app.automation.local_bridge_server Local HTTP Extension Bridge listening on http://127.0.0.1:19876/batch
-22:20:04 INFO app.exporters.csv_exporter Successfully exported 10 profiles to data/autosave.csv
-22:20:04 INFO app.gui.main_window Auto-saved raw profiles to data/autosave.csv
-22:20:04 INFO app.exporters.csv_exporter Successfully exported 10 contest participants to data/autosave_contest.csv
-22:20:04 INFO app.gui.main_window Auto-saved contest validation to data/autosave_contest.csv
-22:20:04 INFO app.gui.main_window Auto-imported Browser Extension batch '1793809167461_nfd3d8' (10 profiles with links; 0 hybrid records synced).
-22:20:29 INFO app.gui.main_window Opened Bookmarklet setup page: /Users/MacBookPro/Downloads/ShareExtractor-main 2/Facebook Contest Validator.app/Contents/Resources/app_bundle/browser_extension/bookmarklet.html
-22:21:12 INFO app.exporters.csv_exporter Successfully exported 10 profiles to data/autosave.csv
-22:21:12 INFO app.gui.main_window Auto-saved raw profiles to data/autosave.csv
-22:21:12 INFO app.exporters.csv_exporter Successfully exported 10 contest participants to data/autosave_contest.csv
-22:21:12 INFO app.gui.main_window Auto-saved contest validation to data/autosave_contest.csv
-22:21:12 INFO app.gui.main_window Auto-imported Browser Extension batch '1793809271942_y1t2ak' (10 profiles with links; 0 hybrid records synced).
-22:21:46 INFO app.exporters.csv_exporter Successfully exported 20 profiles to data/autosave.csv
-22:21:46 INFO app.gui.main_window Auto-saved raw profiles to data/autosave.csv
-22:21:46 INFO app.exporters.csv_exporter Successfully exported 20 contest participants to data/autosave_contest.csv
-22:21:46 INFO app.gui.main_window Auto-saved contest validation to data/autosave_contest.csv
-22:21:46 INFO app.gui.main_window Auto-imported Browser Extension batch '1793809305682_bna1ax' (10 profiles with links; 0 hybrid records synced).
-22:21:59 INFO app.exporters.csv_exporter Successfully exported 30 profiles to data/autosave.csv
-22:21:59 INFO app.gui.main_window Auto-saved raw profiles to data/autosave.csv
-22:21:59 INFO app.exporters.csv_exporter Successfully exported 30 contest participants to data/autosave_contest.csv
-22:21:59 INFO app.gui.main_window Auto-saved contest validation to data/autosave_contest.csv
-22:21:59 INFO app.gui.main_window Auto-imported Browser Extension batch '1793809319127_nvb2p3' (10 profiles with links; 0 hybrid records synced).
-22:22:16 INFO app.exporters.csv_exporter Successfully exported 40 profiles to data/autosave.csv
-22:22:16 INFO app.gui.main_window Auto-saved raw profiles to data/autosave.csv
-22:22:16 INFO app.exporters.csv_exporter Successfully exported 40 contest participants to data/autosave_contest.csv
-22:22:16 INFO app.gui.main_window Auto-saved contest validation to data/autosave_contest.csv
-22:22:16 INFO app.gui.main_window Auto-imported Browser Extension batch '1793809335212_4llpkf' (10 profiles with links; 0 hybrid records synced).
-22:22:29 INFO app.exporters.csv_exporter Successfully exported 50 profiles to data/autosave.csv
-22:22:29 INFO app.gui.main_window Auto-saved raw profiles to data/autosave.csv
-22:22:29 INFO app.exporters.csv_exporter Successfully exported 50 contest participants to data/autosave_contest.csv
-22:22:29 INFO app.gui.main_window Auto-saved contest validation to data/autosave_contest.csv
-22:22:29 INFO app.gui.main_window Auto-imported Browser Extension batch '1793809348531_wqx2wc' (10 profiles with links; 0 hybrid records synced).
-22:23:11 INFO app.exporters.csv_exporter Successfully exported 61 profiles to data/autosave.csv
-22:23:11 INFO app.gui.main_window Auto-saved raw profiles to data/autosave.csv
-22:23:11 INFO app.exporters.csv_exporter Successfully exported 61 contest participants to data/autosave_contest.csv
-22:23:11 INFO app.gui.main_window Auto-saved contest validation to data/autosave_contest.csv
-22:23:11 INFO app.gui.main_window Auto-imported Browser Extension batch '1793809391087_767ty7' (11 profiles with links; 0 hybrid records synced).
-22:23:18 INFO app.exporters.csv_exporter Successfully exported 71 profiles to data/autosave.csv
-22:23:18 INFO app.gui.main_window Auto-saved raw profiles to data/autosave.csv
-22:23:18 INFO app.exporters.csv_exporter Successfully exported 69 contest participants to data/autosave_contest.csv
-22:23:18 INFO app.gui.main_window Auto-saved contest validation to data/autosave_contest.csv
-22:23:18 INFO app.gui.main_window Auto-imported Browser Extension batch '1793809397345_2ayyk8' (10 profiles with links; 0 hybrid records synced).
-22:24:01 INFO app.automation.adb_controller Connected to 102622534S009003 via Direct ADB Mode (Screen: 1080x2400).
-22:24:34 INFO app.gui.main_window Starting collection for action: SHARE
-22:24:39 DEBUG app.automation.profile_extractor Extracted 12 'share' candidates from source (window=unknown).
-22:24:47 DEBUG app.automation.profile_extractor Extracted 13 'share' candidates from source (window=unknown).
-22:24:53 DEBUG app.automation.profile_extractor Extracted 13 'share' candidates from source (window=unknown).
-22:24:59 DEBUG app.automation.profile_extractor Extracted 13 'share' candidates from source (window=unknown).
-22:24:59 INFO app.exporters.csv_exporter Successfully exported 96 profiles to data/autosave.csv
-22:24:59 INFO app.gui.main_window Auto-saved raw profiles to data/autosave.csv
-22:24:59 INFO app.exporters.csv_exporter Successfully exported 87 contest participants to data/autosave_contest.csv
-22:24:59 INFO app.gui.main_window Auto-saved contest validation to data/autosave_contest.csv
-22:25:05 DEBUG app.automation.profile_extractor Extracted 12 'share' candidates from source (window=unknown).
-22:25:07 ERROR __main__ Unhandled exception caught by global guard:
-Traceback (most recent call last):
-  File "/Users/MacBookPro/Downloads/ShareExtractor-main 2/Facebook Contest Validator.app/Contents/Resources/app_bundle/app/gui/sync_profile_panel.py", line 45, in run
-    norm = ContestValidator._normalize_name(p.name or "")
-           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-AttributeError: type object 'ContestValidator' has no attribute '_normalize_name'
-
-22:25:11 DEBUG app.automation.profile_extractor Extracted 12 'share' candidates from source (window=unknown).
-22:25:18 DEBUG app.automation.profile_extractor Extracted 13 'share' candidates from source (window=unknown).
-22:25:24 DEBUG app.automation.profile_extractor Extracted 13 'share' candidates from source (window=unknown).
-22:25:24 INFO app.exporters.csv_exporter Successfully exported 113 profiles to data/autosave.csv
-22:25:24 INFO app.gui.main_window Auto-saved raw profiles to data/autosave.csv
-22:25:24 INFO app.exporters.csv_exporter Successfully exported 98 contest participants to data/autosave_contest.csv
-22:25:24 INFO app.gui.main_window Auto-saved contest validation to data/autosave_contest.csv
-22:25:30 DEBUG app.automation.profile_extractor Extracted 13 'share' candidates from source (window=unknown).
-22:25:36 DEBUG app.automation.profile_extractor Extracted 13 'share' candidates from source (window=unknown).
-22:25:42 DEBUG app.automation.profile_extractor Extracted 13 'share' candidates from source (window=unknown).
-22:25:48 DEBUG app.automation.profile_extractor Extracted 13 'share' candidates from source (window=unknown).
-22:25:48 INFO app.exporters.csv_exporter Successfully exported 129 profiles to data/autosave.csv
-22:25:48 INFO app.gui.main_window Auto-saved raw profiles to data/autosave.csv
-22:25:48 INFO app.exporters.csv_exporter Successfully exported 115 contest participants to data/autosave_contest.csv
-22:25:48 INFO app.gui.main_window Auto-saved contest validation to data/autosave_contest.csv
-22:25:54 DEBUG app.automation.profile_extractor Extracted 13 'share' candidates from source (window=unknown).
-22:26:00 DEBUG app.automation.profile_extractor Extracted 13 'share' candidates from source (window=unknown).
-22:26:06 DEBUG app.automation.profile_extractor Extracted 13 'share' candidates from source (window=unknown).
-22:26:12 DEBUG app.automation.profile_extractor Extracted 13 'share' candidates from source (window=unknown).
-22:26:13 INFO app.exporters.csv_exporter Successfully exported 144 profiles to data/autosave.csv
-22:26:13 INFO app.gui.main_window Auto-saved raw profiles to data/autosave.csv
-22:26:13 INFO app.exporters.csv_exporter Successfully exported 128 contest participants to data/autosave_contest.csv
-22:26:13 INFO app.gui.main_window Auto-saved contest validation to data/autosave_contest.csv
-22:26:19 DEBUG app.automation.profile_extractor Extracted 13 'share' candidates from source (window=unknown).
-22:26:24 DEBUG app.automation.profile_extractor Extracted 13 'share' candidates from source (window=unknown).
-22:26:30 DEBUG app.automation.profile_extractor Extracted 12 'share' candidates from source (window=unknown).
-22:26:36 DEBUG app.automation.profile_extractor Extracted 13 'share' candidates from source (window=unknown).
-22:26:37 INFO app.exporters.csv_exporter Successfully exported 162 profiles to data/autosave.csv
-22:26:37 INFO app.gui.main_window Auto-saved raw profiles to data/autosave.csv
-22:26:37 INFO app.exporters.csv_exporter Successfully exported 142 contest participants to data/autosave_contest.csv
-22:26:37 INFO app.gui.main_window Auto-saved contest validation to data/autosave_contest.csv
-22:26:43 DEBUG app.automation.profile_extractor Extracted 13 'share' candidates from source (window=unknown).
-22:26:49 DEBUG app.automation.profile_extractor Extracted 13 'share' candidates from source (window=unknown).
-22:26:55 DEBUG app.automation.profile_extractor Extracted 13 'share' candidates from source (window=unknown).
-22:27:01 DEBUG app.automation.profile_extractor Extracted 13 'share' candidates from source (window=unknown).
-22:27:01 INFO app.exporters.csv_exporter Successfully exported 179 profiles to data/autosave.csv
-22:27:01 INFO app.gui.main_window Auto-saved raw profiles to data/autosave.csv
-22:27:01 INFO app.exporters.csv_exporter Successfully exported 157 contest participants to data/autosave_contest.csv
-22:27:01 INFO app.gui.main_window Auto-saved contest validation to data/autosave_contest.csv
-22:27:07 DEBUG app.automation.profile_extractor Extracted 13 'share' candidates from source (window=unknown).
-22:27:13 DEBUG app.automation.profile_extractor Extracted 13 'share' candidates from source (window=unknown).
-22:27:19 DEBUG app.automation.profile_extractor Extracted 13 'share' candidates from source (window=unknown).
-22:27:25 DEBUG app.automation.profile_extractor Extracted 13 'share' candidates from source (window=unknown).
-22:27:25 INFO app.exporters.csv_exporter Successfully exported 196 profiles to data/autosave.csv
-22:27:25 INFO app.gui.main_window Auto-saved raw profiles to data/autosave.csv
-22:27:25 INFO app.exporters.csv_exporter Successfully exported 171 contest participants to data/autosave_contest.csv
-22:27:25 INFO app.gui.main_window Auto-saved contest validation to data/autosave_contest.csv
-22:27:31 DEBUG app.automation.profile_extractor Extracted 13 'share' candidates from source (window=unknown).
-22:27:37 DEBUG app.automation.profile_extractor Extracted 13 'share' candidates from source (window=unknown).
-22:27:43 DEBUG app.automation.profile_extractor Extracted 13 'share' candidates from source (window=unknown).
-22:27:49 DEBUG app.automation.profile_extractor Extracted 13 'share' candidates from source (window=unknown).
-22:27:49 INFO app.exporters.csv_exporter Successfully exported 212 profiles to data/autosave.csv
-22:27:49 INFO app.gui.main_window Auto-saved raw profiles to data/autosave.csv
-22:27:49 INFO app.exporters.csv_exporter Successfully exported 185 contest participants to data/autosave_contest.csv
-22:27:49 INFO app.gui.main_window Auto-saved contest validation to data/autosave_contest.csv
-22:27:55 DEBUG app.automation.profile_extractor Extracted 13 'share' candidates from source (window=unknown).
-22:27:59 INFO app.exporters.csv_exporter Successfully exported 231 profiles to data/autosave.csv
-22:27:59 INFO app.gui.main_window Auto-saved raw profiles to data/autosave.csv
-22:27:59 INFO app.exporters.csv_exporter Successfully exported 201 contest participants to data/autosave_contest.csv
-22:27:59 INFO app.gui.main_window Auto-saved contest validation to data/autosave_contest.csv
-22:27:59 INFO app.gui.main_window Auto-imported Browser Extension batch '1793809678097_fshkgs' (10 profiles with links; 57 hybrid records synced).
-22:28:02 DEBUG app.automation.profile_extractor Extracted 13 'share' candidates from source (window=unknown).
+22:41:10 INFO __main__ Starting Facebook Contest Validator & Live Lottery Prep...
+22:41:10 INFO app.automation.local_bridge_server Local HTTP Extension Bridge listening on http://127.0.0.1:19876/batch
+22:41:12 INFO app.exporters.csv_exporter Successfully exported 10 profiles to data/autosave.csv
+22:41:12 INFO app.gui.main_window Auto-saved raw profiles to data/autosave.csv
+22:41:12 INFO app.exporters.csv_exporter Successfully exported 10 contest participants to data/autosave_contest.csv
+22:41:12 INFO app.gui.main_window Auto-saved contest validation to data/autosave_contest.csv
+22:41:12 INFO app.gui.main_window Auto-imported Browser Extension batch '1793810454507_cib2u2' (10 profiles with links; 0 hybrid records synced).
+22:41:59 INFO app.exporters.csv_exporter Successfully exported 442 profiles to data/autosave.csv
+22:41:59 INFO app.gui.main_window Auto-saved raw profiles to data/autosave.csv
+22:41:59 INFO app.exporters.csv_exporter Successfully exported 417 contest participants to data/autosave_contest.csv
+22:41:59 INFO app.gui.main_window Auto-saved contest validation to data/autosave_contest.csv
+22:41:59 INFO app.gui.main_window Auto-imported Browser Extension batch '1793810488922_m9x4i8' (442 profiles with links; 0 hybrid records synced).
+22:42:20 INFO app.exporters.csv_exporter Successfully exported 683 profiles to data/autosave.csv
+22:42:20 INFO app.gui.main_window Auto-saved raw profiles to data/autosave.csv
+22:42:20 INFO app.exporters.csv_exporter Successfully exported 454 contest participants to data/autosave_contest.csv
+22:42:20 INFO app.gui.main_window Auto-saved contest validation to data/autosave_contest.csv
+22:42:20 INFO app.gui.main_window Auto-imported Browser Extension batch '1793810539904_051mcy' (241 profiles with links; 0 hybrid records synced).

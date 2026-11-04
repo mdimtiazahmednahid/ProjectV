@@ -41,8 +41,8 @@ class ProfileSyncBatchWorker(QThread):
         for p in self.profiles:
             if p.share_url and p.share_url.startswith("http") and not p.avatar_hash:
                 if self.only_eligible_names is not None:
-                    from app.utils.contest_validator import ContestValidator
-                    norm = ContestValidator._normalize_name(p.name or "")
+                    from app.utils.contest_validator import IncrementalContestAggregator
+                    norm = IncrementalContestAggregator._clean_author_name(p.name or "").lower()
                     if norm not in self.only_eligible_names:
                         continue
                 candidates.append(p)

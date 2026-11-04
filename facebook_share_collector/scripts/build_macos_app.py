@@ -338,14 +338,32 @@ exec "{venv_py_link}" "{main_script}"
                 ignore=shutil.ignore_patterns("__pycache__", "*.pyc"),
             )
 
-    # Copy SQLite DB, avatars, and auto-saved CSVs (excluding 328MB browser_profile cache)
+    # Copy SQLite DB, avatars, and auto-saved CSVs (preserving any newer live data inside existing .app bundle)
+    existing_app_data = os.path.join(app_bundle, "Contents", "Resources", "app_bundle", "data")
+    if os.path.isdir(existing_app_data):
+        os.makedirs(os.path.join(PROJECT_DIR, "data", "avatars"), exist_ok=True)
+        for item in os.listdir(existing_app_data):
+            s_path = os.path.join(existing_app_data, item)
+            d_path = os.path.join(PROJECT_DIR, "data", item)
+            if os.path.isfile(s_path):
+                if not os.path.exists(d_path) or os.path.getmtime(s_path) >= os.path.getmtime(d_path):
+                    shutil.copyfile(s_path, d_path)
+        existing_avatars = os.path.join(existing_app_data, "avatars")
+        if os.path.isdir(existing_avatars):
+            for av_file in os.listdir(existing_avatars):
+                s_av = os.path.join(existing_avatars, av_file)
+                d_av = os.path.join(PROJECT_DIR, "data", "avatars", av_file)
+                if os.path.isfile(s_av) and not os.path.exists(d_av):
+                    shutil.copyfile(s_av, d_av)
+
     data_dst = os.path.join(app_payload_dir, "data")
     os.makedirs(os.path.join(data_dst, "avatars"), exist_ok=True)
     os.makedirs(os.path.join(app_payload_dir, "logs"), exist_ok=True)
-    for data_file in ("facebook_shares.sqlite", "autosave.csv", "autosave_contest.csv"):
-        src_df = os.path.join(PROJECT_DIR, "data", data_file)
-        if os.path.isfile(src_df):
-            shutil.copyfile(src_df, os.path.join(data_dst, data_file))
+    if os.path.isdir(os.path.join(PROJECT_DIR, "data")):
+        for item in os.listdir(os.path.join(PROJECT_DIR, "data")):
+            src_df = os.path.join(PROJECT_DIR, "data", item)
+            if os.path.isfile(src_df) and item.endswith((".sqlite", ".csv", ".html", ".json", ".xlsx")):
+                shutil.copyfile(src_df, os.path.join(data_dst, item))
     avatars_src = os.path.join(PROJECT_DIR, "data", "avatars")
     if os.path.isdir(avatars_src):
         _copytree_no_xattr(avatars_src, os.path.join(data_dst, "avatars"))
