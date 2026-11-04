@@ -5,21 +5,22 @@ with PySide6 QImage / QPixmap rendering for Android 11+ Wireless Debugging QR Co
 Zero third-party dependencies required — works offline in macOS .app and Windows .exe builds.
 """
 
-from typing import List
+from typing import Callable, List
 
-# Capacities (data codewords) and EC codewords per block for Versions 1..10 at EC Level L (0)
+# Capacities (data codewords) and EC codewords per block for Versions 1..10 at EC Level M (0b00)
+# Using EC Level M (15% error recovery) makes phone camera scanning faster and more resilient on screens.
 # Format: version -> (total_codewords, ec_codewords_per_block, num_blocks_group1, data_codewords_group1, num_blocks_group2, data_codewords_group2)
-_VERSION_TABLE_L = {
-    1: (26, 7, 1, 19, 0, 0),
-    2: (44, 10, 1, 34, 0, 0),
-    3: (70, 15, 1, 55, 0, 0),
-    4: (100, 20, 1, 80, 0, 0),
-    5: (134, 26, 1, 108, 0, 0),
-    6: (172, 18, 2, 68, 0, 0),
-    7: (196, 20, 2, 78, 0, 0),
-    8: (242, 24, 2, 97, 0, 0),
-    9: (292, 30, 2, 116, 0, 0),
-    10: (346, 18, 2, 68, 2, 69),
+_VERSION_TABLE_M = {
+    1: (26, 10, 1, 16, 0, 0),
+    2: (44, 16, 1, 28, 0, 0),
+    3: (70, 26, 1, 44, 0, 0),
+    4: (100, 18, 2, 32, 0, 0),
+    5: (134, 24, 2, 43, 0, 0),
+    6: (172, 16, 4, 27, 0, 0),
+    7: (196, 18, 4, 31, 0, 0),
+    8: (242, 22, 2, 38, 2, 39),
+    9: (292, 22, 3, 36, 2, 37),
+    10: (346, 26, 4, 43, 1, 44),
 }
 
 _ALIGNMENT_POSITIONS = {
@@ -34,6 +35,17 @@ _ALIGNMENT_POSITIONS = {
     9: [6, 26, 46],
     10: [6, 28, 50],
 }
+
+_MASK_FUNCTIONS: List[Callable[[int, int], bool]] = [
+    lambda r, c: (r + c) % 2 == 0,
+    lambda r, c: r % 2 == 0,
+    lambda r, c: c % 3 == 0,
+    lambda r, c: (r + c) % 3 == 0,
+    lambda r, c: ((r // 2) + (c // 3)) % 2 == 0,
+    lambda r, c: ((r * c) % 2) + ((r * c) % 3) == 0,
+    lambda r, c: (((r * c) % 2) + ((r * c) % 3)) % 2 == 0,
+    lambda r, c: (((r + c) % 2) + ((r * c) % 3)) % 2 == 0,
+]
 
 # GF(256) log/exp tables with primitive polynomial 0x11D
 _GF_EXP = [0] * 512
@@ -79,9 +91,9 @@ def _rs_encode(data_bytes: List[int], ec_len: int) -> List[int]:
     return rem
 
 
-def _choose_version_l(payload_len: int) -> int:
+def _choose_version_m(payload_len: int) -> int:
     for ver in range(1, 11):
-        _, _, b1, d1, b2, d2 = _VERSION_TABLE_L[ver]
+        _, _, b1, d1, b2, d2 = _VERSION_TABLE_M[ver]
         total_data_bytes = b1 * d1 + b2 * d2
         header_bytes = 2 if ver <= 9 else 3
         if payload_len + header_bytes <= total_data_bytes:
@@ -90,7 +102,7 @@ def _choose_version_l(payload_len: int) -> int:
 
 
 def _encode_data_codewords(payload: bytes, ver: int) -> List[int]:
-    _, ec_per_block, b1, d1, b2, d2 = _VERSION_TABLE_L[ver]
+    _, ec_per_block, b1, d1, b2, d2 = _VERSION_TABLE_M[ver]
     total_data_codewords = b1 * d1 + b2 * d2
 
     bits: List[int] = []
@@ -187,7 +199,7 @@ def _place_alignment_pattern(matrix: List[List[int]], reserved: List[List[bool]]
 
 
 def _compute_format_bits(ec_level_bits: int, mask_id: int) -> int:
-    # EC Level L = 0b01
+    # EC Level M = 0b00, Level L = 0b01
     data = (ec_level_bits << 3) | mask_id
     rem = data << 10
     for i in range(4, -1, -1):
@@ -197,9 +209,9 @@ def _compute_format_bits(ec_level_bits: int, mask_id: int) -> int:
     return bits
 
 
-def _place_format_bits(matrix: List[List[int]], size: int, mask_id: int):
-    # EC Level L indicator = 0b01; bit 14 is MSB, bit 0 is LSB (ISO/IEC 18004 Figure 25)
-    fmt = _compute_format_bits(0b01, mask_id)
+def _place_format_bits(matrix: List[List[int]], size: int, mask_id: int, ec_level_bits: int = 0b00):
+    # bit 14 is MSB, bit 0 is LSB (ISO/IEC 18004 Figure 25)
+    fmt = _compute_format_bits(ec_level_bits, mask_id)
 
     # Top-left copy: index i corresponds to bit i (0 = LSB at (0,8), 14 = MSB at (8,0))
     coords_tl = [
@@ -217,41 +229,81 @@ def _place_format_bits(matrix: List[List[int]], size: int, mask_id: int):
         matrix[size - 15 + i][8] = (fmt >> i) & 1
 
 
+def _penalty_score(matrix: List[List[int]]) -> int:
+    size = len(matrix)
+    score = 0
+
+    # Rule 1: 5+ consecutive same-color modules in row/col
+    for r in range(size):
+        run_len = 1
+        for c in range(1, size):
+            if matrix[r][c] == matrix[r][c - 1]:
+                run_len += 1
+            else:
+                if run_len >= 5:
+                    score += 3 + (run_len - 5)
+                run_len = 1
+        if run_len >= 5:
+            score += 3 + (run_len - 5)
+
+    for c in range(size):
+        run_len = 1
+        for r in range(1, size):
+            if matrix[r][c] == matrix[r - 1][c]:
+                run_len += 1
+            else:
+                if run_len >= 5:
+                    score += 3 + (run_len - 5)
+                run_len = 1
+        if run_len >= 5:
+            score += 3 + (run_len - 5)
+
+    # Rule 2: 2x2 blocks of same color
+    for r in range(size - 1):
+        for c in range(size - 1):
+            v = matrix[r][c]
+            if v == matrix[r][c + 1] == matrix[r + 1][c] == matrix[r + 1][c + 1]:
+                score += 3
+
+    return score
+
+
 def generate_qr_matrix(text: str) -> List[List[int]]:
     """
-    Generates a 2D boolean/int matrix (1 = dark module, 0 = light module) for `text`.
+    Generates a 2D boolean/int matrix (1 = dark module, 0 = light module) for `text`
+    at Error Correction Level M with optimal mask selection.
     """
     payload = text.encode("utf-8")
-    ver = _choose_version_l(len(payload))
+    ver = _choose_version_m(len(payload))
     size = 17 + 4 * ver
 
-    matrix = [[0] * size for _ in range(size)]
+    base_matrix = [[0] * size for _ in range(size)]
     reserved = [[False] * size for _ in range(size)]
 
     # 1. Finder patterns + separators
-    _place_finder_pattern(matrix, reserved, 0, 0, size)
-    _place_finder_pattern(matrix, reserved, 0, size - 7, size)
-    _place_finder_pattern(matrix, reserved, size - 7, 0, size)
+    _place_finder_pattern(base_matrix, reserved, 0, 0, size)
+    _place_finder_pattern(base_matrix, reserved, 0, size - 7, size)
+    _place_finder_pattern(base_matrix, reserved, size - 7, 0, size)
 
     # 2. Alignment patterns
     align_coords = _ALIGNMENT_POSITIONS[ver]
     for ar in align_coords:
         for ac in align_coords:
-            if (ar == 6 and ac == 6) or (ar == 6 and ac == size - 7) or (ar == size - 7 and ac == 6):
+            if (ar == 6 and ac == 6) or (ar == 6 and ac == align_coords[-1]) or (ar == align_coords[-1] and ac == 6):
                 continue
-            _place_alignment_pattern(matrix, reserved, ar, ac)
+            _place_alignment_pattern(base_matrix, reserved, ar, ac)
 
     # 3. Timing patterns
     for i in range(8, size - 8):
         if not reserved[6][i]:
-            matrix[6][i] = 1 if (i % 2 == 0) else 0
+            base_matrix[6][i] = 1 if (i % 2 == 0) else 0
             reserved[6][i] = True
         if not reserved[i][6]:
-            matrix[i][6] = 1 if (i % 2 == 0) else 0
+            base_matrix[i][6] = 1 if (i % 2 == 0) else 0
             reserved[i][6] = True
 
     # 4. Dark module & reserve format information areas
-    matrix[size - 8][8] = 1
+    base_matrix[size - 8][8] = 1
     reserved[size - 8][8] = True
     for i in range(9):
         reserved[8][i] = True
@@ -267,8 +319,81 @@ def generate_qr_matrix(text: str) -> List[List[int]]:
         for b in range(7, -1, -1):
             bit_stream.append((cw >> b) & 1)
 
-    # 6. Place data bits in upward/downward 2-column zig-zag
-    bit_idx = 0
+    # 6. Evaluate all 8 masks and pick the lowest-penalty matrix
+    best_matrix = None
+    best_score = None
+    for mask_id, mask_fn in enumerate(_MASK_FUNCTIONS):
+        candidate = [row[:] for row in base_matrix]
+        bit_idx = 0
+        col = size - 1
+        upward = True
+        while col > 0:
+            if col == 6:
+                col -= 1
+            row_iter = range(size - 1, -1, -1) if upward else range(size)
+            for r in row_iter:
+                for dc in (0, -1):
+                    c = col + dc
+                    if not reserved[r][c]:
+                        val = bit_stream[bit_idx] if bit_idx < len(bit_stream) else 0
+                        bit_idx += 1
+                        if mask_fn(r, c):
+                            val ^= 1
+                        candidate[r][c] = val
+            upward = not upward
+            col -= 2
+
+        _place_format_bits(candidate, size, mask_id=mask_id, ec_level_bits=0b00)
+        sc = _penalty_score(candidate)
+        if best_score is None or sc < best_score:
+            best_score = sc
+            best_matrix = candidate
+
+    return best_matrix
+
+
+def decode_qr_matrix(matrix: List[List[int]]) -> str:
+    """
+    Pure-Python verifier/decoder for matrices generated by `generate_qr_matrix`.
+    Reads the format bits, unmasks the data modules, verifies Reed-Solomon EC, and returns the UTF-8 string.
+    """
+    size = len(matrix)
+    ver = (size - 17) // 4
+    coords_tl = [
+        (0, 8), (1, 8), (2, 8), (3, 8), (4, 8), (5, 8), (7, 8), (8, 8),
+        (8, 7), (8, 5), (8, 4), (8, 3), (8, 2), (8, 1), (8, 0),
+    ]
+    fmt = 0
+    for i, (r, c) in enumerate(coords_tl):
+        fmt |= (matrix[r][c] & 1) << i
+    unmasked_fmt = fmt ^ 0x5412
+    mask_id = (unmasked_fmt >> 10) & 0b111
+    mask_fn = _MASK_FUNCTIONS[mask_id]
+
+    # Build reserved map
+    dummy = [[0] * size for _ in range(size)]
+    reserved = [[False] * size for _ in range(size)]
+    _place_finder_pattern(dummy, reserved, 0, 0, size)
+    _place_finder_pattern(dummy, reserved, 0, size - 7, size)
+    _place_finder_pattern(dummy, reserved, size - 7, 0, size)
+    align_coords = _ALIGNMENT_POSITIONS[ver]
+    for ar in align_coords:
+        for ac in align_coords:
+            if (ar == 6 and ac == 6) or (ar == 6 and ac == align_coords[-1]) or (ar == align_coords[-1] and ac == 6):
+                continue
+            _place_alignment_pattern(dummy, reserved, ar, ac)
+    for i in range(8, size - 8):
+        reserved[6][i] = True
+        reserved[i][6] = True
+    reserved[size - 8][8] = True
+    for i in range(9):
+        reserved[8][i] = True
+        reserved[i][8] = True
+    for i in range(8):
+        reserved[8][size - 1 - i] = True
+        reserved[size - 1 - i][8] = True
+
+    bits: List[int] = []
     col = size - 1
     upward = True
     while col > 0:
@@ -279,18 +404,68 @@ def generate_qr_matrix(text: str) -> List[List[int]]:
             for dc in (0, -1):
                 c = col + dc
                 if not reserved[r][c]:
-                    val = bit_stream[bit_idx] if bit_idx < len(bit_stream) else 0
-                    bit_idx += 1
-                    # Apply Mask 0: (r + c) % 2 == 0
-                    if (r + c) % 2 == 0:
+                    val = matrix[r][c]
+                    if mask_fn(r, c):
                         val ^= 1
-                    matrix[r][c] = val
+                    bits.append(val)
         upward = not upward
         col -= 2
 
-    # 7. Write format bits for Level L (01) and Mask 0 (000)
-    _place_format_bits(matrix, size, mask_id=0)
-    return matrix
+    codewords = []
+    for i in range(0, len(bits) - 7, 8):
+        cw = 0
+        for b in bits[i : i + 8]:
+            cw = (cw << 1) | b
+        codewords.append(cw)
+
+    _, ec_per_block, b1, d1, b2, d2 = _VERSION_TABLE_M[ver]
+    # De-interleave data blocks (for versions 1..3 b1=1, b2=0)
+    blocks_data = [[] for _ in range(b1 + b2)]
+    idx = 0
+    max_d = max(d1, d2)
+    for col_idx in range(max_d):
+        for b_idx in range(b1 + b2):
+            blk_len = d1 if b_idx < b1 else d2
+            if col_idx < blk_len:
+                blocks_data[b_idx].append(codewords[idx])
+                idx += 1
+    blocks_ec = [[] for _ in range(b1 + b2)]
+    for _ in range(ec_per_block):
+        for b_idx in range(b1 + b2):
+            blocks_ec[b_idx].append(codewords[idx])
+            idx += 1
+
+    # Verify RS EC for every block
+    data_bytes: List[int] = []
+    for b_idx in range(b1 + b2):
+        expected_ec = _rs_encode(blocks_data[b_idx], ec_per_block)
+        if expected_ec != blocks_ec[b_idx]:
+            raise ValueError("Reed-Solomon EC mismatch in QR matrix")
+        data_bytes.extend(blocks_data[b_idx])
+
+    data_bits: List[int] = []
+    for byte_val in data_bytes:
+        for b in range(7, -1, -1):
+            data_bits.append((byte_val >> b) & 1)
+
+    mode = 0
+    for b in data_bits[:4]:
+        mode = (mode << 1) | b
+    if mode != 0b0100:
+        raise ValueError(f"Unexpected QR mode: {mode}")
+    cc_bits = 8 if ver <= 9 else 16
+    char_count = 0
+    for b in data_bits[4 : 4 + cc_bits]:
+        char_count = (char_count << 1) | b
+    out_bytes = bytearray()
+    pos = 4 + cc_bits
+    for _ in range(char_count):
+        val = 0
+        for b in data_bits[pos : pos + 8]:
+            val = (val << 1) | b
+        out_bytes.append(val)
+        pos += 8
+    return out_bytes.decode("utf-8")
 
 
 def render_qr_pixmap(text: str, target_size_px: int = 220, quiet_zone: int = 4):

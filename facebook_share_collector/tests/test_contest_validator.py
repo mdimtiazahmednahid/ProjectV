@@ -1486,18 +1486,36 @@ def test_sync_profile_batch_worker_only_eligible_names_and_normalize_name():
     assert profiles[1].avatar_hash is None
 
 
+def test_wireless_adb_qr_code_and_mdns_discovery():
+    """
+    Verifies:
+      1. Pure-Python ISO/IEC 18004 QR Code generation (`generate_qr_matrix`) and round-trip
+         Reed-Solomon decoding (`decode_qr_matrix`) for Android 11+ Wireless Debugging QR payloads.
+      2. `DeviceManager._parse_adb_mdns_output` parses `_adb-tls-pairing._tcp` and `_adb-tls-connect._tcp`
+         endpoints accurately.
+    """
+    from app.utils.qr_code import generate_qr_matrix, decode_qr_matrix
+    from app.automation.device_manager import DeviceManager
 
+    qr_payload = "WIFI:T:ADB;S:studio-fcv98765;P:84729163;;"
+    matrix = generate_qr_matrix(qr_payload)
+    assert len(matrix) == 29  # Version 3 (29x29 modules)
+    decoded = decode_qr_matrix(matrix)
+    assert decoded == qr_payload
 
+    sample_mdns_stdout = (
+        "List of discovered mdns services\n"
+        "studio-fcv98765\t_adb-tls-pairing._tcp.\t192.168.0.105:41923\n"
+        "adb-R58M42ABCDE-k8x91p\t_adb-tls-connect._tcp.\t192.168.0.105:38411\n"
+    )
+    parsed = DeviceManager._parse_adb_mdns_output(sample_mdns_stdout)
+    assert len(parsed["pairing"]) == 1
+    assert parsed["pairing"][0]["instance"] == "studio-fcv98765"
+    assert parsed["pairing"][0]["ip"] == "192.168.0.105"
+    assert parsed["pairing"][0]["port"] == "41923"
+    assert parsed["pairing"][0]["ip_port"] == "192.168.0.105:41923"
 
-
-
-
-
-
-
-
-
-
-
+    assert len(parsed["connect"]) == 1
+    assert parsed["connect"][0]["ip_port"] == "192.168.0.105:38411"
 
 
