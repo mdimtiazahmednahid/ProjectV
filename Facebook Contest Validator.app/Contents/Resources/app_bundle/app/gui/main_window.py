@@ -331,7 +331,7 @@ class MainWindow(QMainWindow):
         if not sessions:
             QMessageBox.information(self, "No Saved Sessions", "No previous collection sessions found in database.")
             return
-        self._load_sessions_by_ids([s.id for s in sessions[:3]])
+        self._load_sessions_by_ids([s.id for s in sessions[:30]])
 
     def _open_session_manager(self):
         from app.gui.session_manager_dialog import SessionManagerDialog

@@ -82,9 +82,23 @@ class LotteryPrintExporter:
                     table_url_html = id_hint
 
                 badge_label = "ELIGIBLE 3/3 ✓" if p.is_eligible else f"QUALIFIED ({p.actions_completed}/3) ✓"
-                done_meta = " · ".join(
-                    lbl for flag, lbl in [(p.liked, "Like"), (p.commented, "Comment"), (p.shared, "Share")] if flag
-                ) or "Verified Entry"
+                like_cls = "act-done" if p.liked else "act-missing"
+                like_sign = "✅" if p.liked else "❌"
+                comment_cls = "act-done" if p.commented else "act-missing"
+                comment_sign = "✅" if p.commented else "❌"
+                share_cls = "act-done" if p.shared else "act-missing"
+                share_sign = "✅" if p.shared else "❌"
+
+                done_meta = (
+                    f'<span class="act-item act-like {like_cls}" onclick="toggleSingleAction(this)" title="Click to toggle Like status">'
+                    f'<span class="act-icon">{like_sign} </span>Like</span>'
+                    f'<span class="act-sep"> · </span>'
+                    f'<span class="act-item act-comment {comment_cls}" onclick="toggleSingleAction(this)" title="Click to toggle Comment status">'
+                    f'<span class="act-icon">{comment_sign} </span>Comment</span>'
+                    f'<span class="act-sep"> · </span>'
+                    f'<span class="act-item act-share {share_cls}" onclick="toggleSingleAction(this)" title="Click to toggle Share status">'
+                    f'<span class="act-icon">{share_sign} </span>Share</span>'
+                )
 
                 tickets_html.append(f"""
                 <div class="ticket">
@@ -97,7 +111,7 @@ class LotteryPrintExporter:
                         <div class="ticket-info">
                             <div class="name notranslate" translate="no">{safe_name}</div>
                             <div class="meta">{done_meta}</div>
-                            <div class="comment notranslate" translate="no" data-short="{html.escape(safe_short, quote=True)}" data-full="{html.escape(safe_full, quote=True)}" data-truncated="{is_truncated}" onclick="toggleCommentText(this)" title="Click to view full comment">{safe_short}</div>
+                            <div class="comment notranslate" translate="no" data-short="{html.escape(safe_short, quote=True)}" data-full="{html.escape(safe_full, quote=True)}" data-truncated="{is_truncated}" onclick="toggleCommentText(this)" title="Click to view full comment">{safe_full}</div>
                         </div>
                     </div>
                     <div class="ticket-footer">{footer_html}</div>
@@ -213,8 +227,15 @@ class LotteryPrintExporter:
         padding-bottom: 4px;
         margin-bottom: 7px;
     }}
+    body.id-left .ticket-header,
     body.align-left .ticket-header {{
         justify-content: space-between;
+    }}
+    body.id-hide .serial {{
+        display: none !important;
+    }}
+    body.id-hide:not(.show-badge) .ticket-header {{
+        display: none !important;
     }}
     .serial {{
         font-size: 18px;
@@ -272,11 +293,64 @@ class LotteryPrintExporter:
         text-overflow: ellipsis;
     }}
     .meta {{
-        font-size: 11px;
-        color: #198754;
+        font-size: 10.5px;
         font-weight: 600;
         margin-top: 2px;
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 2px;
     }}
+    .act-item {{
+        cursor: pointer;
+        user-select: none;
+    }}
+    .act-done {{
+        color: #15803d;
+    }}
+    .act-missing {{
+        color: #b91c1c;
+        opacity: 0.85;
+    }}
+    .act-sep {{
+        color: #9ca3af;
+        margin: 0 2px;
+    }}
+    /* Action Display Customization Modes */
+    body.actions-done-icons .act-missing {{
+        display: none !important;
+    }}
+    body.actions-done-icons .act-sep {{
+        display: none !important;
+    }}
+    body.actions-done-icons .act-done {{
+        margin-right: 6px;
+    }}
+    body.actions-done-text .act-missing {{
+        display: none !important;
+    }}
+    body.actions-done-text .act-icon {{
+        display: none !important;
+    }}
+    body.actions-done-text .act-sep {{
+        display: none !important;
+    }}
+    body.actions-done-text .act-done {{
+        margin-right: 6px;
+    }}
+    body.actions-hide .meta {{
+        display: none !important;
+    }}
+    body.hide-act-like .act-like {{
+        display: none !important;
+    }}
+    body.hide-act-comment .act-comment {{
+        display: none !important;
+    }}
+    body.hide-act-share .act-share {{
+        display: none !important;
+    }}
+    /* Comment Line Customization (Default: 2 Lines) */
     .comment {{
         font-size: 11px;
         line-height: 1.38;
@@ -285,21 +359,60 @@ class LotteryPrintExporter:
         margin-top: 3px;
         display: -webkit-box;
         -webkit-box-orient: vertical;
-        -webkit-line-clamp: 3;
-        line-clamp: 3;
+        -webkit-line-clamp: 2;
+        line-clamp: 2;
         white-space: normal;
         word-break: break-word;
         overflow: hidden;
         text-overflow: ellipsis;
         cursor: pointer;
     }}
-    .comment.expanded {{
+    body.comment-lines-1 .comment {{
+        display: block;
+        -webkit-line-clamp: unset;
+        line-clamp: unset;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }}
+    body.comment-lines-2 .comment {{
+        display: -webkit-box;
+        -webkit-box-orient: vertical;
+        -webkit-line-clamp: 2;
+        line-clamp: 2;
+        white-space: normal;
+    }}
+    body.comment-lines-3 .comment {{
+        display: -webkit-box;
+        -webkit-box-orient: vertical;
+        -webkit-line-clamp: 3;
+        line-clamp: 3;
+        white-space: normal;
+    }}
+    body.comment-lines-4 .comment {{
+        display: -webkit-box;
+        -webkit-box-orient: vertical;
+        -webkit-line-clamp: 4;
+        line-clamp: 4;
+        white-space: normal;
+    }}
+    body.comment-lines-full .comment {{
         display: block;
         -webkit-line-clamp: unset;
         line-clamp: unset;
         white-space: normal;
-        word-break: break-word;
         overflow: visible;
+    }}
+    body.comment-lines-hide .comment {{
+        display: none !important;
+    }}
+    .comment.expanded {{
+        display: block !important;
+        -webkit-line-clamp: unset !important;
+        line-clamp: unset !important;
+        white-space: normal !important;
+        word-break: break-word !important;
+        overflow: visible !important;
     }}
     .ticket-footer {{
         margin-top: 6px;
@@ -379,11 +492,42 @@ class LotteryPrintExporter:
         document.body.classList.remove("border-solid", "border-dashed", "border-none");
         document.body.classList.add("border-" + styleVal);
     }}
+    function setIdPosition(posVal) {{
+        document.body.classList.remove("id-center", "id-left", "id-hide", "align-left");
+        document.body.classList.add("id-" + posVal);
+    }}
     function toggleCenterSerial(checked) {{
-        if (checked) {{
-            document.body.classList.remove("align-left");
-        }} else {{
-            document.body.classList.add("align-left");
+        setIdPosition(checked ? "center" : "left");
+    }}
+    function setActionStyle(modeVal) {{
+        document.body.classList.remove("actions-all-icons", "actions-done-icons", "actions-done-text", "actions-hide");
+        document.body.classList.add("actions-" + modeVal);
+    }}
+    function toggleActionItemVisibility(actName, checked) {{
+        document.body.classList.toggle("hide-act-" + actName, !checked);
+    }}
+    function setCommentLines(linesVal) {{
+        document.body.classList.remove(
+            "comment-lines-1",
+            "comment-lines-2",
+            "comment-lines-3",
+            "comment-lines-4",
+            "comment-lines-full",
+            "comment-lines-hide"
+        );
+        document.body.classList.add("comment-lines-" + linesVal);
+        document.querySelectorAll(".comment.expanded").forEach(function(el) {{
+            el.classList.remove("expanded");
+        }});
+    }}
+    function toggleSingleAction(el) {{
+        if (!el) return;
+        const isDone = el.classList.contains("act-done");
+        el.classList.toggle("act-done", !isDone);
+        el.classList.toggle("act-missing", isDone);
+        const iconSpan = el.querySelector(".act-icon");
+        if (iconSpan) {{
+            iconSpan.textContent = !isDone ? "✅ " : "❌ ";
         }}
     }}
     function toggleStatusBadge(checked) {{
@@ -395,11 +539,13 @@ class LotteryPrintExporter:
     function toggleCommentText(el) {{
         if (!el) return;
         const isExpanded = el.classList.toggle("expanded");
-        el.textContent = isExpanded ? (el.getAttribute("data-full") || el.textContent) : (el.getAttribute("data-short") || el.textContent);
+        if (el.getAttribute("data-full")) {{
+            el.textContent = el.getAttribute("data-full");
+        }}
     }}
 </script>
 </head>
-<body class="border-solid">
+<body class="border-solid id-center actions-all-icons comment-lines-2">
     <div class="toolbar no-print">
         <div>
             <strong>Contest Lottery Slips ({len(target_list)} Tickets)</strong>
@@ -413,7 +559,34 @@ class LotteryPrintExporter:
                     <option value="none">No Border</option>
                 </select>
             </label>
-            <label><input type="checkbox" checked onchange="toggleCenterSerial(this.checked)"> Center ID (#0001)</label>
+            <label>ID (#0001):
+                <select onchange="setIdPosition(this.value)">
+                    <option value="center" selected>Center ID (#0001)</option>
+                    <option value="left">Left Align ID (#0001)</option>
+                    <option value="hide">Hide / Remove ID</option>
+                </select>
+            </label>
+            <label>Actions:
+                <select onchange="setActionStyle(this.value)">
+                    <option value="all-icons" selected>✅ / ❌ All 3 (Like · Comment · Share)</option>
+                    <option value="done-icons">✅ Completed Only</option>
+                    <option value="done-text">Plain Text (Completed)</option>
+                    <option value="hide">Hide Actions</option>
+                </select>
+            </label>
+            <label><input type="checkbox" checked onchange="toggleActionItemVisibility('like', this.checked)"> Like</label>
+            <label><input type="checkbox" checked onchange="toggleActionItemVisibility('comment', this.checked)"> Comment</label>
+            <label><input type="checkbox" checked onchange="toggleActionItemVisibility('share', this.checked)"> Share</label>
+            <label>Comment Lines:
+                <select onchange="setCommentLines(this.value)">
+                    <option value="1">1 Line (...)</option>
+                    <option value="2" selected>2 Lines (Default)</option>
+                    <option value="3">3 Lines (...)</option>
+                    <option value="4">4 Lines (...)</option>
+                    <option value="full">Full Comment</option>
+                    <option value="hide">Hide Comment</option>
+                </select>
+            </label>
             <label><input type="checkbox" onchange="toggleStatusBadge(this.checked)"> Show Status Badge</label>
             <label><input type="checkbox" onchange="toggleJudgeSheet(this.checked)"> Include Verification Table</label>
             <button onclick="window.print()">🖨️ Print</button>

@@ -104,13 +104,18 @@ def test_printable_lottery_tickets_export():
         html_text = open(out_html, encoding="utf-8").read()
         assert "#0001" in html_text
         assert "Winner One" in html_text
-        # 1. Default solid border ("border-solid"), centered serial ID, and 3-column grid
-        assert 'class="border-solid"' in html_text
+        # 1. Default solid border ("border-solid"), centered serial ID ("id-center"), 2-line default ("comment-lines-2"), and 3-column grid
+        assert 'class="border-solid id-center actions-all-icons comment-lines-2"' in html_text
         assert "grid-template-columns: repeat(3, minmax(0, 1fr))" in html_text
         assert "setBorderStyle(this.value)" in html_text
-        # 2. Action text has NO emoji icons ('👍' / '💬' / '🔄' removed from meta)
-        assert '<div class="meta">Like · Comment · Share</div>' in html_text
-        # 3. Long comment has '...' preview and click-to-expand toggleCommentText(this) with full comment in data-full
+        assert "setIdPosition(this.value)" in html_text
+        assert "setCommentLines(this.value)" in html_text
+        # 2. Action row shows ✅ / ❌ status per action (and no 👍 / 💬 / 🔄 emojis)
+        assert '<span class="act-icon">✅ </span>Like' in html_text
+        assert '<span class="act-icon">✅ </span>Comment' in html_text
+        assert '<span class="act-icon">✅ </span>Share' in html_text
+        assert "👍" not in html_text and "💬" not in html_text and "🔄" not in html_text
+        # 3. Long comment has click-to-expand toggleCommentText(this) with full comment in data-full
         assert 'onclick="toggleCommentText(this)"' in html_text
         assert long_comment in html_text
         # 4. Profile link in footer is a clickable <a href="..." target="_blank"> redirecting to the profile
@@ -1274,6 +1279,153 @@ def test_original_comment_preserved_without_english_translation(tmp_path):
     assert 'content="notranslate"' in html_text
     assert original_bangla in html_text
     assert "Peanuts are very nutritious food" not in html_text
+
+
+def test_multi_day_daily_scraping_upsert_and_conflict_resolution():
+    """
+    Simulates a 4-day daily scraping schedule (Nov 2 -> Nov 3 -> Nov 4 -> Nov 5)
+    and verifies the Upsert Rule ("If Found -> Auto-Update; If Not Found -> Create New"):
+      1. Canonical Profile Link Supremacy across URL variants (/people/Name/UID vs /profile.php?id=UID),
+         even when the user changes their profile photo or edits their display name across days.
+      2. Photo Mismatch Tolerance when upgrading a unique-named Phone participant with a Web Profile URL.
+      3. Strict Separation of Same-Name Users who have different Profile Links (or blank silhouette avatars).
+      4. Multi-day CDN Avatar Asset Filename matching (when ?oh=...&oe=... rotates daily).
+    """
+    from app.utils.contest_validator import IncrementalContestAggregator
+    from app.utils.url_normalizer import extract_canonical_identity_key, extract_avatar_asset_id
+
+    assert extract_canonical_identity_key("https://www.facebook.com/people/Mst-Ambea-Akhter/100078091213712") == "uid:100078091213712"
+    assert extract_canonical_identity_key("https://m.facebook.com/profile.php?id=100078091213712&comment_id=1") == "uid:100078091213712"
+    assert extract_canonical_identity_key("https://www.facebook.com/people/Md-Rahim/pfbid02xyzABC") == "pfbid:pfbid02xyzabc"
+    assert extract_canonical_identity_key("https://www.facebook.com/people/Md-Rahim-Updated/pfbid02xyzABC") == "pfbid:pfbid02xyzabc"
+    assert extract_avatar_asset_id("https://scontent.fdac1-1.fna.fbcdn.net/v/t39.30808-1/432109876_123456789_987654321_n.jpg?oh=day1&oe=111") == "432109876_123456789_987654321_n.jpg"
+    assert extract_avatar_asset_id("https://scontent.fdac1-1.fna.fbcdn.net/v/t39.30808-1/432109876_123456789_987654321_n.jpg?oh=day4&oe=999") == "432109876_123456789_987654321_n.jpg"
+
+    agg = IncrementalContestAggregator()
+
+    # Day 1 (Nov 2): Mst Ambea Akhter likes & comments (with /people/... URL and Photo Hash A)
+    agg.add_profile(
+        ShareProfile(
+            name="Mst Ambea Akhter",
+            profile_url="https://www.facebook.com/people/Mst-Ambea-Akhter/100078091213712",
+            action_type="like",
+            avatar_hash="1122334455667788",
+            source="facebook_browser_extension",
+            confidence=0.98,
+            session_id="nov2",
+        )
+    )
+    agg.add_profile(
+        ShareProfile(
+            name="Mst Ambea Akhter",
+            profile_url="https://www.facebook.com/people/Mst-Ambea-Akhter/100078091213712",
+            content="খাই চিনা বাদাম...",
+            action_type="comment",
+            avatar_hash="1122334455667788",
+            source="facebook_browser_extension",
+            confidence=0.98,
+            session_id="nov2",
+        )
+    )
+
+    # Day 2 (Nov 3): Tanvir Hasan scraped on Phone (no URL yet, Photo Hash X)
+    agg.add_profile(
+        ShareProfile(
+            name="Tanvir Hasan",
+            profile_url=None,
+            action_type="share",
+            avatar_hash="123456789abcdef0",
+            source="facebook_android_ui",
+            confidence=0.9,
+            session_id="nov3",
+        )
+    )
+
+    # Day 3 (Nov 4):
+    # - Mst Ambea Akhter re-scraped with /profile.php?id=... URL, CHANGED avatar photo, and full expanded comment
+    # - Tanvir Hasan scraped on Web WITH URL, but his photo changed/mismatched (Photo Hash Y)
+    agg.add_profile(
+        ShareProfile(
+            name="Mst Ambea Akhter (Ambea)",
+            profile_url="https://www.facebook.com/profile.php?id=100078091213712",
+            content="খাই চিনা বাদাম (Peanuts) এটা অত্যন্ত পুষ্টিকর!",
+            action_type="comment",
+            avatar_hash="9988776655443322",  # Completely different photo on Nov 4!
+            source="facebook_browser_extension",
+            confidence=0.98,
+            session_id="nov4",
+        )
+    )
+    agg.add_profile(
+        ShareProfile(
+            name="Tanvir Hasan",
+            profile_url="https://www.facebook.com/tanvir.hasan.bd",
+            action_type="like",
+            avatar_hash="fedcba9876543210",  # Mismatched photo between Phone and Web!
+            source="facebook_browser_extension",
+            confidence=0.98,
+            session_id="nov4",
+        )
+    )
+
+    # Day 4 (Nov 5):
+    # - Mst Ambea Akhter shares the post -> becomes 3/3 Eligible!
+    # - Two DIFFERENT people both named "Md Rahim" comment with different profile links & blank silhouette avatars
+    agg.add_profile(
+        ShareProfile(
+            name="Mst Ambea Akhter",
+            profile_url="https://www.facebook.com/profile.php?id=100078091213712",
+            action_type="share",
+            source="facebook_browser_extension",
+            confidence=0.98,
+            session_id="nov5",
+        )
+    )
+    agg.add_profile(
+        ShareProfile(
+            name="Md Rahim",
+            profile_url="https://www.facebook.com/md.rahim.one",
+            content="Contest entry 1",
+            action_type="comment",
+            avatar_hash="0000000000000000",
+            source="facebook_browser_extension",
+            confidence=0.98,
+            session_id="nov5",
+        )
+    )
+    agg.add_profile(
+        ShareProfile(
+            name="Md Rahim",
+            profile_url="https://www.facebook.com/md.rahim.two",
+            content="Contest entry 2",
+            action_type="comment",
+            avatar_hash="0000000000000000",
+            source="facebook_browser_extension",
+            confidence=0.98,
+            session_id="nov5",
+        )
+    )
+
+    participants = agg.get_sorted_participants()
+    # Must be exactly 4 distinct participants: Mst Ambea Akhter (3/3), Tanvir Hasan (2/3), Md Rahim #1 (1/3), Md Rahim #2 (1/3)
+    assert len(participants) == 4
+
+    ambea = next(p for p in participants if "Ambea" in p.name)
+    assert ambea.is_eligible is True
+    assert ambea.profile_url == "https://www.facebook.com/profile.php?id=100078091213712"
+    assert ambea.comment_texts == ["খাই চিনা বাদাম (Peanuts) এটা অত্যন্ত পুষ্টিকর!"]
+
+    tanvir = next(p for p in participants if p.name == "Tanvir Hasan")
+    assert tanvir.liked is True and tanvir.shared is True
+    assert tanvir.profile_url == "https://www.facebook.com/tanvir.hasan.bd"
+
+    rahims = [p for p in participants if p.name == "Md Rahim"]
+    assert len(rahims) == 2
+    assert {r.profile_url for r in rahims} == {
+        "https://www.facebook.com/md.rahim.one",
+        "https://www.facebook.com/md.rahim.two",
+    }
+
 
 
 

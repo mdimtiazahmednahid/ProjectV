@@ -5,7 +5,7 @@ from typing import List, Dict, Optional, Set, Tuple
 from app.models.share_profile import ShareProfile
 from app.utils.contest_validator import IncrementalContestAggregator
 from app.utils.avatar_fingerprint import AvatarFingerprinter, are_avatars_matching, hamming_distance
-from app.utils.url_normalizer import normalize_url
+from app.utils.url_normalizer import normalize_url, extract_canonical_identity_key
 
 logger = logging.getLogger(__name__)
 
@@ -117,6 +117,7 @@ class ProfileSyncEngine:
         Fast O(N) pass that does NOT perform network I/O (network avatar hashing happens in chunked batches).
         """
         by_norm_name: Dict[str, List[ShareProfile]] = {}
+        id_key_to_primary_name: Dict[str, str] = {}
         for p in profiles:
             clean_name = IncrementalContestAggregator._clean_author_name(p.name or "")
             if IncrementalContestAggregator.is_ui_noise_name(clean_name, p.profile_url):
@@ -124,6 +125,12 @@ class ProfileSyncEngine:
             norm_name = clean_name.lower()
             if not norm_name:
                 continue
+            id_key = extract_canonical_identity_key(p.profile_url) if p.profile_url else None
+            if id_key:
+                if id_key in id_key_to_primary_name:
+                    norm_name = id_key_to_primary_name[id_key]
+                else:
+                    id_key_to_primary_name[id_key] = norm_name
             by_norm_name.setdefault(norm_name, []).append(p)
 
         rows: List[SyncCandidateRow] = []
@@ -141,7 +148,7 @@ class ProfileSyncEngine:
                         p.avatar_path = None
                 clean_u = normalize_url(p.profile_url) if p.profile_url else None
                 if clean_u:
-                    u_key = clean_u.lower()
+                    u_key = extract_canonical_identity_key(clean_u) or clean_u.lower()
                     web_clusters.setdefault(u_key, []).append(p)
                 else:
                     # Phone or URL-less record: cluster using identical rules to IncrementalContestAggregator

@@ -13,6 +13,7 @@ from app.utils.advanced_filter_engine import (
     CustomAnalysisRule,
 )
 from app.utils.text_normalizer import normalize_text
+from app.utils.url_normalizer import normalize_url, extract_canonical_identity_key
 from app.exporters.csv_exporter import CSVExporter
 from app.exporters.json_exporter import JSONExporter
 from app.exporters.xlsx_exporter import XLSXExporter
@@ -1105,19 +1106,40 @@ class ResultsPanel(QWidget):
                 QDesktopServices.openUrl(QUrl(txt))
 
     def _ingest_single_profile(self, profile: ShareProfile):
-        raw_key = (
-            (profile.name or "").strip().lower(),
-            (getattr(profile, "action_type", "share") or "share").lower(),
-            (profile.profile_url or "").strip().lower(),
-            (profile.content or "").strip()[:120],
-        )
+        if profile.profile_url:
+            profile.profile_url = normalize_url(profile.profile_url)
+        norm_name = IncrementalContestAggregator._clean_author_name(profile.name or "").lower()
+        act_type = (getattr(profile, "action_type", "share") or "share").lower()
+        id_key = extract_canonical_identity_key(profile.profile_url) if profile.profile_url else ""
+        content_snip = (profile.content or "").strip()[:120]
+
+        raw_key = (norm_name, act_type, id_key or "", content_snip)
         existing = self._raw_dedupe_map.get(raw_key)
+
+        # If previously ingested without URL on an earlier day/pass, upgrade the URL-less record in-place!
+        if existing is None and id_key:
+            no_url_key = (norm_name, act_type, "", content_snip)
+            existing = self._raw_dedupe_map.get(no_url_key)
+            if existing is not None:
+                self._raw_dedupe_map[raw_key] = existing
+
+        # Conversely, if already ingested WITH URL on an earlier day and now seen without URL, reuse existing!
+        if existing is None and not id_key:
+            for k, v in self._raw_dedupe_map.items():
+                if k[0] == norm_name and k[1] == act_type and k[3] == content_snip and k[2]:
+                    existing = v
+                    break
+
         if existing is not None:
-            if not existing.profile_url and profile.profile_url:
+            if profile.profile_url and (not existing.profile_url or "/people/" in existing.profile_url.lower()):
                 existing.profile_url = profile.profile_url
             if not existing.avatar_hash and profile.avatar_hash:
                 existing.avatar_hash = profile.avatar_hash
                 existing.avatar_path = profile.avatar_path
+            if getattr(profile, "last_seen_at", None):
+                existing.last_seen_at = profile.last_seen_at
+            if profile.content and (not existing.content or len(profile.content) > len(existing.content)):
+                existing.content = profile.content
         else:
             self._raw_dedupe_map[raw_key] = profile
             self.profiles.append(profile)

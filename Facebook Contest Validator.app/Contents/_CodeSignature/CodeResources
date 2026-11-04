@@ -90,7 +90,7 @@
 		</data>
 		<key>Resources/app_bundle/app/exporters/lottery_print_exporter.py</key>
 		<data>
-		Iue4Od3eV6nSKZeMA8TyIjz0hK8=
+		xwP7OH0xa5oUFYBCRokrBM2ZjIA=
 		</data>
 		<key>Resources/app_bundle/app/exporters/xlsx_exporter.py</key>
 		<data>
@@ -122,11 +122,11 @@
 		</data>
 		<key>Resources/app_bundle/app/gui/main_window.py</key>
 		<data>
-		mvLnwvXm7o9veGiSRIlKlep4YFc=
+		s5vk05ktQOW8qO93YI316kmsVzY=
 		</data>
 		<key>Resources/app_bundle/app/gui/results_panel.py</key>
 		<data>
-		l1hRe5IukksRbzBpWJblq1x5CP4=
+		UTL1ygRiEOegpg233hT3SpA+v3s=
 		</data>
 		<key>Resources/app_bundle/app/gui/session_manager_dialog.py</key>
 		<data>
@@ -170,7 +170,7 @@
 		</data>
 		<key>Resources/app_bundle/app/utils/contest_validator.py</key>
 		<data>
-		QrIneBbMGSSHQ0leRXeAia0Wxmc=
+		dSPDVSCT8CX7iPCus1a2iUcBYYk=
 		</data>
 		<key>Resources/app_bundle/app/utils/deduplicator.py</key>
 		<data>
@@ -186,7 +186,7 @@
 		</data>
 		<key>Resources/app_bundle/app/utils/profile_sync_engine.py</key>
 		<data>
-		qjNgQNPgy23YykLpFPhj1SjC5EA=
+		4lYqNtB5yyr1CKPWUQTlZoig8QI=
 		</data>
 		<key>Resources/app_bundle/app/utils/text_normalizer.py</key>
 		<data>
@@ -194,7 +194,7 @@
 		</data>
 		<key>Resources/app_bundle/app/utils/url_normalizer.py</key>
 		<data>
-		i1I6m2N6vPJT/qP7zDe3MPS5R2Q=
+		soraRH0tX1xxcTaNnGez/K+NgtE=
 		</data>
 		<key>Resources/app_bundle/bin/macos/adb</key>
 		<data>
@@ -7226,7 +7226,7 @@
 		<dict>
 			<key>hash2</key>
 			<data>
-			u2hljRerNbJ5FLxbE7K/ZP40D3nCu2qA0gLjooNvsPQ=
+			GMUCpHKCzApDrGDw8GUSfqQR4YWa4QmCO4cWwIXMWIo=
 			</data>
 		</dict>
 		<key>Resources/app_bundle/app/exporters/xlsx_exporter.py</key>
@@ -7282,14 +7282,14 @@
 		<dict>
 			<key>hash2</key>
 			<data>
-			2tLQdnPvSgLxsOkC2ZY1jWgfseOiWxlgmdTB3BWflW0=
+			HjFDE0hnxecVjVroMw45ueCZG/aOtOcoxARoD32eWwU=
 			</data>
 		</dict>
 		<key>Resources/app_bundle/app/gui/results_panel.py</key>
 		<dict>
 			<key>hash2</key>
 			<data>
-			M+YEALIVoCm9cIhHFjWP+oeYUYSaHM1uWu492qe9rRs=
+			m/xR9G7NI4XPqeA6gB7XF/yxBy8vQFNlvUmdbrBZ0tQ=
 			</data>
 		</dict>
 		<key>Resources/app_bundle/app/gui/session_manager_dialog.py</key>
@@ -7366,7 +7366,7 @@
 		<dict>
 			<key>hash2</key>
 			<data>
-			wTKqNgZgN1TM0EmnomSHdrF6HoRZcRKMInksqraNQkM=
+			ocuhESAVt5SCY9uaPGj3rOpo1cHLp6nd4C4c+zuZySU=
 			</data>
 		</dict>
 		<key>Resources/app_bundle/app/utils/deduplicator.py</key>
@@ -7394,7 +7394,7 @@
 		<dict>
 			<key>hash2</key>
 			<data>
-			C3V+rgtnQmp+Ag0qFQ6hBO7fhxD0Tzx5tpC+vIG+dgA=
+			z8IFLksJHr8sbyj6wxaq3XxVQPnl8KclyiLwhxFsvoo=
 			</data>
 		</dict>
 		<key>Resources/app_bundle/app/utils/text_normalizer.py</key>
@@ -7408,7 +7408,7 @@
 		<dict>
 			<key>hash2</key>
 			<data>
-			gI1AzMOVzPNhws+EIlegkZZJbMR4lah9bC7zXANdmOo=
+			7Em6vyAmvq5j9B2tucxv/VfQuGlBd+LXE8hB9GRhyP0=
 			</data>
 		</dict>
 		<key>Resources/app_bundle/bin/macos/adb</key>
