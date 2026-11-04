@@ -88,9 +88,27 @@ class MainWindow(QMainWindow):
         self.current_device_scroll_index = 0
         self._db_write_buffer = []
         self._processed_clipboard_batches = set()
+        self._processed_clipboard_batch_order = []
+        self._max_processed_batch_history = 1200
 
         self._setup_ui()
         self._setup_clipboard_bridge()
+
+    def _record_processed_batch_ids(self, batch_ids):
+        if isinstance(batch_ids, str):
+            batch_ids = [batch_ids]
+        for b_id in batch_ids:
+            if not b_id or b_id in self._processed_clipboard_batches:
+                continue
+            self._processed_clipboard_batches.add(b_id)
+            self._processed_clipboard_batch_order.append(b_id)
+        # Scalable FIFO eviction: when processed batch history exceeds limit, wipe out oldest 400 IDs
+        if len(self._processed_clipboard_batch_order) > self._max_processed_batch_history:
+            evict_count = 400
+            old_ids = self._processed_clipboard_batch_order[:evict_count]
+            del self._processed_clipboard_batch_order[:evict_count]
+            for old_id in old_ids:
+                self._processed_clipboard_batches.discard(old_id)
 
     def _retire_thread_safely(self, thread_obj):
         if not thread_obj:
@@ -102,9 +120,9 @@ class MainWindow(QMainWindow):
             )
 
     def _setup_clipboard_bridge(self):
-        # Poll every 1.0s on the Main GUI Thread for Local HTTP Bridge batches & Clipboard batches
+        # Poll every 500ms on the Main GUI Thread for Local HTTP Bridge batches & Rolling Clipboard batches
         self._clipboard_timer = QTimer(self)
-        self._clipboard_timer.setInterval(1000)
+        self._clipboard_timer.setInterval(500)
         self._clipboard_timer.timeout.connect(lambda: self._check_clipboard_for_extension_batch(manual=False))
         self._clipboard_timer.start()
 
@@ -132,7 +150,7 @@ class MainWindow(QMainWindow):
     def _ingest_extension_profiles(self, batch_id: str, profiles: list, manual: bool = False):
         if not profiles:
             return
-        self._processed_clipboard_batches.add(batch_id)
+        self._record_processed_batch_ids(batch_id)
         self._db_write_buffer.extend(profiles)
         self._flush_db_buffer()
         self.results_panel.add_profiles_batch(profiles)
@@ -221,21 +239,42 @@ class MainWindow(QMainWindow):
                 return
 
             session_id = self._ensure_session_id()
-            parsed = BrowserDOMExtractor.parse_clipboard_batch(text, session_id=session_id)
-            if not parsed:
+            parsed_win = BrowserDOMExtractor.parse_clipboard_batches_window(
+                text,
+                session_id=session_id,
+                seen_batch_ids=None if manual else self._processed_clipboard_batches,
+            )
+            if not parsed_win:
                 return
 
-            batch_id, profiles = parsed
-            if batch_id in self._processed_clipboard_batches:
+            new_batch_ids, profiles, total_window_batches = parsed_win
+            if not new_batch_ids:
+                # All batches in the clipboard ring buffer have already been imported!
+                # If the clipboard string is getting large (>= 75 KB), automatically wipe out the consumed batch payload from the OS clipboard so it never stays full.
+                if not manual and len(text) >= 75000:
+                    try:
+                        clipboard.clear()
+                        logger.info("Auto-cleared consumed large batch buffer from system clipboard to free memory.")
+                    except Exception:
+                        pass
                 if manual:
                     QMessageBox.information(
                         self,
                         "Batch Already Imported",
-                        f"Extension batch '{batch_id}' ({len(profiles)} profiles) has already been imported into this session."
+                        f"All {total_window_batches} batch(es) currently on the clipboard have already been imported into this session."
                     )
                 return
 
-            self._ingest_extension_profiles(batch_id, profiles, manual=manual)
+            self._record_processed_batch_ids(new_batch_ids)
+            if profiles:
+                self._ingest_extension_profiles(new_batch_ids[-1], profiles, manual=manual)
+            # If the clipboard payload was large (>= 75 KB), wipe it out right after ingesting so the clipboard stays light
+            if not manual and len(text) >= 75000:
+                try:
+                    clipboard.clear()
+                    logger.info("Auto-cleared ingested large batch buffer from system clipboard.")
+                except Exception:
+                    pass
         except Exception as e:
             logger.error(f"Clipboard batch import error: {e}", exc_info=True)
         finally:

@@ -62,10 +62,13 @@ class LocalBridgeServer:
     and Bookmarklet on Windows & macOS — completely bypassing clipboard focus restrictions!
     """
 
+    MAX_QUEUE_BATCHES = 300
+
     def __init__(self, port: int = DEFAULT_BRIDGE_PORT):
         self.port = port
         self._lock = threading.Lock()
         self._queue: List[str] = []
+        self.evicted_batches_count: int = 0
         self._httpd: ThreadingHTTPServer = None
         self._thread: threading.Thread = None
 
@@ -102,6 +105,11 @@ class LocalBridgeServer:
     def enqueue_batch_str(self, batch_str: str) -> None:
         with self._lock:
             self._queue.append(batch_str)
+            # Scalable ring-buffer guard: if queue exceeds MAX_QUEUE_BATCHES, wipe out oldest batches
+            if len(self._queue) > self.MAX_QUEUE_BATCHES:
+                overflow = len(self._queue) - self.MAX_QUEUE_BATCHES
+                del self._queue[:overflow]
+                self.evicted_batches_count += overflow
 
     def pop_batches(self) -> List[str]:
         with self._lock:

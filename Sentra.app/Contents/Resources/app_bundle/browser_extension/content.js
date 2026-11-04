@@ -32,6 +32,10 @@
 
   const BATCH_PREFIX = "FB_CONTEST_BATCH_V1:";
   const BATCH_FLUSH_SIZE = 1;
+  const MAX_CLIPBOARD_RING_BATCHES = 6;
+  const MAX_CLIPBOARD_ITEMS = 160;
+  const MAX_CLIPBOARD_BYTES = 140000;
+  const MAX_HTTP_CHUNK_ITEMS = 80;
 
   let isRunning = false;
   let activeAction = "like";
@@ -39,6 +43,8 @@
   let emptyScrolls = 0;
   let scrollCount = 0;
   let batchesSent = 0;
+  let clipboardBatchRing = [];
+  let totalBatchesEvicted = 0;
   let lastExtractedElements = [];
   let lockedScrollEl = null;
   let lockedWindowRoot = null;
@@ -641,7 +647,7 @@
   async function trySwitchToAllComments(root) {
     if (switchedToAllComments) return false;
     const scope = root || document.body;
-    const filterButtons = scope.querySelectorAll('div[role="button"], span[role="button"]');
+    const filterButtons = scope.querySelectorAll('div[role="button"], span[role="button"], span[dir="auto"]');
     for (const btn of filterButtons) {
       if (isInsideIgnoredChrome(btn)) continue;
       const txt = cleanText(btn.innerText || btn.textContent).toLowerCase();
@@ -649,10 +655,12 @@
         txt === "most relevant" ||
         txt === "newest" ||
         txt === "সবচেয়ে প্রাসঙ্গিক" ||
+        txt === "সবচেয়ে প্রাসঙ্গিক" ||
         txt === "নতুন"
       ) {
         try {
-          btn.click();
+          const clickTarget = btn.closest('div[role="button"], span[role="button"]') || btn;
+          clickTarget.click();
           switchedToAllComments = true;
           updateUIStatus("Switching comment filter from 'Most relevant' to 'All comments'...");
           await sleep(1100);
@@ -666,7 +674,9 @@
               mTxt.startsWith("all comments ") ||
               mTxt.includes("show all comments, including potential spam") ||
               mTxt === "সব মন্তব্য" ||
-              mTxt.startsWith("সব মন্তব্য ")
+              mTxt.startsWith("সব মন্তব্য ") ||
+              mTxt === "সব কমেন্ট" ||
+              mTxt.startsWith("সব কমেন্ট ")
             ) {
               mi.click();
               await sleep(1800);
@@ -677,7 +687,9 @@
         break;
       }
     }
-    switchedToAllComments = true;
+    if (scrollCount >= 2) {
+      switchedToAllComments = true;
+    }
     return false;
   }
 
@@ -909,7 +921,6 @@
     const avatarUrl = extractAvatarUrlFromContainer(rowEl);
 
     /* 2b. Ensure "See original" ("মূলটি দেখুন") and "See more" ("আরও দেখুন") inside this row are clicked BEFORE reading comment text */
-    let hasActiveSeeOriginal = false;
     const rowBtns = rowEl.querySelectorAll('div[role="button"], span[role="button"], a[role="button"], span[dir="auto"]');
     for (const rb of rowBtns) {
       const rbTxt = cleanText(rb.innerText || rb.textContent).toLowerCase();
@@ -926,27 +937,19 @@
         rbLabel === "hide translation" ||
         rbLabel === "অনুবাদ লুকান"
       ) {
-        hasActiveSeeOriginal = true;
-        try {
-          const clickTarget = rb.closest('div[role="button"], span[role="button"], a[role="button"]') || rb;
-          clickTarget.click();
-          rb.dataset.fbOriginalClicked = "1";
-        } catch (e) {}
+        if (rb.dataset.fbOriginalClicked !== "1") {
+          try {
+            const clickTarget = rb.closest('div[role="button"], span[role="button"], a[role="button"]') || rb;
+            clickTarget.click();
+            rb.dataset.fbOriginalClicked = "1";
+          } catch (e) {}
+        }
       } else if ((/^see\s+more$/i.test(rbLabel) || rbLabel === "আরও দেখুন") && rb.dataset.fbExpandClicked !== "1") {
         try {
           const clickTarget = rb.closest('div[role="button"], span[role="button"], a[role="button"]') || rb;
           clickTarget.click();
           rb.dataset.fbExpandClicked = "1";
         } catch (e) {}
-      }
-    }
-
-    if (hasActiveSeeOriginal) {
-      const waits = Number(rowEl.dataset.fbWaitOriginalCount || "0") + 1;
-      rowEl.dataset.fbWaitOriginalCount = String(waits);
-      if (waits <= 2) {
-        /* Wait for Facebook React DOM to replace the English translation with the exact original comment on the next pass */
-        return null;
       }
     }
 
@@ -1027,7 +1030,7 @@
 
     /* Engine A: Walk up from every leaf "Reply" node while countLeafReplyNodes === 1 */
     const allSpansAndBtns = Array.from(
-      root.querySelectorAll("span:not([data-fb-scraped='1']), div[role='button']:not([data-fb-scraped='1'])")
+      root.querySelectorAll("span, div[role='button']")
     );
     for (const node of allSpansAndBtns) {
       if (node.children.length > 0) continue;
@@ -1049,16 +1052,13 @@
       if (bestCommentRow && !processedRows.has(bestCommentRow)) {
         const item = extractCommentFromSingleRowContainer(bestCommentRow, modalOwnerNameLower);
         if (item) {
-          if (item.url && item.content) {
-            node.dataset.fbScraped = "1";
-          }
           recordComment(item, bestCommentRow);
         }
       }
     }
 
     /* Engine B: Anchor-First <a href> scan (same mechanism that works for Likes!) */
-    const allLinks = Array.from(root.querySelectorAll("a[href]:not([data-fb-scraped='1'])"));
+    const allLinks = Array.from(root.querySelectorAll("a[href]"));
     for (const a of allLinks) {
       if (isInsideIgnoredChrome(a)) continue;
       if (a.closest('[role="tab"], [role="tablist"]')) continue;
@@ -1083,6 +1083,9 @@
         let hasDifferentPerson = false;
         for (const oa of otherAnchors) {
           if (oa === a) continue;
+          /* Ignore @mention links inside a comment text block (div[dir="auto"]) so @tagging friends doesn't break the row! */
+          const oaDirBlock = oa.closest('div[dir="auto"]');
+          if (oaDirBlock && !oaDirBlock.contains(a)) continue;
           const oaUrl = cleanProfileUrl(oa.getAttribute("href") || oa.href);
           if (oaUrl && oaUrl.toLowerCase() !== cUrl.toLowerCase()) {
             hasDifferentPerson = true;
@@ -1130,7 +1133,7 @@
   function extractLikesFromDialog(likeDialog) {
     const found = [];
     triggerHoverHydration(likeDialog);
-    const links = Array.from(likeDialog.querySelectorAll("a[href]:not([data-fb-scraped='1'])"));
+    const links = Array.from(likeDialog.querySelectorAll("a[href]"));
     const urlToRecord = new Map();
     const orderedUrls = [];
 
@@ -1546,15 +1549,19 @@
       if (!idKey) continue;
       if (actionType === "comment" && item.content) {
         const hasNonAscii = /[^\x00-\x7F]/.test(item.content);
-        /* If an earlier pass captured a truncated prefix or an ASCII-only translation for this same author, replace it with the original/expanded comment */
+        /* If an earlier pass captured an empty comment, a truncated prefix, or an ASCII-only translation for this same author, replace it with the original/expanded comment */
         for (const [existingKey, existingItem] of Array.from(targetMap.entries())) {
           if (!existingKey.startsWith(`${idKey}|`)) continue;
           const oldContent = (existingItem.content || "").trim();
-          if (!oldContent || oldContent === item.content) continue;
+          if (oldContent === item.content) continue;
+          const isReplacingEmpty = !oldContent && item.content.length > 0;
           const oldPrefix = oldContent.replace(/[.…\s]+$/, "").trim();
-          const isExpandedOfOld = oldPrefix.length >= 8 && item.content.startsWith(oldPrefix) && item.content.length > oldContent.length;
-          const isOriginalReplacingTranslated = hasNonAscii && !/[^\x00-\x7F]/.test(oldContent);
-          if (isExpandedOfOld || isOriginalReplacingTranslated) {
+          const isExpandedOfOld =
+            oldPrefix.length >= 6 &&
+            item.content.startsWith(oldPrefix) &&
+            item.content.length > oldContent.length;
+          const isOriginalReplacingTranslated = hasNonAscii && oldContent && !/[^\x00-\x7F]/.test(oldContent);
+          if (isReplacingEmpty || isExpandedOfOld || isOriginalReplacingTranslated) {
             targetMap.delete(existingKey);
           }
         }
@@ -1776,16 +1783,7 @@
     return false;
   }
 
-  function copyBatchToClipboard(items, actionLabel = "mixed") {
-    if (!items || items.length === 0) return false;
-    const payloadObj = {
-      batch_id: `${Date.now()}_${Math.random().toString(36).slice(2, 8)}`,
-      action_type: actionLabel,
-      timestamp: new Date().toISOString(),
-      items: items
-    };
-    const payloadStr = BATCH_PREFIX + JSON.stringify(payloadObj);
-
+  function postSingleBatchOverHttpBridge(payloadStr) {
     /* Channel 1: Direct Chrome Extension Background Service Worker -> Desktop App HTTP Bridge (100% immune to focus loss!) */
     try {
       if (typeof chrome !== "undefined" && chrome.runtime && chrome.runtime.sendMessage) {
@@ -1796,16 +1794,19 @@
     } catch (e) {}
 
     /* Channel 2: Direct localhost HTTP POST (for Bookmarklet / direct browser mode) */
-    try {
-      fetch("http://127.0.0.1:19876/batch", {
-        method: "POST",
-        mode: "cors",
-        headers: { "Content-Type": "text/plain;charset=UTF-8" },
-        body: payloadStr
-      }).catch(() => {});
-    } catch (e) {}
+    for (const port of [19876, 19877, 19878]) {
+      try {
+        fetch(`http://127.0.0.1:${port}/batch`, {
+          method: "POST",
+          mode: "cors",
+          headers: { "Content-Type": "text/plain;charset=UTF-8" },
+          body: payloadStr
+        }).catch(() => {});
+      } catch (e) {}
+    }
+  }
 
-    /* Channel 3: System Clipboard backup */
+  function writeTextToSystemClipboard(payloadStr) {
     const fallbackCopy = () => {
       try {
         const host = document.getElementById("fb-contest-ext-panel") || document.body;
@@ -1829,9 +1830,78 @@
     } else {
       fallbackCopy();
     }
+  }
+
+  function copyBatchToClipboard(items, actionLabel = "mixed") {
+    if (!items || items.length === 0) return false;
+
+    /* 1. Chunk large arrays (e.g. Copy All on 2,000+ items) into HTTP Bridge chunks so no payload ever exceeds buffer limits */
+    let lastChunkBatchId = "";
+    for (let offset = 0; offset < items.length; offset += MAX_HTTP_CHUNK_ITEMS) {
+      const slice = items.slice(offset, offset + MAX_HTTP_CHUNK_ITEMS);
+      const bId = `${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
+      lastChunkBatchId = bId;
+      const singlePayloadObj = {
+        batch_id: bId,
+        action_type: actionLabel,
+        timestamp: new Date().toISOString(),
+        items: slice
+      };
+      postSingleBatchOverHttpBridge(BATCH_PREFIX + JSON.stringify(singlePayloadObj));
+
+      /* 2. Push into Rolling Clipboard Ring Buffer & automatically wipe out old batches when clipboard approaches capacity */
+      clipboardBatchRing.push({
+        batch_id: bId,
+        action_type: actionLabel,
+        items: slice
+      });
+    }
+
+    /* Evict oldest batches when ring exceeds MAX_CLIPBOARD_RING_BATCHES or MAX_CLIPBOARD_ITEMS */
+    while (clipboardBatchRing.length > MAX_CLIPBOARD_RING_BATCHES) {
+      clipboardBatchRing.shift();
+      totalBatchesEvicted += 1;
+    }
+    let totalRingItems = clipboardBatchRing.reduce((acc, b) => acc + b.items.length, 0);
+    while (clipboardBatchRing.length > 1 && totalRingItems > MAX_CLIPBOARD_ITEMS) {
+      const removed = clipboardBatchRing.shift();
+      totalRingItems -= removed ? removed.items.length : 0;
+      totalBatchesEvicted += 1;
+    }
+
+    const buildRollingClipboardString = () => {
+      const ringIds = clipboardBatchRing.map((b) => b.batch_id);
+      const mergedItems = [];
+      for (const b of clipboardBatchRing) {
+        for (const it of b.items) {
+          mergedItems.push(it);
+        }
+      }
+      const rollingObj = {
+        batch_id: lastChunkBatchId || ringIds[ringIds.length - 1] || `${Date.now()}`,
+        batch_ids: ringIds,
+        batches: clipboardBatchRing,
+        evicted_batches: totalBatchesEvicted,
+        action_type: actionLabel,
+        timestamp: new Date().toISOString(),
+        items: mergedItems
+      };
+      return BATCH_PREFIX + JSON.stringify(rollingObj);
+    };
+
+    let clipboardStr = buildRollingClipboardString();
+    /* Byte-cap guard: if long comments make the clipboard JSON exceed MAX_CLIPBOARD_BYTES, wipe out older batches until compact */
+    while (clipboardStr.length > MAX_CLIPBOARD_BYTES && clipboardBatchRing.length > 1) {
+      clipboardBatchRing.shift();
+      totalBatchesEvicted += 1;
+      clipboardStr = buildRollingClipboardString();
+    }
+
+    writeTextToSystemClipboard(clipboardStr);
 
     batchesSent += 1;
-    updateUIStatus(`Synced batch #${batchesSent} (${items.length} items) to Desktop App!`);
+    const evictedNote = totalBatchesEvicted > 0 ? ` [Auto-pruned ${totalBatchesEvicted} old batches]` : "";
+    updateUIStatus(`Synced batch #${batchesSent} (${items.length} items) to Sentra!${evictedNote}`);
     return true;
   }
 
@@ -2006,10 +2076,12 @@
     store.comment.clear();
     store.share.clear();
     unsentBatch = [];
+    clipboardBatchRing = [];
+    totalBatchesEvicted = 0;
     batchesSent = 0;
     document.querySelectorAll("[data-fb-scraped]").forEach((el) => el.removeAttribute("data-fb-scraped"));
     updateUICounters();
-    updateUIStatus("Cleared all counts.");
+    updateUIStatus("Cleared all counts & clipboard ring buffer.");
   }
 
   function createFloatingPanel() {

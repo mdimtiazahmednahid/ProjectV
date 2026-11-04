@@ -66,11 +66,14 @@ class CollectorEngine(QThread):
                 logger.error("Failed to scroll to top.")
 
         max_scrolls = self.config.get("collector.max_scrolls", 500)
-        max_no_new_results = self.config.get("collector.max_no_new_results", 3)
+        base_max_no_new = self.config.get("collector.max_no_new_results", 3)
+        max_no_new_results = max(base_max_no_new, 5) if self.action_type == "comment" else base_max_no_new
 
         scrolls = 0
         empty_passes = 0
         auto_retries_used = 0
+        switched_to_all_comments = False
+        seen_engine_keys = set()
 
         last_xml_source = ""
 
@@ -90,6 +93,25 @@ class CollectorEngine(QThread):
                     self.error_occurred.emit("Facebook is not in the foreground on the connected device.")
                     self.stop()
                     break
+
+                # 2b. On first pass of Comments, switch filter from 'Most relevant' to 'All comments' if visible
+                if self.action_type == "comment" and not switched_to_all_comments and xml_source and hasattr(driver, "tap"):
+                    switched_to_all_comments = True
+                    filter_xy = ProfileExtractor.find_comment_filter_tap_coords(xml_source)
+                    if filter_xy:
+                        logger.info(f"Switching Android comment filter from 'Most relevant' at {filter_xy} to 'All comments'...")
+                        self.status_updated.emit("SWITCHING TO ALL COMMENTS...")
+                        try:
+                            driver.tap(filter_xy[0], filter_xy[1])
+                            time.sleep(1.3)
+                            menu_xml = UIInspector.get_page_source(driver) or ""
+                            all_comm_xy = ProfileExtractor.find_all_comments_menu_tap_coords(menu_xml)
+                            if all_comm_xy:
+                                driver.tap(all_comm_xy[0], all_comm_xy[1])
+                                time.sleep(1.8)
+                                xml_source = UIInspector.get_page_source(driver) or xml_source
+                        except Exception as e:
+                            logger.debug(f"Comment filter switch skipped: {e}")
 
                 if not xml_source or xml_source == last_xml_source:
                     # Before counting an empty pass on Comments, check if there's a 'View more comments' button to tap
@@ -120,10 +142,10 @@ class CollectorEngine(QThread):
                 # 3. Extract
                 new_this_pass = 0
                 if xml_source and xml_source != last_xml_source:
-                    if self.action_type == "comment" and hasattr(driver, "tap"):
+                    if self.action_type in ("comment", "share") and hasattr(driver, "tap"):
                         see_orig_coords = ProfileExtractor.find_see_original_tap_coords(xml_source)
                         if see_orig_coords:
-                            logger.info(f"Tapping {len(see_orig_coords)} 'See original' button(s) to restore original comment text...")
+                            logger.info(f"Tapping {len(see_orig_coords)} 'See original'/'See more' button(s) to reveal full text...")
                             for ox, oy in see_orig_coords[:5]:
                                 try:
                                     driver.tap(ox, oy)
@@ -158,8 +180,15 @@ class CollectorEngine(QThread):
                     for candidate in candidates:
                         candidate.scroll_index = scrolls
                         self.profile_found.emit(candidate)
-                        self.session.total_profiles += 1
-                        new_this_pass += 1
+                        cand_key = (
+                            (candidate.name or "").strip().lower(),
+                            candidate.action_type,
+                            (candidate.content or "").strip()[:80].lower(),
+                        )
+                        if cand_key not in seen_engine_keys:
+                            seen_engine_keys.add(cand_key)
+                            self.session.total_profiles += 1
+                            new_this_pass += 1
 
                         if self.auto_save:
                             self.profiles_since_last_save += 1
@@ -167,9 +196,23 @@ class CollectorEngine(QThread):
                                 self.auto_save_requested.emit()
                                 self.profiles_since_last_save = 0
 
-                    if new_this_pass > 0:
-                        empty_passes = 0
-                        auto_retries_used = 0
+                    # If collecting comments and a 'View more comments' / 'View previous comments' button is visible, tap it proactively!
+                    if self.action_type == "comment" and hasattr(driver, "tap"):
+                        tap_xy = ProfileExtractor.find_expand_comments_tap_coords(xml_source)
+                        if tap_xy:
+                            logger.info(f"Proactively tapping 'View more comments' at {tap_xy}...")
+                            self.status_updated.emit("EXPANDING MORE COMMENTS...")
+                            try:
+                                driver.tap(tap_xy[0], tap_xy[1])
+                                time.sleep(1.8)
+                                empty_passes = 0
+                            except Exception:
+                                pass
+
+                    if new_this_pass > 0 or len(candidates) > 0:
+                        empty_passes = 0 if new_this_pass > 0 else empty_passes + 1
+                        if new_this_pass > 0:
+                            auto_retries_used = 0
                     else:
                         empty_passes += 1
 

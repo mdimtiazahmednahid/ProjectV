@@ -16,6 +16,10 @@ class ProfileExtractor:
         r"^(?:profile\s+(?:picture|photo)\s+of\s+(.+?)|(.+?)(?:'s|\u2019s)?\s+profile\s+(?:picture|photo)(?:,\s*.*)?)$",
         re.IGNORECASE,
     )
+    COMMENT_ACTION_AUTHOR_RE = re.compile(
+        r"^(?:reply\s+to|more\s+options\s+for|like|react\s+to|upvote|downvote)\s+(.+?)(?:'s|\u2019s)\s+(?:comment|reply)\b",
+        re.IGNORECASE,
+    )
     REACTION_SUFFIX_RE = re.compile(
         r"(?:\s*[,·•]\s*|\s+)(?:Liked|Loved|Cared|Haha|Wow|Sad|Angry)\.?$",
         re.IGNORECASE,
@@ -141,11 +145,79 @@ class ProfileExtractor:
         return [chosen_c], chosen_b, chosen_kind
 
     @staticmethod
+    def find_comment_filter_tap_coords(xml_source: str) -> Optional[Tuple[int, int]]:
+        """
+        Finds the 'Most relevant' / 'Newest' ('সবচেয়ে প্রাসঙ্গিক' / 'নতুন') comment filter dropdown
+        on Android Facebook so CollectorEngine can switch it to 'All comments' ('সব কমেন্ট' / 'সব মন্তব্য').
+        """
+        if not xml_source:
+            return None
+        try:
+            root = ET.fromstring(xml_source)
+        except Exception:
+            return None
+
+        for el in root.iter():
+            t = (el.attrib.get("text") or "").strip().lower()
+            c = (el.attrib.get("content-desc") or "").strip().lower()
+            for label in (t, c):
+                if not label:
+                    continue
+                if (
+                    label in ("most relevant", "newest", "সবচেয়ে প্রাসঙ্গিক", "সবচেয়ে প্রাসঙ্গিক", "নতুন")
+                    or label.startswith("most relevant ")
+                    or label.startswith("সবচেয়ে প্রাসঙ্গিক")
+                    or label.startswith("সবচেয়ে প্রাসঙ্গিক")
+                ):
+                    b = parse_bounds(el.attrib.get("bounds", ""))
+                    if b:
+                        x, y, w, h = b
+                        if w > 20 and h > 14 and 100 < y < 2100:
+                            return (x + w // 2, y + h // 2)
+        return None
+
+    @staticmethod
+    def find_all_comments_menu_tap_coords(xml_source: str) -> Optional[Tuple[int, int]]:
+        """
+        Finds the 'All comments' ('সব কমেন্ট' / 'সব মন্তব্য' / 'Show all comments, including potential spam')
+        option in the Android bottom-sheet menu after tapping 'Most relevant'.
+        """
+        if not xml_source:
+            return None
+        try:
+            root = ET.fromstring(xml_source)
+        except Exception:
+            return None
+
+        for el in root.iter():
+            t = (el.attrib.get("text") or "").strip().lower()
+            c = (el.attrib.get("content-desc") or "").strip().lower()
+            for label in (t, c):
+                if not label:
+                    continue
+                if (
+                    label == "all comments"
+                    or label.startswith("all comments\n")
+                    or label.startswith("all comments ")
+                    or "show all comments, including potential spam" in label
+                    or label in ("সব কমেন্ট", "সব মন্তব্য")
+                    or label.startswith("সব কমেন্ট")
+                    or label.startswith("সব মন্তব্য")
+                ):
+                    b = parse_bounds(el.attrib.get("bounds", ""))
+                    if b:
+                        x, y, w, h = b
+                        if w > 20 and h > 14:
+                            return (x + w // 2, y + h // 2)
+        return None
+
+    @staticmethod
     def find_see_original_tap_coords(xml_source: str) -> List[Tuple[int, int]]:
         """
-        Finds all visible 'See original' ('মূলটি দেখুন') or 'Hide translation' ('অনুবাদ লুকান')
-        buttons on the Android screen so CollectorEngine can tap them to restore exact original comment text
-        before extracting comments. Never taps 'See translation'.
+        Finds all visible 'See original' ('মূলটি দেখুন'), 'Hide translation' ('অনুবাদ লুকান'),
+        or 'See more' ('আরও দেখুন') buttons on the Android screen so CollectorEngine can tap them
+        to restore exact original/expanded comment text before extracting comments.
+        Never taps 'See translation'.
         """
         coords: List[Tuple[int, int]] = []
         if not xml_source:
@@ -167,7 +239,14 @@ class ProfileExtractor:
                 label == "see original"
                 or label.startswith("see original ")
                 or label.startswith("see original(")
-                or label in ("মূলটি দেখুন", "মূল লেখাটি দেখুন", "hide translation", "অনুবাদ লুকান")
+                or label in (
+                    "মূলটি দেখুন",
+                    "মূল লেখাটি দেখুন",
+                    "hide translation",
+                    "অনুবাদ লুকান",
+                    "see more",
+                    "আরও দেখুন",
+                )
             ):
                 b = parse_bounds(el.attrib.get("bounds", ""))
                 if b:
@@ -182,7 +261,7 @@ class ProfileExtractor:
     def find_expand_comments_tap_coords(xml_source: str) -> Optional[Tuple[int, int]]:
         """
         Finds the screen center `(x, y)` of a 'View more comments' / 'View previous comments' /
-        'See more replies' button in Android XML so CollectorEngine can tap it automatically.
+        'See more comments' / 'See more replies' button in Android XML so CollectorEngine can tap it automatically.
         """
         if not xml_source:
             return None
@@ -200,7 +279,16 @@ class ProfileExtractor:
             if (
                 label.startswith("view more comments")
                 or label.startswith("view previous comments")
-                or re.match(r"^view\s+\d+\s+more\s+(?:comments?|replies)", label)
+                or label.startswith("see more comments")
+                or label.startswith("see previous comments")
+                or label.startswith("view more replies")
+                or label.startswith("view previous replies")
+                or label.startswith("see more replies")
+                or "আরও কমেন্ট দেখুন" in label
+                or "আরও মন্তব্য দেখুন" in label
+                or "পূর্ববর্তী কমেন্ট" in label
+                or "পূর্ববর্তী মন্তব্য" in label
+                or re.match(r"^(?:view|see)\s+\d+\s+(?:more|previous)\s+(?:comments?|replies)", label)
                 or re.match(r"^\d+\s+replies$", label)
             ):
                 b = parse_bounds(el.attrib.get("bounds", ""))
@@ -323,10 +411,38 @@ class ProfileExtractor:
             while len(rows) == 1 and len(rows[0].findall("./*")) >= 2:
                 rows = rows[0].findall("./*")
 
+            # If a child ViewGroup wraps multiple distinct comments (e.g. a comments section wrapper inside a ScrollView), unwrap it
+            if action_type == "comment":
+                expanded_rows = []
+                for r in rows:
+                    children = r.findall("./*")
+                    if len(children) >= 2:
+                        pic_or_reply_children = 0
+                        for ch in children:
+                            ch_blob = " ".join(
+                                ((el.attrib.get("content-desc") or "") + " " + (el.attrib.get("text") or "")).lower()
+                                for el in ch.iter()
+                            )
+                            if (
+                                "profile picture" in ch_blob
+                                or "profile photo" in ch_blob
+                                or "reply to " in ch_blob
+                                or "\n" in ch_blob
+                            ):
+                                pic_or_reply_children += 1
+                        if pic_or_reply_children >= 2:
+                            expanded_rows.extend(children)
+                            continue
+                    expanded_rows.append(r)
+                rows = expanded_rows
+
             for item in rows:
                 all_strings = []
                 has_clickable_or_heading = False
                 has_multiline_block = False
+                non_noise_text_nodes = []
+                action_author_hint = None
+
                 for el in item.iter():
                     if el.attrib.get("heading") == "true" or el.attrib.get("clickable") == "true":
                         t_check = (el.attrib.get("text") or el.attrib.get("content-desc") or "").strip()
@@ -338,11 +454,21 @@ class ProfileExtractor:
                             all_strings.append(v)
                             if "\n" in v:
                                 has_multiline_block = True
+                            if not action_author_hint:
+                                m_act = self.COMMENT_ACTION_AUTHOR_RE.match(v)
+                                if m_act:
+                                    cand_hint = _clean_candidate_name(m_act.group(1).strip())
+                                    if self._has_letters(cand_hint):
+                                        action_author_hint = cand_hint
+                            if not self.PROFILE_PIC_DESC_RE.match(v) and not _is_noise_line(v):
+                                non_noise_text_nodes.append(v)
 
                 joined_lower = " | ".join(all_strings).lower()
 
-                # Skip original post/reel media preview cards or page bio cards
-                if "pinned post" in joined_lower or "more options for " in joined_lower or "contact info" in joined_lower:
+                # Skip original post/reel media preview cards or page bio cards (never skip a comment that has "more options for X's comment")
+                if "pinned post" in joined_lower or "contact info" in joined_lower:
+                    continue
+                if "more options for " in joined_lower and action_type != "comment" and "comment" not in joined_lower:
                     continue
 
                 if action_type == "share":
@@ -389,14 +515,19 @@ class ProfileExtractor:
 
                 # If collecting comments on a real Facebook screen and the top of the comment
                 # was scrolled off-screen (so only "Reply to X's comment" / "Like X's comment" is visible
-                # with NO avatar, NO heading/clickable name, and NO multiline author+comment block),
-                # skip this cut-off fragment so comment text or buttons aren't mistaken for a user name!
+                # with NO avatar, NO heading/clickable name, NO multiline author+comment block,
+                # and fewer than 2 non-noise text nodes), skip this cut-off fragment!
+                has_two_valid_nodes = (
+                    len(non_noise_text_nodes) >= 2
+                    and self._has_letters(_clean_candidate_name(non_noise_text_nodes[0]))
+                )
                 if (
                     action_type == "comment"
                     and not has_explicit_profile_pic_node
                     and not avatar_bounds
                     and not has_clickable_or_heading
                     and not has_multiline_block
+                    and not has_two_valid_nodes
                 ):
                     if "reply to " in joined_lower or "comment button" in joined_lower or "downvote " in joined_lower:
                         continue

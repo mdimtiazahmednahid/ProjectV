@@ -729,6 +729,75 @@ class BrowserDOMExtractor:
         return batch_id, profiles
 
     @classmethod
+    def parse_clipboard_batches_window(
+        cls,
+        clipboard_text: str,
+        session_id: str,
+        seen_batch_ids: Optional[set] = None,
+    ) -> Optional[Tuple[List[str], List[ShareProfile], int]]:
+        """
+        Parses either a single `FB_CONTEST_BATCH_V1:{...}` batch or a rolling ring-buffer
+        clipboard payload containing `batches: [{batch_id, action_type, items}, ...]`.
+        Filters out any sub-batch already present in `seen_batch_ids` so only unseen
+        batches are parsed and returned.
+        Returns `(new_batch_ids, new_profiles, total_batches_in_window)` or `None`.
+        """
+        if not clipboard_text:
+            return None
+
+        stripped = clipboard_text.strip()
+        if not stripped.startswith(CLIPBOARD_BATCH_PREFIX):
+            return None
+
+        json_part = stripped[len(CLIPBOARD_BATCH_PREFIX):].strip()
+        try:
+            payload = json.loads(json_part)
+        except Exception as e:
+            logger.warning(f"Failed to parse extension clipboard JSON batch: {e}")
+            return None
+
+        if not isinstance(payload, dict):
+            return None
+
+        seen = seen_batch_ids if seen_batch_ids is not None else set()
+        sub_batches = payload.get("batches")
+        if isinstance(sub_batches, list) and sub_batches:
+            new_batch_ids: List[str] = []
+            combined_profiles: List[ShareProfile] = []
+            for sb in sub_batches:
+                if not isinstance(sb, dict):
+                    continue
+                b_id = str(sb.get("batch_id") or "").strip()
+                if not b_id or b_id in seen:
+                    continue
+                b_action = str(sb.get("action_type") or payload.get("action_type") or "share").lower()
+                b_items = sb.get("items") or []
+                profs = cls.parse_dom_items(
+                    raw_items=b_items,
+                    session_id=session_id,
+                    action_type=b_action,
+                    scroll_index=0,
+                )
+                new_batch_ids.append(b_id)
+                combined_profiles.extend(profs)
+            return new_batch_ids, combined_profiles, len(sub_batches)
+
+        # Single-batch payload fallback
+        batch_id = str(payload.get("batch_id") or "").strip()
+        if not batch_id or batch_id in seen:
+            return [], [], 1
+
+        default_action = str(payload.get("action_type") or "share").lower()
+        raw_items = payload.get("items") or []
+        profiles = cls.parse_dom_items(
+            raw_items=raw_items,
+            session_id=session_id,
+            action_type=default_action,
+            scroll_index=0,
+        )
+        return [batch_id], profiles, 1
+
+    @classmethod
     def generate_bookmarklet_page(cls) -> str:
         """
         Compiles `browser_extension/content.js` into a single-click `javascript:...`

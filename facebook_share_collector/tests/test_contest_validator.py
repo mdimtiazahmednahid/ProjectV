@@ -1673,5 +1673,120 @@ def test_share_types_with_shared_caption_and_post_url(tmp_path):
     assert "সঠিক : খাই চিনা বাদাম।" in csv_text
 
 
+def test_device_comments_and_scalable_rolling_clipboard():
+    """
+    Verifies:
+      1. Android Device Comments:
+         - Extracts comments even when rows contain 'More options for <Author>\\'s comment'
+           or Litho single-line nodes without clickable='true' or ImageView.
+         - Unwraps nested comment section ViewGroups inside a ScrollView.
+         - Detects 'Most relevant' / 'সবচেয়ে প্রাসঙ্গিক' filter and 'All comments' / 'সব কমেন্ট' menu coords.
+      2. Scalable Rolling Clipboard Ring Buffer & Bridge Queue:
+         - `BrowserDOMExtractor.parse_clipboard_batches_window` skips already-ingested batches in `seen_batch_ids`
+           and extracts only newly added batches from the rolling clipboard window.
+         - `LocalBridgeServer` automatically evicts oldest batches when `MAX_QUEUE_BATCHES` is exceeded.
+    """
+    import json
+    from app.automation.profile_extractor import ProfileExtractor
+    from app.automation.browser_dom_extractor import BrowserDOMExtractor, CLIPBOARD_BATCH_PREFIX
+    from app.automation.local_bridge_server import LocalBridgeServer
+
+    device_comments_xml = """<?xml version="1.0" encoding="UTF-8"?>
+    <hierarchy rotation="0">
+      <android.widget.ScrollView scrollable="true" bounds="[0,200][1080,2200]">
+        <!-- Post Header Child 0 -->
+        <android.view.ViewGroup bounds="[0,200][1080,350]">
+          <android.widget.Button text="Most relevant" bounds="[40,280][340,330]" />
+        </android.view.ViewGroup>
+        <!-- Comments Section Wrapper Child 1 (wrapping 2 distinct comment rows) -->
+        <android.view.ViewGroup bounds="[0,360][1080,1200]">
+          <!-- Comment A: Has 'More options for ...'s comment' -->
+          <android.view.ViewGroup bounds="[0,370][1080,620]">
+            <android.widget.Button content-desc="Raisa Islam profile picture" bounds="[36,380][126,470]" />
+            <android.view.ViewGroup text="Raisa Islam" bounds="[140,380][500,430]" />
+            <android.view.ViewGroup text="উত্তর: চিনা বাদাম #Vejalnai" bounds="[140,435][980,520]" />
+            <android.widget.Button content-desc="More options for Raisa Islam's comment" bounds="[980,380][1050,440]" />
+            <android.widget.Button content-desc="Reply to Raisa's comment" bounds="[140,530][280,580]" />
+          </android.view.ViewGroup>
+          <!-- Comment B: Litho single-line nodes without clickable='true' or ImageView -->
+          <android.view.ViewGroup bounds="[0,640][1080,900]">
+            <android.view.ViewGroup text="Shuvo Kumar Shill" bounds="[140,650][540,700]" />
+            <android.view.ViewGroup text="সঠিক উত্তর চিনা বাদাম" bounds="[140,705][980,790]" />
+            <android.widget.Button content-desc="Reply to Shuvo's comment" bounds="[140,800][280,850]" />
+          </android.view.ViewGroup>
+        </android.view.ViewGroup>
+      </android.widget.ScrollView>
+    </hierarchy>
+    """
+    filter_xy = ProfileExtractor.find_comment_filter_tap_coords(device_comments_xml)
+    assert filter_xy == (190, 305)
+
+    menu_xml = """<?xml version="1.0" encoding="UTF-8"?>
+    <hierarchy rotation="0">
+      <android.view.ViewGroup text="সব কমেন্ট" bounds="[80,1400][980,1520]" />
+    </hierarchy>
+    """
+    assert ProfileExtractor.find_all_comments_menu_tap_coords(menu_xml) == (530, 1460)
+
+    extractor = ProfileExtractor(min_confidence=0.6)
+    extracted = extractor.extract(device_comments_xml, session_id="s_dev", action_type="comment")
+    assert len(extracted) == 2
+    by_name = {p.name: p.content for p in extracted}
+    assert "Raisa Islam" in by_name
+    assert "চিনা বাদাম" in by_name["Raisa Islam"]
+    assert "Shuvo Kumar Shill" in by_name
+    assert "সঠিক উত্তর চিনা বাদাম" in by_name["Shuvo Kumar Shill"]
+
+    # Scalable rolling clipboard window test
+    rolling_payload = {
+        "batch_id": "b_3",
+        "batch_ids": ["b_1", "b_2", "b_3"],
+        "batches": [
+            {
+                "batch_id": "b_1",
+                "action_type": "comment",
+                "items": [{"name": "User One", "url": "https://www.facebook.com/u1", "content": "Ans 1"}],
+            },
+            {
+                "batch_id": "b_2",
+                "action_type": "comment",
+                "items": [{"name": "User Two", "url": "https://www.facebook.com/u2", "content": "Ans 2"}],
+            },
+            {
+                "batch_id": "b_3",
+                "action_type": "comment",
+                "items": [{"name": "User Three", "url": "https://www.facebook.com/u3", "content": "Ans 3"}],
+            },
+        ],
+        "evicted_batches": 5,
+        "action_type": "comment",
+        "items": [
+            {"name": "User One", "url": "https://www.facebook.com/u1", "content": "Ans 1"},
+            {"name": "User Two", "url": "https://www.facebook.com/u2", "content": "Ans 2"},
+            {"name": "User Three", "url": "https://www.facebook.com/u3", "content": "Ans 3"},
+        ],
+    }
+    clipboard_str = CLIPBOARD_BATCH_PREFIX + json.dumps(rolling_payload)
+    seen = {"b_1", "b_2"}
+    res = BrowserDOMExtractor.parse_clipboard_batches_window(clipboard_str, session_id="s_roll", seen_batch_ids=seen)
+    assert res is not None
+    new_ids, new_profs, total_win = res
+    assert total_win == 3
+    assert new_ids == ["b_3"]
+    assert len(new_profs) == 1
+    assert new_profs[0].name == "User Three"
+
+    # LocalBridgeServer queue eviction test
+    bridge = LocalBridgeServer()
+    for i in range(LocalBridgeServer.MAX_QUEUE_BATCHES + 25):
+        bridge.enqueue_batch_str(f"batch_{i}")
+    popped = bridge.pop_batches()
+    assert len(popped) == LocalBridgeServer.MAX_QUEUE_BATCHES
+    assert bridge.evicted_batches_count == 25
+    assert popped[0] == "batch_25"
+    assert popped[-1] == f"batch_{LocalBridgeServer.MAX_QUEUE_BATCHES + 24}"
+
+
+
 
 
