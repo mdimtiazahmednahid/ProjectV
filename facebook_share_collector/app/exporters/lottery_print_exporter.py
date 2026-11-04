@@ -34,8 +34,9 @@ class LotteryPrintExporter:
             if os.path.dirname(output_path):
                 os.makedirs(os.path.dirname(output_path), exist_ok=True)
 
-            # Filter to eligible (3/3) participants first; if none are eligible yet, include provided list
-            eligible = [p for p in participants if p.is_eligible]
+            # Filter to qualified participants with assigned serial numbers first (or 3/3 eligible); if none, include provided list
+            qualified_serial = [p for p in participants if p.serial_number is not None]
+            eligible = qualified_serial or [p for p in participants if p.is_eligible]
             target_list = eligible if eligible else participants
 
             # Ensure sequential serial numbers (#0001, #0002, ...)
@@ -51,7 +52,7 @@ class LotteryPrintExporter:
             for p in target_list:
                 serial_str = f"#{p.serial_number:04d}"
                 safe_name = html.escape(p.display_name)
-                comment_preview = html.escape(p.comment_texts[0][:45] + ("..." if len(p.comment_texts[0]) > 45 else "")) if p.comment_texts else "Verified Comment"
+                comment_preview = html.escape(p.comment_texts[0][:45] + ("..." if len(p.comment_texts[0]) > 45 else "")) if p.comment_texts else "Verified Action"
                 avatar_uri = cls._encode_avatar_data_uri(p.avatar_path or "")
                 initials = html.escape((p.name[:2] if p.name else "FB").upper())
 
@@ -60,19 +61,23 @@ class LotteryPrintExporter:
                 else:
                     avatar_tag = f'<div class="avatar-placeholder">{initials}</div>'
 
-                id_hint = html.escape(p.profile_url or (f"AvatarHash:{p.avatar_hash[:8]}" if p.avatar_hash else "3/3 Verified"))
+                id_hint = html.escape(p.profile_url or (f"AvatarHash:{p.avatar_hash[:8]}" if p.avatar_hash else "Verified"))
+                badge_label = "ELIGIBLE 3/3 ✓" if p.is_eligible else f"QUALIFIED ({p.actions_completed}/3) ✓"
+                done_meta = " · ".join(
+                    lbl for flag, lbl in [(p.liked, "👍 Like"), (p.commented, "💬 Comment"), (p.shared, "🔄 Share")] if flag
+                ) or "Verified Entry"
 
                 tickets_html.append(f"""
                 <div class="ticket">
                     <div class="ticket-header">
                         <span class="serial">{serial_str}</span>
-                        <span class="badge">{'ELIGIBLE 3/3 ✓' if p.is_eligible else f'{p.actions_completed}/3'}</span>
+                        <span class="badge">{badge_label}</span>
                     </div>
                     <div class="ticket-body">
                         {avatar_tag}
                         <div class="ticket-info">
                             <div class="name">{safe_name}</div>
-                            <div class="meta">👍 Like · 💬 Comment · 🔄 Share</div>
+                            <div class="meta">{done_meta}</div>
                             <div class="comment">"{comment_preview}"</div>
                         </div>
                     </div>

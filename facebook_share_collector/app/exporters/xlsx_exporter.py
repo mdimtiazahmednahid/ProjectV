@@ -94,14 +94,16 @@ class XLSXExporter:
             ws.freeze_panes = "A2"
 
             for row, p in enumerate(participants, 2):
+                is_qual = getattr(p, "_eval_is_qualified", p.is_eligible)
+                status_str = getattr(p, "_eval_status_badge", None) or p.status_label
                 ws.cell(row=row, column=1, value=p.serial_code)
                 ws.cell(row=row, column=2, value=p.display_name)
-                ws.cell(row=row, column=3, value='YES' if p.is_eligible else 'NO')
+                ws.cell(row=row, column=3, value='YES' if is_qual else 'NO')
                 ws.cell(row=row, column=4, value=f"{p.actions_completed}/3")
                 ws.cell(row=row, column=5, value='Yes' if p.liked else 'No')
                 ws.cell(row=row, column=6, value='Yes' if p.commented else 'No')
                 ws.cell(row=row, column=7, value='Yes' if p.shared else 'No')
-                ws.cell(row=row, column=8, value=p.status_label)
+                ws.cell(row=row, column=8, value=status_str)
                 ws.cell(row=row, column=9, value=" | ".join(p.comment_texts))
                 ws.cell(row=row, column=10, value=" | ".join(p.share_contents))
                 ws.cell(row=row, column=11, value=p.profile_url or "")

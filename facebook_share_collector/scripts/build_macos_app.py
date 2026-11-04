@@ -155,6 +155,31 @@ int main(int argc, char *argv[]) {{
     os.chmod(output_bin_path, os.stat(output_bin_path).st_mode | stat.S_IXUSR | stat.S_IXGRP | stat.S_IXOTH)
 
 
+def _copytree_no_xattr(src: str, dst: str, ignore=None):
+    os.makedirs(dst, exist_ok=True)
+    names = os.listdir(src)
+    ignored = set(ignore(src, names)) if ignore is not None else set()
+    for name in names:
+        if name in ignored:
+            continue
+        s = os.path.join(src, name)
+        d = os.path.join(dst, name)
+        if os.path.islink(s):
+            linkto = os.readlink(s)
+            if os.path.lexists(d):
+                os.unlink(d)
+            os.symlink(linkto, d)
+        elif os.path.isdir(s):
+            _copytree_no_xattr(s, d, ignore=ignore)
+        else:
+            shutil.copyfile(s, d)
+            try:
+                if os.access(s, os.X_OK):
+                    os.chmod(d, 0o755)
+            except OSError:
+                pass
+
+
 def _bundle_slim_site_packages(dst_site_packages: str):
     """
     Copies only the essential runtime packages needed by Facebook Contest Validator
@@ -191,9 +216,13 @@ def _bundle_slim_site_packages(dst_site_packages: str):
         src = os.path.join(SITE_PACKAGES_SRC, item)
         dst = os.path.join(dst_site_packages, item)
         if os.path.isdir(src):
-            shutil.copytree(src, dst, symlinks=True, dirs_exist_ok=True)
+            _copytree_no_xattr(
+                src,
+                dst,
+                ignore=shutil.ignore_patterns("__pycache__", "*.pyc"),
+            )
         elif os.path.isfile(src):
-            shutil.copy2(src, dst)
+            shutil.copyfile(src, dst)
 
     # Copy slimmed PySide6 (Core, Gui, Widgets, Network, Svg, DBus)
     pyside_src = os.path.join(SITE_PACKAGES_SRC, "PySide6")
@@ -215,7 +244,7 @@ def _bundle_slim_site_packages(dst_site_packages: str):
     ):
         s_file = os.path.join(pyside_src, fname)
         if os.path.exists(s_file):
-            shutil.copy2(s_file, os.path.join(pyside_dst, fname), follow_symlinks=False)
+            shutil.copyfile(s_file, os.path.join(pyside_dst, fname), follow_symlinks=False)
 
     # Copy required Qt frameworks
     qt_lib_src = os.path.join(pyside_src, "Qt", "lib")
@@ -231,7 +260,7 @@ def _bundle_slim_site_packages(dst_site_packages: str):
     ):
         s_fw = os.path.join(qt_lib_src, fw)
         if os.path.isdir(s_fw):
-            shutil.copytree(s_fw, os.path.join(qt_lib_dst, fw), symlinks=True, dirs_exist_ok=True)
+            _copytree_no_xattr(s_fw, os.path.join(qt_lib_dst, fw))
 
     # Copy required Qt plugins (platforms, styles, imageformats, iconengines)
     qt_plugins_src = os.path.join(pyside_src, "Qt", "plugins")
@@ -239,7 +268,7 @@ def _bundle_slim_site_packages(dst_site_packages: str):
     for plug in ("platforms", "styles", "imageformats", "iconengines"):
         s_pl = os.path.join(qt_plugins_src, plug)
         if os.path.isdir(s_pl):
-            shutil.copytree(s_pl, os.path.join(qt_plugins_dst, plug), symlinks=True, dirs_exist_ok=True)
+            _copytree_no_xattr(s_pl, os.path.join(qt_plugins_dst, plug))
 
 
 def build_macos_bundle_and_dmg():
@@ -298,15 +327,14 @@ exec "{venv_py_link}" "{main_script}"
     for root_file in ("main.py", "run.py", "config.yaml"):
         src_rf = os.path.join(PROJECT_DIR, root_file)
         if os.path.isfile(src_rf):
-            shutil.copy2(src_rf, os.path.join(app_payload_dir, root_file))
+            shutil.copyfile(src_rf, os.path.join(app_payload_dir, root_file))
     for folder in ("app", "config", "browser_extension", "bin"):
         src_f = os.path.join(PROJECT_DIR, folder)
         if os.path.isdir(src_f):
-            shutil.copytree(
+            _copytree_no_xattr(
                 src_f,
                 os.path.join(app_payload_dir, folder),
                 ignore=shutil.ignore_patterns("__pycache__", "*.pyc"),
-                dirs_exist_ok=True,
             )
 
     # Copy SQLite DB, avatars, and auto-saved CSVs (excluding 328MB browser_profile cache)
@@ -316,10 +344,10 @@ exec "{venv_py_link}" "{main_script}"
     for data_file in ("facebook_shares.sqlite", "autosave.csv", "autosave_contest.csv"):
         src_df = os.path.join(PROJECT_DIR, "data", data_file)
         if os.path.isfile(src_df):
-            shutil.copy2(src_df, os.path.join(data_dst, data_file))
+            shutil.copyfile(src_df, os.path.join(data_dst, data_file))
     avatars_src = os.path.join(PROJECT_DIR, "data", "avatars")
     if os.path.isdir(avatars_src):
-        shutil.copytree(avatars_src, os.path.join(data_dst, "avatars"), dirs_exist_ok=True)
+        _copytree_no_xattr(avatars_src, os.path.join(data_dst, "avatars"))
 
     # Bundle slim site-packages
     _bundle_slim_site_packages(site_pkg_dir)

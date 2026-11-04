@@ -10,6 +10,7 @@ from app.utils.contest_validator import IncrementalContestAggregator
 from app.utils.advanced_filter_engine import (
     AdvancedFilterConfig,
     AdvancedFilterEngine,
+    CustomAnalysisRule,
 )
 from app.utils.text_normalizer import normalize_text
 from app.exporters.csv_exporter import CSVExporter
@@ -39,6 +40,7 @@ class ResultsPanel(QWidget):
         self._participants_dirty = False
         self._icon_cache = {}
         self._disqualified_keys = set()
+        self.custom_rules = []
         self._last_evaluations = {}
         self._last_category_counts = {
             "all": 0,
@@ -49,6 +51,13 @@ class ResultsPanel(QWidget):
             "no_comments": 0,
             "duplicates": 0,
             "disqualified": 0,
+            "unique_names": 0,
+            "male": 0,
+            "female": 0,
+            "unknown_gender": 0,
+            "positive": 0,
+            "neutral": 0,
+            "negative": 0,
         }
         self._active_quick_category = "all"
 
@@ -70,7 +79,7 @@ class ResultsPanel(QWidget):
         self.filter_combo = QComboBox()
         self.filter_combo.addItems([
             "All Participants (Contest Validation)",
-            "Only Eligible (All 3 Done ✅ — Ready to Print)",
+            "Only Eligible / Qualified (Ready to Draw ✅)",
             "Raw Collected Items (All)",
             "Raw Likes Only 👍",
             "Raw Comments Only 💬",
@@ -87,7 +96,7 @@ class ResultsPanel(QWidget):
         self.btn_find_device = QPushButton("Find on Device")
         self.btn_find_device.clicked.connect(self._trigger_device_search)
 
-        self.btn_toggle_adv = QPushButton("🎯 Advanced Filters (AND / OR / NOT)")
+        self.btn_toggle_adv = QPushButton("🎯 FairDraw Advanced Filters & Action Toggles")
         self.btn_toggle_adv.setCheckable(True)
         self.btn_toggle_adv.setChecked(True)
         self.btn_toggle_adv.setStyleSheet(
@@ -105,12 +114,12 @@ class ResultsPanel(QWidget):
         search_layout.addWidget(self.btn_toggle_adv)
 
         # =========================================================================
-        # Row 2 & 3: FairDraw (DrawSystem) Advanced Boolean Filter & Rule Panel
+        # FairDraw (DrawSystem) Advanced Filter & Action Toggle Bar
         # =========================================================================
         self.adv_frame = QFrame()
         self.adv_frame.setStyleSheet(
             "QFrame#AdvFilterFrame { background-color: #0f172a; border: 1px solid #334155; "
-            "border-radius: 7px; padding: 4px; }"
+            "border-radius: 8px; padding: 4px; }"
             "QLabel { color: #cbd5e1; font-size: 11px; font-weight: bold; }"
             "QLineEdit { background-color: #1e293b; color: #f8fafc; border: 1px solid #475569; "
             "border-radius: 4px; padding: 4px 6px; font-size: 12px; }"
@@ -123,49 +132,223 @@ class ResultsPanel(QWidget):
         adv_main_layout.setContentsMargins(8, 6, 8, 6)
         adv_main_layout.setSpacing(6)
 
-        # --- Sub-row A: Boolean Keyword Inputs (OR / AND / NOT / Expression) ---
+        # --- Sub-row 0: 3-Field Chained Action Toggle Bar (Field 1 -> Dropdown 1 -> Field 2 -> Dropdown 2 -> Field 3) ---
+        action_bar_layout = QHBoxLayout()
+        action_bar_layout.setSpacing(4)
+
+        lbl_act_title = QLabel("⚡ Action Toggle Bar:")
+        lbl_act_title.setStyleSheet("color: #fde047; font-size: 11px; font-weight: 800;")
+        action_bar_layout.addWidget(lbl_act_title)
+
+        action_field_items = [
+            "— Not Selected (Off) —",
+            "👍 Like",
+            "💬 Comment",
+            "🔄 Share",
+        ]
+        logic_op_items = [
+            "AND (&)",
+            "OR (|)",
+            "NOT (AND NOT)",
+            "OR NOT",
+        ]
+
+        # Action Field 1
+        self.btn_act_f1 = QPushButton("✓ F1")
+        self.btn_act_f1.setCheckable(True)
+        self.btn_act_f1.setChecked(True)
+        self.btn_act_f1.setToolTip("Toggle Action Field 1 ON or OFF. If OFF, Field 1 is not applied.")
+        self.btn_act_f1.toggled.connect(self._on_act_field_btn_toggled)
+
+        self.act_field1_combo = QComboBox()
+        self.act_field1_combo.addItems(action_field_items)
+        self.act_field1_combo.setCurrentIndex(1)  # 👍 Like
+        self.act_field1_combo.setToolTip("Select Action Field 1 (Like, Comment, Share, or Not Selected).")
+        self.act_field1_combo.currentIndexChanged.connect(lambda idx: self._on_act_field_combo_changed(1, idx))
+
+        # Action Operator 1 (between Field 1 and Field 2)
+        self.act_op1_combo = QComboBox()
+        self.act_op1_combo.addItems(logic_op_items)
+        self.act_op1_combo.setCurrentIndex(0)  # AND
+        self.act_op1_combo.setToolTip(
+            "Operator between Field 1 and Field 2:\n"
+            "• AND (&): Both Field 1 and Field 2 must match\n"
+            "• OR (|): Either Field 1 or Field 2 matches\n"
+            "• NOT (AND NOT): Field 1 matches AND Field 2 does NOT match\n"
+            "• OR NOT: Field 1 matches OR Field 2 does NOT match"
+        )
+        self.act_op1_combo.currentIndexChanged.connect(self._on_action_toggle_changed)
+
+        # Action Field 2
+        self.btn_act_f2 = QPushButton("✓ F2")
+        self.btn_act_f2.setCheckable(True)
+        self.btn_act_f2.setChecked(True)
+        self.btn_act_f2.setToolTip("Toggle Action Field 2 ON or OFF. If OFF, Field 2 (and Operator 1) won't be applied.")
+        self.btn_act_f2.toggled.connect(self._on_act_field_btn_toggled)
+
+        self.act_field2_combo = QComboBox()
+        self.act_field2_combo.addItems(action_field_items)
+        self.act_field2_combo.setCurrentIndex(2)  # 💬 Comment
+        self.act_field2_combo.setToolTip("Select Action Field 2 (Like, Comment, Share, or Not Selected).")
+        self.act_field2_combo.currentIndexChanged.connect(lambda idx: self._on_act_field_combo_changed(2, idx))
+
+        # Action Operator 2 (between Field 2 and Field 3)
+        self.act_op2_combo = QComboBox()
+        self.act_op2_combo.addItems(logic_op_items)
+        self.act_op2_combo.setCurrentIndex(0)  # AND
+        self.act_op2_combo.setToolTip(
+            "Operator between Field 2 and Field 3 (Only applied when Field 3 is selected!):\n"
+            "• AND (&): Must also match Field 3\n"
+            "• OR (|): Or matches Field 3\n"
+            "• NOT (AND NOT): And does NOT match Field 3\n"
+            "• OR NOT: Or does NOT match Field 3"
+        )
+        self.act_op2_combo.currentIndexChanged.connect(self._on_action_toggle_changed)
+
+        # Action Field 3
+        self.btn_act_f3 = QPushButton("✓ F3")
+        self.btn_act_f3.setCheckable(True)
+        self.btn_act_f3.setChecked(True)
+        self.btn_act_f3.setToolTip("Toggle Action Field 3 ON or OFF. If not selected, Field 3 won't be applied at all!")
+        self.btn_act_f3.toggled.connect(self._on_act_field_btn_toggled)
+
+        self.act_field3_combo = QComboBox()
+        self.act_field3_combo.addItems(action_field_items)
+        self.act_field3_combo.setCurrentIndex(3)  # 🔄 Share
+        self.act_field3_combo.setToolTip("Select Action Field 3 (If 'Not Selected', Field 3 won't be applied).")
+        self.act_field3_combo.currentIndexChanged.connect(lambda idx: self._on_act_field_combo_changed(3, idx))
+
+        self.chk_act_group_right = QCheckBox("F1 op (F2 op F3)")
+        self.chk_act_group_right.setToolTip(
+            "Grouping Order when all 3 fields are active:\n"
+            "• Unchecked (Default): (Field 1 [Op1] Field 2) [Op2] Field 3\n"
+            "• Checked: Field 1 [Op1] (Field 2 [Op2] Field 3) — e.g. Comment AND (Like OR Share)"
+        )
+        self.chk_act_group_right.toggled.connect(self._on_action_toggle_changed)
+
+        self.chk_one_entry_per_user = QCheckBox("1 Entry/Person")
+        self.chk_one_entry_per_user.setToolTip(
+            "FairDraw Rule: Ensure each unique person name gets at most 1 winning lottery serial."
+        )
+        self.chk_one_entry_per_user.toggled.connect(self._on_filter_criteria_changed)
+
+        self.lbl_analytics_summary = QLabel(
+            "📊 Unique: 0  |  ♂ Male: 0  ♀ Female: 0  |  😊 Pos: 0  😐 Neu: 0  😠 Neg: 0"
+        )
+        self.lbl_analytics_summary.setStyleSheet(
+            "background-color: #1e293b; color: #93c5fd; font-size: 11px; font-weight: bold; "
+            "padding: 3px 8px; border-radius: 5px; border: 1px solid #334155;"
+        )
+
+        action_bar_layout.addWidget(self.btn_act_f1)
+        action_bar_layout.addWidget(self.act_field1_combo)
+        action_bar_layout.addWidget(self.act_op1_combo)
+        action_bar_layout.addWidget(self.btn_act_f2)
+        action_bar_layout.addWidget(self.act_field2_combo)
+        action_bar_layout.addWidget(self.act_op2_combo)
+        action_bar_layout.addWidget(self.btn_act_f3)
+        action_bar_layout.addWidget(self.act_field3_combo)
+        action_bar_layout.addWidget(self.chk_act_group_right)
+        action_bar_layout.addWidget(self.chk_one_entry_per_user)
+        action_bar_layout.addStretch()
+        action_bar_layout.addWidget(self.lbl_analytics_summary)
+        adv_main_layout.addLayout(action_bar_layout)
+
+        # --- Sub-row A: 3-Field Chained Keyword Bar (Field 1 -> Dropdown 1 -> Field 2 -> Dropdown 2 -> Field 3) ---
         kw_row = QHBoxLayout()
-        kw_row.setSpacing(6)
+        kw_row.setSpacing(4)
 
-        lbl_or = QLabel("✅ OR (Any Right Answer):")
-        lbl_or.setStyleSheet("color: #4ade80; font-weight: bold;")
-        self.or_keywords_input = QLineEdit()
-        self.or_keywords_input.setPlaceholderText("e.g. apple, আপেল, 4, চার, ready")
-        self.or_keywords_input.setToolTip(
-            "OR Logic (Match ANY): Participant passes if their comment/share contains AT LEAST ONE of these comma-separated answers.\n"
-            "You can also type inline boolean queries like: (apple OR আপেল) AND fresh NOT fake"
+        lbl_kw_title = QLabel("🔤 Keyword Toggle Bar:")
+        lbl_kw_title.setStyleSheet("color: #38bdf8; font-size: 11px; font-weight: 800;")
+        kw_row.addWidget(lbl_kw_title)
+
+        # Keyword Field 1
+        self.btn_kw_f1 = QPushButton("✓ K1")
+        self.btn_kw_f1.setCheckable(True)
+        self.btn_kw_f1.setChecked(True)
+        self.btn_kw_f1.setToolTip("Toggle Keyword Field 1 ON or OFF.")
+        self.btn_kw_f1.toggled.connect(self._on_action_toggle_changed)
+
+        self.kw_field1_input = QLineEdit()
+        self.kw_field1_input.setPlaceholderText("Field 1 keywords (e.g. apple, আপেল, 4, চার)")
+        self.kw_field1_input.setToolTip(
+            "Keyword Field 1: Enter word(s) or comma-separated synonyms.\n"
+            "Supports Bangla + English numerals (4 = ৪) and whole-word matching."
         )
-        self.or_keywords_input.textChanged.connect(self._on_filter_criteria_changed)
+        self.kw_field1_input.textChanged.connect(self._on_action_toggle_changed)
 
-        lbl_and = QLabel("🔗 AND (Must Have ALL):")
-        lbl_and.setStyleSheet("color: #60a5fa; font-weight: bold;")
-        self.and_keywords_input = QLineEdit()
-        self.and_keywords_input.setPlaceholderText("e.g. done, shared (Must match ALL)")
-        self.and_keywords_input.setToolTip(
-            "AND Logic (Match ALL): Participant must include EVERY comma-separated keyword listed here."
+        # Keyword Operator 1 (between Field 1 and Field 2)
+        self.kw_op1_combo = QComboBox()
+        self.kw_op1_combo.addItems(logic_op_items)
+        self.kw_op1_combo.setCurrentIndex(0)  # AND
+        self.kw_op1_combo.setToolTip(
+            "Operator between Keyword Field 1 and Field 2:\n"
+            "• AND (&)  • OR (|)  • NOT (AND NOT)  • OR NOT"
         )
-        self.and_keywords_input.textChanged.connect(self._on_filter_criteria_changed)
+        self.kw_op1_combo.currentIndexChanged.connect(self._on_action_toggle_changed)
 
-        lbl_not = QLabel("🚫 NOT (Wrong / Exclude):")
-        lbl_not.setStyleSheet("color: #f87171; font-weight: bold;")
-        self.not_keywords_input = QLineEdit()
-        self.not_keywords_input.setPlaceholderText("e.g. 14, wrong, spam, fake (Exclude)")
-        self.not_keywords_input.setToolTip(
-            "NOT Logic (Exclude / Wrong Answer): Immediately marks comment as Wrong Answer & excludes participant if ANY of these keywords appear."
+        # Keyword Field 2
+        self.btn_kw_f2 = QPushButton("✓ K2")
+        self.btn_kw_f2.setCheckable(True)
+        self.btn_kw_f2.setChecked(True)
+        self.btn_kw_f2.setToolTip("Toggle Keyword Field 2 ON or OFF. If unchecked or empty, Field 2 won't be applied.")
+        self.btn_kw_f2.toggled.connect(self._on_action_toggle_changed)
+
+        self.kw_field2_input = QLineEdit()
+        self.kw_field2_input.setPlaceholderText("Field 2 keywords (optional — off if empty)")
+        self.kw_field2_input.setToolTip("Keyword Field 2: Ignored automatically if unchecked or left blank.")
+        self.kw_field2_input.textChanged.connect(self._on_action_toggle_changed)
+
+        # Keyword Operator 2 (between Field 2 and Field 3)
+        self.kw_op2_combo = QComboBox()
+        self.kw_op2_combo.addItems(logic_op_items)
+        self.kw_op2_combo.setCurrentIndex(2)  # Default NOT (AND NOT) for Field 3 convenience, user can pick AND/OR/NOT
+        self.kw_op2_combo.setToolTip(
+            "Operator between Keyword Field 2 and Field 3 (Only applied if Field 3 is active & non-empty!):\n"
+            "• AND (&)  • OR (|)  • NOT (AND NOT)  • OR NOT"
         )
-        self.not_keywords_input.textChanged.connect(self._on_filter_criteria_changed)
+        self.kw_op2_combo.currentIndexChanged.connect(self._on_action_toggle_changed)
 
-        kw_row.addWidget(lbl_or)
-        kw_row.addWidget(self.or_keywords_input, 2)
-        kw_row.addWidget(lbl_and)
-        kw_row.addWidget(self.and_keywords_input, 2)
-        kw_row.addWidget(lbl_not)
-        kw_row.addWidget(self.not_keywords_input, 2)
+        # Keyword Field 3
+        self.btn_kw_f3 = QPushButton("✓ K3")
+        self.btn_kw_f3.setCheckable(True)
+        self.btn_kw_f3.setChecked(True)
+        self.btn_kw_f3.setToolTip("Toggle Keyword Field 3 ON or OFF. If unchecked or empty, Field 3 won't be applied!")
+        self.btn_kw_f3.toggled.connect(self._on_action_toggle_changed)
+
+        self.kw_field3_input = QLineEdit()
+        self.kw_field3_input.setPlaceholderText("Field 3 keywords (optional — off if empty)")
+        self.kw_field3_input.setToolTip("Keyword Field 3: Ignored automatically if unchecked or left blank.")
+        self.kw_field3_input.textChanged.connect(self._on_action_toggle_changed)
+
+        self.chk_kw_group_right = QCheckBox("K1 op (K2 op K3)")
+        self.chk_kw_group_right.setToolTip(
+            "Grouping Order when all 3 keyword fields are active:\n"
+            "• Unchecked (Default): (K1 [Op1] K2) [Op2] K3\n"
+            "• Checked: K1 [Op1] (K2 [Op2] K3)"
+        )
+        self.chk_kw_group_right.toggled.connect(self._on_action_toggle_changed)
+
+        # Keep aliases for backward-compatible references
+        self.or_keywords_input = self.kw_field1_input
+        self.and_keywords_input = self.kw_field2_input
+        self.not_keywords_input = self.kw_field3_input
+
+        kw_row.addWidget(self.btn_kw_f1)
+        kw_row.addWidget(self.kw_field1_input, 2)
+        kw_row.addWidget(self.kw_op1_combo)
+        kw_row.addWidget(self.btn_kw_f2)
+        kw_row.addWidget(self.kw_field2_input, 2)
+        kw_row.addWidget(self.kw_op2_combo)
+        kw_row.addWidget(self.btn_kw_f3)
+        kw_row.addWidget(self.kw_field3_input, 2)
+        kw_row.addWidget(self.chk_kw_group_right)
+        self._update_action_toggle_button_styles()
         adv_main_layout.addLayout(kw_row)
 
-        # --- Sub-row B: Match Mode + Extra Rule Constraints + Participant Actions ---
+        # --- Sub-row B: Match Mode + Extra Rule Constraints + Custom Rules & Bulk Actions ---
         rules_row = QHBoxLayout()
-        rules_row.setSpacing(8)
+        rules_row.setSpacing(6)
 
         lbl_mode = QLabel("Match Mode:")
         self.match_mode_combo = QComboBox()
@@ -203,7 +386,7 @@ class ResultsPanel(QWidget):
         )
         self.chk_exclude_emoji.toggled.connect(self._on_filter_criteria_changed)
 
-        self.chk_require_tag = QCheckBox("Require @Mention / #Tag")
+        self.chk_require_tag = QCheckBox("@Mention/#Tag")
         self.chk_require_tag.setToolTip("Require comment or share text to include at least one @mention or #hashtag.")
         self.chk_require_tag.toggled.connect(self._on_filter_criteria_changed)
 
@@ -212,23 +395,46 @@ class ResultsPanel(QWidget):
         self.gender_combo.addItems(["All Genders", "Male ♂", "Female ♀", "Unknown ?"])
         self.gender_combo.currentIndexChanged.connect(self._on_filter_criteria_changed)
 
-        self.btn_dq_toggle = QPushButton("🚫 Disqualify / Qualify")
+        lbl_sentiment = QLabel("Sentiment:")
+        self.sentiment_combo = QComboBox()
+        self.sentiment_combo.addItems(["All Sentiment", "Positive 😊", "Neutral 😐", "Negative 😠"])
+        self.sentiment_combo.currentIndexChanged.connect(self._on_filter_criteria_changed)
+
+        self.btn_custom_rules = QPushButton("🧠 +Custom Rule (0)")
+        self.btn_custom_rules.setToolTip(
+            "Open FairDraw Global Analyzer Rule Builder to add custom TRUE/FALSE rule columns & filters."
+        )
+        self.btn_custom_rules.setStyleSheet(
+            "background-color: #065f46; color: #a7f3d0; font-size: 11px; font-weight: bold; padding: 4px 8px; border-radius: 4px;"
+        )
+        self.btn_custom_rules.clicked.connect(self.open_custom_rule_builder)
+
+        self.btn_dq_toggle = QPushButton("🚫 Disqualify")
         self.btn_dq_toggle.setToolTip("Manually Disqualify or Re-Qualify the selected participant row(s).")
         self.btn_dq_toggle.setStyleSheet(
             "background-color: #7f1d1d; color: #fecaca; font-size: 11px; font-weight: bold; padding: 4px 8px; border-radius: 4px;"
         )
         self.btn_dq_toggle.clicked.connect(self.toggle_disqualify_selected)
 
-        self.btn_clean_dups = QPushButton("🧹 Clean Duplicates")
+        self.btn_merge_selected = QPushButton("🔗 Merge Selected")
+        self.btn_merge_selected.setToolTip(
+            "FairDraw Bulk Merge: Combine selected rows into a single participant (merging their Likes, Comments, and Shares)."
+        )
+        self.btn_merge_selected.setStyleSheet(
+            "background-color: #1d4ed8; color: #ffffff; font-size: 11px; font-weight: bold; padding: 4px 8px; border-radius: 4px;"
+        )
+        self.btn_merge_selected.clicked.connect(self.merge_selected_participants)
+
+        self.btn_clean_dups = QPushButton("🧹 Clean Dups")
         self.btn_clean_dups.setToolTip(
-            "Merge/remove duplicate same-name entries, keeping the highest-scoring record per name."
+            "Merge/remove duplicate same-name entries, keeping the consolidated record per name."
         )
         self.btn_clean_dups.setStyleSheet(
             "background-color: #334155; color: #e2e8f0; font-size: 11px; font-weight: bold; padding: 4px 8px; border-radius: 4px;"
         )
         self.btn_clean_dups.clicked.connect(self.clean_duplicate_names)
 
-        self.btn_reset_filters = QPushButton("↺ Reset Filters")
+        self.btn_reset_filters = QPushButton("↺ Reset")
         self.btn_reset_filters.setStyleSheet(
             "background-color: #475569; color: #ffffff; font-size: 11px; font-weight: bold; padding: 4px 8px; border-radius: 4px;"
         )
@@ -244,11 +450,23 @@ class ResultsPanel(QWidget):
         rules_row.addWidget(self.chk_require_tag)
         rules_row.addWidget(lbl_gender)
         rules_row.addWidget(self.gender_combo)
+        rules_row.addWidget(lbl_sentiment)
+        rules_row.addWidget(self.sentiment_combo)
         rules_row.addStretch()
+        rules_row.addWidget(self.btn_custom_rules)
         rules_row.addWidget(self.btn_dq_toggle)
+        rules_row.addWidget(self.btn_merge_selected)
         rules_row.addWidget(self.btn_clean_dups)
         rules_row.addWidget(self.btn_reset_filters)
         adv_main_layout.addLayout(rules_row)
+
+        # --- Sub-row B2: Live Active Formula Preview Banner ---
+        self.lbl_active_formula = QLabel("📐 Active Winner Rule: 👍 Like AND 💬 Comment AND 🔄 Share")
+        self.lbl_active_formula.setStyleSheet(
+            "background-color: #172554; color: #93c5fd; font-size: 11px; font-weight: bold; "
+            "padding: 3px 8px; border-radius: 5px; border: 1px solid #1e40af;"
+        )
+        adv_main_layout.addWidget(self.lbl_active_formula)
 
         # --- Sub-row C: DrawSystem Interactive Quick Category Filter Pills (with Live Counts & %) ---
         pills_row = QHBoxLayout()
@@ -256,7 +474,7 @@ class ResultsPanel(QWidget):
         self._category_buttons = {}
         pill_specs = [
             ("all", "All", "#334155", "#2563eb"),
-            ("qualified", "✅ Qualified (3/3 + Rules)", "#065f46", "#10b981"),
+            ("qualified", "✅ Qualified Winners", "#065f46", "#10b981"),
             ("correct", "🎯 Correct Answer", "#1e3a8a", "#3b82f6"),
             ("wrong", "❌ Wrong Answer", "#7f1d1d", "#ef4444"),
             ("invalid", "⚠️ Invalid / Emoji-Only", "#78350f", "#f59e0b"),
@@ -302,7 +520,7 @@ class ResultsPanel(QWidget):
         # Export & Lottery Print Buttons
         # =========================================================================
         btn_layout = QHBoxLayout()
-        self.btn_print_lottery = QPushButton("🖨️ Print Lottery Slips (3/3 Eligible)")
+        self.btn_print_lottery = QPushButton("🖨️ Print Lottery Slips (Qualified)")
         self.btn_print_lottery.setStyleSheet("font-weight: bold; background-color: #1b8a2f; color: white; padding: 6px 12px;")
         self.btn_print_lottery.clicked.connect(self.export_printable_lottery)
 
@@ -349,13 +567,115 @@ class ResultsPanel(QWidget):
     def _toggle_advanced_filter_panel(self, checked: bool):
         self.adv_frame.setVisible(checked)
 
-    def _on_view_mode_changed(self, idx: int):
-        if idx == 1 and self._active_quick_category == "all":
-            # Sync combo box "Only Eligible" with quick pill
+    def _on_act_field_btn_toggled(self, *args):
+        """
+        Synchronizes the toggle button (✓ F1, ✓ F2, ✓ F3) with the dropdown selection:
+        If the user re-checks a toggle button whose dropdown was '— Not Selected (Off) —',
+        automatically select the default action for that slot (F1=Like, F2=Comment, F3=Share).
+        """
+        slot_defaults = [
+            (self.btn_act_f1, self.act_field1_combo, 1),
+            (self.btn_act_f2, self.act_field2_combo, 2),
+            (self.btn_act_f3, self.act_field3_combo, 3),
+        ]
+        for btn, combo, default_idx in slot_defaults:
+            if btn.isChecked() and combo.currentIndex() == 0:
+                combo.blockSignals(True)
+                combo.setCurrentIndex(default_idx)
+                combo.blockSignals(False)
+        self._on_action_toggle_changed()
+
+    def _on_act_field_combo_changed(self, slot_num: int, idx: int):
+        """
+        If user picks '— Not Selected (Off) —' (index 0) in a Field dropdown,
+        automatically uncheck that field's toggle button so it's visually OFF and not applied.
+        If user picks Like / Comment / Share (index > 0), automatically check that field's toggle button.
+        """
+        btn_map = {
+            1: self.btn_act_f1,
+            2: self.btn_act_f2,
+            3: self.btn_act_f3,
+        }
+        btn = btn_map.get(slot_num)
+        if btn is not None:
+            btn.blockSignals(True)
+            btn.setChecked(idx > 0)
+            btn.blockSignals(False)
+        self._on_action_toggle_changed()
+
+    def _on_action_toggle_changed(self, *args):
+        self._update_action_toggle_button_styles()
+        self._on_filter_criteria_changed()
+
+    def _update_action_toggle_button_styles(self):
+        # 1) Style Action Toggle Bar (Field 1, Field 2, Field 3 + Dropdowns)
+        act_slots = [
+            (self.btn_act_f1, self.act_field1_combo, None, "F1", "#16a34a"),
+            (self.btn_act_f2, self.act_field2_combo, self.act_op1_combo, "F2", "#2563eb"),
+            (self.btn_act_f3, self.act_field3_combo, self.act_op2_combo, "F3", "#9333ea"),
+        ]
+        for btn, combo, op_combo, label, on_bg in act_slots:
+            is_selected = btn.isChecked() and combo.currentIndex() > 0
+            btn.setText(f"{'✓' if is_selected else '✗'} {label}")
+            combo.setEnabled(btn.isChecked())
+            if op_combo is not None:
+                op_combo.setEnabled(is_selected)
+            if is_selected:
+                btn.setStyleSheet(
+                    f"QPushButton {{ background-color: {on_bg}; color: #ffffff; font-weight: 800; "
+                    f"font-size: 11px; padding: 3px 8px; border-radius: 5px; border: 1px solid #ffffff; }}"
+                )
+            else:
+                btn.setStyleSheet(
+                    "QPushButton { background-color: #334155; color: #94a3b8; font-weight: bold; "
+                    "font-size: 11px; padding: 3px 8px; border-radius: 5px; border: 1px solid #475569; }"
+                )
+
+        # 2) Style Keyword Toggle Bar (K1, K2, K3 + Dropdowns)
+        kw_slots = [
+            (self.btn_kw_f1, self.kw_field1_input, None, "K1", "#0284c7"),
+            (self.btn_kw_f2, self.kw_field2_input, self.kw_op1_combo, "K2", "#0d9488"),
+            (self.btn_kw_f3, self.kw_field3_input, self.kw_op2_combo, "K3", "#7c3aed"),
+        ]
+        for btn, line_edit, op_combo, label, on_bg in kw_slots:
+            is_checked = btn.isChecked()
+            has_text = bool((line_edit.text() or "").strip())
+            is_active = is_checked and has_text
+            line_edit.setEnabled(is_checked)
+            if op_combo is not None:
+                op_combo.setEnabled(is_active)
+            btn.setText(f"{'✓' if is_checked else '✗'} {label}")
+            if is_active:
+                btn.setStyleSheet(
+                    f"QPushButton {{ background-color: {on_bg}; color: #ffffff; font-weight: 800; "
+                    f"font-size: 11px; padding: 3px 8px; border-radius: 5px; border: 1px solid #ffffff; }}"
+                )
+            elif is_checked:
+                btn.setStyleSheet(
+                    "QPushButton { background-color: #1e293b; color: #38bdf8; font-weight: bold; "
+                    "font-size: 11px; padding: 3px 8px; border-radius: 5px; border: 1px solid #0284c7; }"
+                )
+            else:
+                btn.setStyleSheet(
+                    "QPushButton { background-color: #334155; color: #94a3b8; font-weight: bold; "
+                    "font-size: 11px; padding: 3px 8px; border-radius: 5px; border: 1px solid #475569; }"
+                )
+        self._update_active_formula_banner()
+
+    def _update_active_formula_banner(self):
+        if not hasattr(self, "lbl_active_formula") or not hasattr(self, "match_mode_combo"):
+            return
+        try:
+            cfg = self.get_advanced_filter_config()
+            self.lbl_active_formula.setText(f"📐 Active Winner Rule: {cfg.describe_full_rules()}")
+        except Exception:
             pass
+
+    def _on_view_mode_changed(self, idx: int):
         self.refresh_table()
 
     def _on_filter_criteria_changed(self, *args):
+        self._update_active_formula_banner()
         if not self._refresh_timer.isActive():
             self._refresh_timer.start()
 
@@ -393,72 +713,173 @@ class ResultsPanel(QWidget):
                     f"QPushButton:hover {{ background-color: {active_border}; color: #ffffff; }}"
                 )
 
+        # Also update the live FairDraw Analytics bar (Unique, Gender, Sentiment)
+        c = self._last_category_counts
+        self.lbl_analytics_summary.setText(
+            f"📊 Unique: {c.get('unique_names', 0)}  |  "
+            f"♂ Male: {c.get('male', 0)}  ♀ Female: {c.get('female', 0)}  |  "
+            f"😊 Pos: {c.get('positive', 0)}  😐 Neu: {c.get('neutral', 0)}  😠 Neg: {c.get('negative', 0)}"
+        )
+
     def get_advanced_filter_config(self) -> AdvancedFilterConfig:
-        mode_idx = self.match_mode_combo.currentIndex()
+        act_val_map = {
+            0: "none",
+            1: "like",
+            2: "comment",
+            3: "share",
+        }
+        logic_op_map = {
+            0: "AND",
+            1: "OR",
+            2: "NOT",
+            3: "OR_NOT",
+        }
         mode_map = {
             0: "whole_word",
             1: "contains",
             2: "exact",
             3: "regex",
         }
-        gender_idx = self.gender_combo.currentIndex()
         gender_map = {
             0: "all",
             1: "male",
             2: "female",
             3: "unknown",
         }
+        sentiment_map = {
+            0: "all",
+            1: "positive",
+            2: "neutral",
+            3: "negative",
+        }
         effective_category = self._active_quick_category
         if self.filter_combo.currentIndex() == 1 and effective_category == "all":
             effective_category = "qualified"
 
+        f1_val = act_val_map.get(self.act_field1_combo.currentIndex(), "none")
+        f2_val = act_val_map.get(self.act_field2_combo.currentIndex(), "none")
+        f3_val = act_val_map.get(self.act_field3_combo.currentIndex(), "none")
+
+        f1_on = self.btn_act_f1.isChecked() and f1_val != "none"
+        f2_on = self.btn_act_f2.isChecked() and f2_val != "none"
+        f3_on = self.btn_act_f3.isChecked() and f3_val != "none"
+
+        active_actions = set()
+        if f1_on:
+            active_actions.add(f1_val)
+        if f2_on:
+            active_actions.add(f2_val)
+        if f3_on:
+            active_actions.add(f3_val)
+
         return AdvancedFilterConfig(
-            or_keywords=self.or_keywords_input.text() or "",
-            and_keywords=self.and_keywords_input.text() or "",
-            not_keywords=self.not_keywords_input.text() or "",
-            match_mode=mode_map.get(mode_idx, "whole_word"),
+            require_like=("like" in active_actions),
+            require_comment=("comment" in active_actions),
+            require_share=("share" in active_actions),
+            action_operator=logic_op_map.get(self.act_op1_combo.currentIndex(), "AND"),
+            use_action_chain=True,
+            act_f1_enabled=f1_on,
+            act_f1_val=f1_val,
+            act_op1=logic_op_map.get(self.act_op1_combo.currentIndex(), "AND"),
+            act_f2_enabled=f2_on,
+            act_f2_val=f2_val,
+            act_op2=logic_op_map.get(self.act_op2_combo.currentIndex(), "AND"),
+            act_f3_enabled=f3_on,
+            act_f3_val=f3_val,
+            act_group_right=self.chk_act_group_right.isChecked(),
+            use_keyword_chain=True,
+            kw_f1_enabled=self.btn_kw_f1.isChecked(),
+            kw_f1_text=self.kw_field1_input.text() or "",
+            kw_op1=logic_op_map.get(self.kw_op1_combo.currentIndex(), "AND"),
+            kw_f2_enabled=self.btn_kw_f2.isChecked(),
+            kw_f2_text=self.kw_field2_input.text() or "",
+            kw_op2=logic_op_map.get(self.kw_op2_combo.currentIndex(), "NOT"),
+            kw_f3_enabled=self.btn_kw_f3.isChecked(),
+            kw_f3_text=self.kw_field3_input.text() or "",
+            kw_group_right=self.chk_kw_group_right.isChecked(),
+            or_keywords=self.kw_field1_input.text() or "",
+            and_keywords=self.kw_field2_input.text() or "",
+            not_keywords=self.kw_field3_input.text() or "",
+            match_mode=mode_map.get(self.match_mode_combo.currentIndex(), "whole_word"),
             min_comment_length=self.spin_min_len.value(),
             min_word_count=self.spin_min_words.value(),
             exclude_invalid_emoji=self.chk_exclude_emoji.isChecked(),
             require_mention_or_hashtag=self.chk_require_tag.isChecked(),
-            gender_filter=gender_map.get(gender_idx, "all"),
+            gender_filter=gender_map.get(self.gender_combo.currentIndex(), "all"),
+            sentiment_filter=sentiment_map.get(self.sentiment_combo.currentIndex(), "all"),
+            one_entry_per_user=self.chk_one_entry_per_user.isChecked(),
             quick_category=effective_category,
+            custom_rules=list(self.custom_rules),
         )
 
+    def open_custom_rule_builder(self):
+        from app.gui.custom_rule_dialog import CustomRuleBuilderDialog
+        dlg = CustomRuleBuilderDialog(self.custom_rules, parent=self)
+        if dlg.exec():
+            self.custom_rules = list(dlg.rules)
+            self.btn_custom_rules.setText(f"🧠 +Custom Rule ({len(self.custom_rules)})")
+            self.refresh_table()
+
     def reset_advanced_filters(self):
-        for w in (
-            self.or_keywords_input,
-            self.and_keywords_input,
-            self.not_keywords_input,
+        widgets = (
+            self.btn_act_f1,
+            self.act_field1_combo,
+            self.act_op1_combo,
+            self.btn_act_f2,
+            self.act_field2_combo,
+            self.act_op2_combo,
+            self.btn_act_f3,
+            self.act_field3_combo,
+            self.chk_act_group_right,
+            self.chk_one_entry_per_user,
+            self.btn_kw_f1,
+            self.kw_field1_input,
+            self.kw_op1_combo,
+            self.btn_kw_f2,
+            self.kw_field2_input,
+            self.kw_op2_combo,
+            self.btn_kw_f3,
+            self.kw_field3_input,
+            self.chk_kw_group_right,
             self.match_mode_combo,
             self.spin_min_len,
             self.spin_min_words,
             self.chk_exclude_emoji,
             self.chk_require_tag,
             self.gender_combo,
-        ):
+            self.sentiment_combo,
+        )
+        for w in widgets:
             w.blockSignals(True)
-        self.or_keywords_input.clear()
-        self.and_keywords_input.clear()
-        self.not_keywords_input.clear()
+        self.btn_act_f1.setChecked(True)
+        self.act_field1_combo.setCurrentIndex(1)  # 👍 Like
+        self.act_op1_combo.setCurrentIndex(0)     # AND
+        self.btn_act_f2.setChecked(True)
+        self.act_field2_combo.setCurrentIndex(2)  # 💬 Comment
+        self.act_op2_combo.setCurrentIndex(0)     # AND
+        self.btn_act_f3.setChecked(True)
+        self.act_field3_combo.setCurrentIndex(3)  # 🔄 Share
+        self.chk_act_group_right.setChecked(False)
+        self.chk_one_entry_per_user.setChecked(False)
+        self.btn_kw_f1.setChecked(True)
+        self.kw_field1_input.clear()
+        self.kw_op1_combo.setCurrentIndex(0)      # AND
+        self.btn_kw_f2.setChecked(True)
+        self.kw_field2_input.clear()
+        self.kw_op2_combo.setCurrentIndex(2)      # NOT
+        self.btn_kw_f3.setChecked(True)
+        self.kw_field3_input.clear()
+        self.chk_kw_group_right.setChecked(False)
         self.match_mode_combo.setCurrentIndex(0)
         self.spin_min_len.setValue(0)
         self.spin_min_words.setValue(0)
         self.chk_exclude_emoji.setChecked(False)
         self.chk_require_tag.setChecked(False)
         self.gender_combo.setCurrentIndex(0)
-        for w in (
-            self.or_keywords_input,
-            self.and_keywords_input,
-            self.not_keywords_input,
-            self.match_mode_combo,
-            self.spin_min_len,
-            self.spin_min_words,
-            self.chk_exclude_emoji,
-            self.chk_require_tag,
-            self.gender_combo,
-        ):
+        self.sentiment_combo.setCurrentIndex(0)
+        for w in widgets:
             w.blockSignals(False)
+        self._update_action_toggle_button_styles()
         self.set_quick_category("all")
 
     def toggle_disqualify_selected(self):
@@ -487,6 +908,93 @@ class ResultsPanel(QWidget):
             toggled += 1
         if toggled > 0:
             self.refresh_table()
+
+    def merge_selected_participants(self):
+        """
+        Matches DrawSystem's 'Bulk Merge' (`ParticipantController.php::bulkMerge`):
+        Combines 2 or more selected rows into the first selected participant (merging
+        their Likes, Comments, Shares, and Profile URL).
+        """
+        if not self._is_contest_view():
+            return
+        selected_rows = sorted({item.row() for item in self.table.selectedItems()})
+        if len(selected_rows) < 2:
+            QMessageBox.information(
+                self,
+                "Select 2+ Rows to Merge",
+                "Hold Ctrl/Cmd or Shift to select at least 2 participant rows in the table, then click '🔗 Merge Selected'."
+            )
+            return
+
+        selected_keys = []
+        for row in selected_rows:
+            name_item = self.table.item(row, 1)
+            if name_item:
+                k = name_item.data(Qt.UserRole + 2)
+                if k and k not in selected_keys:
+                    selected_keys.append(k)
+
+        if len(selected_keys) < 2:
+            return
+
+        by_key = {p.normalized_key: p for p in self.participants}
+        master = by_key.get(selected_keys[0])
+        if not master:
+            return
+
+        merged_count = 0
+        keys_to_remove = set(selected_keys[1:])
+        merged_names_lower = set()
+        merged_urls_lower = set()
+        for k in selected_keys[1:]:
+            other = by_key.get(k)
+            if not other:
+                continue
+            if other.name:
+                merged_names_lower.add(normalize_text(other.name).lower())
+            if other.profile_url:
+                merged_urls_lower.add(other.profile_url.strip().lower())
+            master.liked = master.liked or other.liked
+            master.commented = master.commented or other.commented
+            master.shared = master.shared or other.shared
+            for c in other.comment_texts:
+                if c not in master.comment_texts:
+                    master.comment_texts.append(c)
+            for s in other.share_contents:
+                if s not in master.share_contents:
+                    master.share_contents.append(s)
+            if not master.profile_url and other.profile_url:
+                master.profile_url = other.profile_url
+            if not master.avatar_hash and other.avatar_hash:
+                master.avatar_hash = other.avatar_hash
+                master.avatar_path = other.avatar_path
+            merged_count += 1
+
+        # Also unify underlying ShareProfile records so future profile syncs preserve this merge
+        for sp in self.profiles:
+            sp_nm = normalize_text(sp.name or "").lower()
+            sp_url = (sp.profile_url or "").strip().lower()
+            if (sp_url and sp_url in merged_urls_lower) or (sp_nm and sp_nm in merged_names_lower):
+                sp.name = master.name
+                if master.profile_url:
+                    sp.profile_url = master.profile_url
+                if master.avatar_hash and not sp.avatar_hash:
+                    sp.avatar_hash = master.avatar_hash
+                    sp.avatar_path = master.avatar_path
+
+        self.aggregator.participants = [
+            p for p in self.aggregator.participants if p.normalized_key not in keys_to_remove
+        ]
+        self.aggregator.recalculate_state()
+        self._participants_dirty = True
+        self._ensure_sorted_participants()
+        self.refresh_table()
+        self._emit_updated_counts()
+        QMessageBox.information(
+            self,
+            "Participants Merged",
+            f"Merged {merged_count + 1} selected entries into '{master.display_name}'!"
+        )
 
     def clean_duplicate_names(self):
         """
@@ -531,10 +1039,23 @@ class ResultsPanel(QWidget):
             QMessageBox.information(self, "No Duplicates Found", "No duplicate participant names were found.")
             return
 
+        # Propagate consolidated profile_url / avatar_hash to underlying raw profiles with the same name
+        for sp in self.profiles:
+            nm = normalize_text(sp.name or "").lower().strip()
+            primary = by_name.get(nm)
+            if primary:
+                if primary.profile_url:
+                    sp.profile_url = primary.profile_url
+                if primary.avatar_hash:
+                    sp.avatar_hash = primary.avatar_hash
+                    sp.avatar_path = primary.avatar_path
+
         self.aggregator.participants = new_participants
+        self.aggregator.recalculate_state()
         self._participants_dirty = True
         self._ensure_sorted_participants()
         self.refresh_table()
+        self._emit_updated_counts()
         QMessageBox.information(
             self,
             "Duplicates Cleaned",
@@ -548,6 +1069,10 @@ class ResultsPanel(QWidget):
         act_dq = QAction("🚫 Toggle Disqualify / Qualify Selected", self)
         act_dq.triggered.connect(self.toggle_disqualify_selected)
         menu.addAction(act_dq)
+
+        act_merge = QAction("🔗 Merge Selected Participants (Combine Actions & Comments)", self)
+        act_merge.triggered.connect(self.merge_selected_participants)
+        menu.addAction(act_merge)
 
         act_find = QAction("📱 Find Selected on Device", self)
         act_find.triggered.connect(self._trigger_device_search)
@@ -608,7 +1133,9 @@ class ResultsPanel(QWidget):
     def _emit_updated_counts(self):
         base_counts = dict(self.aggregator.get_counts())
         if self._last_category_counts and (
-            self.get_advanced_filter_config().has_any_rule_constraints() or self._disqualified_keys
+            self.get_advanced_filter_config().has_any_rule_constraints()
+            or self.get_advanced_filter_config().one_entry_per_user
+            or self._disqualified_keys
         ):
             base_counts["eligible"] = self._last_category_counts.get("qualified", base_counts.get("eligible", 0))
         self.counts_changed.emit(base_counts)
@@ -659,8 +1186,8 @@ class ResultsPanel(QWidget):
 
     def get_qualified_winners(self):
         """
-        Returns all participants who are Qualified Winners (completed 3/3 actions AND
-        pass all active AND/OR/NOT/Length/Emoji/Gender rules AND are not disqualified).
+        Returns all participants who are Qualified Winners (satisfy active Action Toggle Bar
+        AND pass all active AND/OR/NOT/Length/Emoji/Gender/Sentiment/Custom rules AND are not disqualified).
         """
         self._ensure_sorted_participants()
         cfg = self.get_advanced_filter_config()
@@ -685,18 +1212,36 @@ class ResultsPanel(QWidget):
 
         cfg = self.get_advanced_filter_config()
         if cfg.has_active_keyword_rules():
-            or_list = AdvancedFilterEngine.parse_keyword_list(cfg.or_keywords)
-            and_list = AdvancedFilterEngine.parse_keyword_list(cfg.and_keywords)
-            not_list = AdvancedFilterEngine.parse_keyword_list(cfg.not_keywords)
             filtered_raw = []
             for p in raw_list:
                 txt = (p.content or "").strip()
-                if not_list and any(AdvancedFilterEngine.match_single_keyword(txt, k, cfg.match_mode) for k in not_list):
-                    continue
-                if or_list and not any(AdvancedFilterEngine.match_single_keyword(txt, k, cfg.match_mode) for k in or_list):
-                    continue
-                if and_list and not all(AdvancedFilterEngine.match_single_keyword(txt, k, cfg.match_mode) for k in and_list):
-                    continue
+                if cfg.use_keyword_chain:
+                    f1_txt = (cfg.kw_f1_text or "").strip()
+                    f2_txt = (cfg.kw_f2_text or "").strip()
+                    f3_txt = (cfg.kw_f3_text or "").strip()
+                    f1_sel = bool(cfg.kw_f1_enabled and f1_txt)
+                    f2_sel = bool(cfg.kw_f2_enabled and f2_txt)
+                    f3_sel = bool(cfg.kw_f3_enabled and f3_txt)
+                    f1_pass = AdvancedFilterEngine.evaluate_keyword_slot(txt, f1_txt, cfg.match_mode) if f1_sel else True
+                    f2_pass = AdvancedFilterEngine.evaluate_keyword_slot(txt, f2_txt, cfg.match_mode) if f2_sel else True
+                    f3_pass = AdvancedFilterEngine.evaluate_keyword_slot(txt, f3_txt, cfg.match_mode) if f3_sel else True
+                    if not AdvancedFilterEngine.evaluate_three_slot_chain(
+                        [(f1_sel, f1_pass), (f2_sel, f2_pass), (f3_sel, f3_pass)],
+                        cfg.kw_op1,
+                        cfg.kw_op2,
+                        cfg.kw_group_right,
+                    ):
+                        continue
+                else:
+                    or_list = AdvancedFilterEngine.parse_keyword_list(cfg.or_keywords)
+                    and_list = AdvancedFilterEngine.parse_keyword_list(cfg.and_keywords)
+                    not_list = AdvancedFilterEngine.parse_keyword_list(cfg.not_keywords)
+                    if not_list and any(AdvancedFilterEngine.match_single_keyword(txt, k, cfg.match_mode) for k in not_list):
+                        continue
+                    if or_list and not any(AdvancedFilterEngine.match_single_keyword(txt, k, cfg.match_mode) for k in or_list):
+                        continue
+                    if and_list and not all(AdvancedFilterEngine.match_single_keyword(txt, k, cfg.match_mode) for k in and_list):
+                        continue
                 filtered_raw.append(p)
             raw_list = filtered_raw
         return raw_list
@@ -706,11 +1251,15 @@ class ResultsPanel(QWidget):
         try:
             self.table.setRowCount(0)
             if self._is_contest_view():
-                self.table.setColumnCount(9)
-                self.table.setHorizontalHeaderLabels([
+                base_headers = [
                     "Serial #", "Name & Avatar", "Liked 👍", "Commented 💬", "Shared 🔄",
                     "Score", "Contest Status", "Comment / Share Text", "Identity / Profile URL"
-                ])
+                ]
+                rule_headers = [f"🧠 {r.name}" for r in self.custom_rules]
+                all_headers = base_headers + rule_headers
+                self.table.setColumnCount(len(all_headers))
+                self.table.setHorizontalHeaderLabels(all_headers)
+
                 displayed = self._get_filtered_participants()
                 query = (self.search_input.text() or "").strip().lower()
                 if query:
@@ -780,6 +1329,13 @@ class ResultsPanel(QWidget):
                         serial_item, name_item, liked_item, commented_item, shared_item,
                         score_item, status_item, notes_item, url_item
                     ]
+                    for r_obj in self.custom_rules:
+                        passed_r = ev.custom_rule_results.get(r_obj.id, False) if ev else False
+                        r_item = QTableWidgetItem("✅ TRUE" if passed_r else "❌ FALSE")
+                        if passed_r:
+                            r_item.setFont(bold_font)
+                        row_items.append(r_item)
+
                     if is_qual:
                         row_bg = eligible_bg
                         row_fg = eligible_fg
@@ -903,18 +1459,32 @@ class ResultsPanel(QWidget):
             prefix = "facebook_contest_eligible" if self.filter_combo.currentIndex() == 1 else "facebook_contest_results"
         return f"{prefix}_{timestamp}.{ext}"
 
+    def _disqualify_from_live_draw(self, winner):
+        if winner and winner.normalized_key:
+            self._disqualified_keys.add(winner.normalized_key)
+            self.refresh_table()
+
     def open_live_lottery_draw(self):
         eligible = self.get_qualified_winners()
+        cfg = self.get_advanced_filter_config()
+        rule_desc = cfg.describe_full_rules()
+
         if not eligible:
             QMessageBox.information(
                 self,
-                "No Qualified 3/3 Winners Match",
-                "No participants currently match all 3 contest actions (Like + Comment + Share) AND active keyword/filter rules.\n\n"
-                "Check your OR/AND/NOT keyword filters or collect Likes, Comments, and Shares first!"
+                "No Qualified Winners Match",
+                f"No participants currently match your active Action & Keyword rules:\n\n"
+                f"• {rule_desc}\n\n"
+                f"Adjust the Action Toggle Bar (👍 Like / 💬 Comment / 🔄 Share) or keyword filters above!"
             )
             return
         from app.gui.live_lottery_dialog import LiveLotteryDialog
-        dlg = LiveLotteryDialog(eligible, parent=self)
+        dlg = LiveLotteryDialog(
+            eligible,
+            parent=self,
+            rule_summary_text=rule_desc,
+            on_disqualify_callback=self._disqualify_from_live_draw,
+        )
         dlg.exec()
 
     def export_printable_lottery(self):

@@ -415,7 +415,7 @@ class BackgroundHTMLExtractor:
                 if author_name and author_url:
                     break
 
-            if not author_name or not author_url:
+            if not author_name:
                 continue
 
             # Build comment body from dir="auto" blocks inside this article

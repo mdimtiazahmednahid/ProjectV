@@ -55,15 +55,17 @@ class CSVExporter:
                 writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
                 writer.writeheader()
                 for p in participants:
+                    is_qual = getattr(p, "_eval_is_qualified", p.is_eligible)
+                    status_str = getattr(p, "_eval_status_badge", None) or p.status_label
                     writer.writerow({
                         'Serial #': p.serial_code,
                         'Name': p.display_name,
-                        'Eligible': 'YES' if p.is_eligible else 'NO',
+                        'Eligible': 'YES' if is_qual else 'NO',
                         'Actions Completed': f"{p.actions_completed}/3",
                         'Liked': 'Yes' if p.liked else 'No',
                         'Commented': 'Yes' if p.commented else 'No',
                         'Shared': 'Yes' if p.shared else 'No',
-                        'Status': p.status_label,
+                        'Status': status_str,
                         'Comments Text': " | ".join(p.comment_texts),
                         'Share Content': " | ".join(p.share_contents),
                         'Profile URL': p.profile_url or "",

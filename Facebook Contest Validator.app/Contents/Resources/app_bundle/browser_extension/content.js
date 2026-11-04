@@ -22,6 +22,7 @@
   let lastExtractedElements = [];
   let lockedScrollEl = null;
   let lockedWindowRoot = null;
+  let switchedToAllComments = false;
   let speedProfile = "human";
 
   const SPEED_CONFIGS = {
@@ -32,7 +33,7 @@
       viewportFraction: 0.36,
       minScrollPx: 160,
       maxScrollPx: 250,
-      maxEmptyScrolls: 12
+      maxEmptyScrolls: 15
     },
     human: {
       minWaitMs: 2600,
@@ -41,7 +42,7 @@
       viewportFraction: 0.42,
       minScrollPx: 185,
       maxScrollPx: 285,
-      maxEmptyScrolls: 10
+      maxEmptyScrolls: 12
     },
     normal: {
       minWaitMs: 1800,
@@ -50,7 +51,7 @@
       viewportFraction: 0.50,
       minScrollPx: 220,
       maxScrollPx: 340,
-      maxEmptyScrolls: 9
+      maxEmptyScrolls: 11
     }
   };
 
@@ -542,26 +543,86 @@
     return false;
   }
 
-  function autoExpandComments(root) {
-    let clickedExpand = false;
-    const buttons = root.querySelectorAll('div[role="button"], span[role="button"]');
-    for (const btn of buttons) {
+  async function trySwitchToAllComments(root) {
+    if (switchedToAllComments) return false;
+    const scope = root || document.body;
+    const filterButtons = scope.querySelectorAll('div[role="button"], span[role="button"]');
+    for (const btn of filterButtons) {
       if (isInsideIgnoredChrome(btn)) continue;
       const txt = cleanText(btn.innerText || btn.textContent).toLowerCase();
       if (
+        txt === "most relevant" ||
+        txt === "newest" ||
+        txt === "সবচেয়ে প্রাসঙ্গিক" ||
+        txt === "নতুন"
+      ) {
+        try {
+          btn.click();
+          switchedToAllComments = true;
+          updateUIStatus("Switching comment filter from 'Most relevant' to 'All comments'...");
+          await sleep(1100);
+          const menuItems = document.querySelectorAll(
+            'div[role="menuitem"], div[role="menuitemradio"], div[role="option"], div[role="button"], span'
+          );
+          for (const mi of menuItems) {
+            const mTxt = cleanText(mi.innerText || mi.textContent).toLowerCase();
+            if (
+              mTxt === "all comments" ||
+              mTxt.startsWith("all comments ") ||
+              mTxt.includes("show all comments, including potential spam") ||
+              mTxt === "সব মন্তব্য" ||
+              mTxt.startsWith("সব মন্তব্য ")
+            ) {
+              mi.click();
+              await sleep(1800);
+              return true;
+            }
+          }
+        } catch (e) {}
+        break;
+      }
+    }
+    switchedToAllComments = true;
+    return false;
+  }
+
+  function autoExpandComments(root) {
+    let clickedExpand = false;
+    const buttons = root.querySelectorAll('div[role="button"], span[role="button"], span[dir="auto"]');
+    for (const btn of buttons) {
+      if (isInsideIgnoredChrome(btn)) continue;
+      if (btn.dataset.fbExpandClicked === "1") continue;
+      const txt = cleanText(btn.innerText || btn.textContent).toLowerCase();
+      const isSeeMore = /^see\s+more$/i.test(txt) || txt === "আরও দেখুন";
+      const isPaginationExpand =
         txt.startsWith("view more comments") ||
         txt.startsWith("view previous comments") ||
         txt.startsWith("view all ") ||
+        txt.includes("more comments") ||
+        txt.includes("previous comments") ||
+        txt.includes("more replies") ||
+        txt.includes("previous replies") ||
         /^\d+\s+replies$/i.test(txt) ||
-        /^view\s+\d+\s+more/i.test(txt) ||
-        /^see\s+more$/i.test(txt)
-      ) {
-        const rect = btn.getBoundingClientRect();
-        if (rect.top >= 0 && rect.bottom <= window.innerHeight) {
+        /^view\s+all\s+\d+\s+replies/i.test(txt) ||
+        /^view\s+\d+\s+(?:more|previous)/i.test(txt) ||
+        txt.includes("আরও মন্তব্য দেখুন") ||
+        txt.includes("পূর্ববর্তী মন্তব্য") ||
+        txt.includes("উত্তর দেখুন");
+
+      if (isSeeMore || isPaginationExpand) {
+        const targetClickEl = btn.closest('div[role="button"], span[role="button"]') || btn;
+        const rect = targetClickEl.getBoundingClientRect();
+        if (rect.width > 5 && rect.height > 5) {
           try {
-            btn.click();
+            if (rect.top < 0 || rect.bottom > window.innerHeight) {
+              targetClickEl.scrollIntoView({ block: "center", behavior: "instant" });
+            }
+            targetClickEl.click();
+            if (isSeeMore) {
+              btn.dataset.fbExpandClicked = "1";
+            }
             clickedExpand = true;
-            if (!txt.startsWith("see more")) break;
+            if (isPaginationExpand) break;
           } catch (e) {}
         }
       }
@@ -750,9 +811,6 @@
       if (rowNode) {
         processedRows.add(rowNode);
         lastExtractedElements.push(rowNode);
-        if (item.url && item.name) {
-          rowNode.dataset.fbScraped = "1";
-        }
       }
     };
 
@@ -762,7 +820,6 @@
     );
     for (const node of allSpansAndBtns) {
       if (node.children.length > 0) continue;
-      if (node.closest('[data-fb-scraped="1"]')) continue;
       if (isInsideIgnoredChrome(node)) continue;
       const t = cleanText(node.textContent).toLowerCase();
       if (t !== "reply" && t !== "উত্তর দিন") continue;
@@ -781,7 +838,9 @@
       if (bestCommentRow && !processedRows.has(bestCommentRow)) {
         const item = extractCommentFromSingleRowContainer(bestCommentRow, modalOwnerNameLower);
         if (item) {
-          if (item.url) node.dataset.fbScraped = "1";
+          if (item.url && item.content) {
+            node.dataset.fbScraped = "1";
+          }
           recordComment(item, bestCommentRow);
         }
       }
@@ -790,7 +849,6 @@
     /* Engine B: Anchor-First <a href> scan (same mechanism that works for Likes!) */
     const allLinks = Array.from(root.querySelectorAll("a[href]:not([data-fb-scraped='1'])"));
     for (const a of allLinks) {
-      if (a.closest('[data-fb-scraped="1"]')) continue;
       if (isInsideIgnoredChrome(a)) continue;
       if (a.closest('[role="tab"], [role="tablist"]')) continue;
 
@@ -831,6 +889,18 @@
           if (!item.url) item.url = cUrl;
           recordComment(item, bestRow);
         }
+      }
+    }
+
+    /* Engine C: Comment <div role="article"> scan (covers replies & layout variants without visible Reply buttons) */
+    const articles = Array.from(root.querySelectorAll('div[role="article"]'));
+    for (const art of articles) {
+      if (isInsideIgnoredChrome(art)) continue;
+      if (processedRows.has(art)) continue;
+      if (art.querySelector('div[role="article"]')) continue; // Only leaf comment articles
+      const item = extractCommentFromSingleRowContainer(art, modalOwnerNameLower);
+      if (item) {
+        recordComment(item, art);
       }
     }
 
@@ -1137,7 +1207,24 @@
         }
         await sleep(stepDelay + randomInt(0, 12));
       }
-      return window.scrollY > startY + 2;
+      if (window.scrollY > startY + 2) {
+        return true;
+      }
+    }
+
+    /* Fallback for Comments when inner scroll reaches bottom or 'View more comments' is at bottom of list */
+    if (actionType === "comment") {
+      if (autoExpandComments(targetWin.root)) {
+        return true;
+      }
+      if (lastExtractedElements.length > 0) {
+        try {
+          const lastEl = lastExtractedElements[lastExtractedElements.length - 1];
+          lastEl.scrollIntoView({ block: "end", behavior: "smooth" });
+          await sleep(350);
+          return true;
+        } catch (e) {}
+      }
     }
 
     return false;
@@ -1252,6 +1339,10 @@
 
     updateUIWindowBadge(targetWin.label);
 
+    if (activeAction === "comment" && scrollCount === 0) {
+      await trySwitchToAllComments(targetWin.root);
+    }
+
     let newCount = harvestVisibleIntoStore(activeAction, targetWin);
     if (scrollCount === 0 && newCount > 0) {
       flushUnsentBatch(true);
@@ -1291,7 +1382,7 @@
 
     if (!isRunning) return;
 
-    const maxEmpty = scrolled ? cfg.maxEmptyScrolls : 5;
+    const maxEmpty = scrolled ? cfg.maxEmptyScrolls : 6;
     if (emptyScrolls >= maxEmpty) {
       stopScraping(`✅ Finished ${activeAction.toUpperCase()}S (${targetMap.size} total)! Click '📋 Copy All Now' if needed.`);
       return;
@@ -1308,6 +1399,9 @@
     scrollCount = 0;
     lockedScrollEl = null;
     lockedWindowRoot = null;
+    if (actionType === "comment") {
+      switchedToAllComments = false;
+    }
     updateUIStatus(`Detecting ${actionType.toUpperCase()} window...`);
     updateUICounters();
     runHumanScrapeLoop();

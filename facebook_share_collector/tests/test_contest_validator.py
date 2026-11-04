@@ -879,6 +879,323 @@ def test_advanced_filter_engine_boolean_and_or_not_and_bangla_boundaries():
     assert {p.name for p in female_list} == {"Nusrat Jahan", "Fatema Akter"}
 
 
+def test_action_toggle_bar_custom_rules_sentiment_and_one_entry_per_user():
+    """
+    Tests the Interactive Action Requirement Toggle Bar (Like, Comment, Share with
+    AND / OR / Comment & (Like OR Share) / Like & (Comment OR Share) / Any 2 of 3),
+    Custom Analysis Rules (DrawSystem Global Analyzer parity), Sentiment detection,
+    and 1-Entry-Per-Person deduplication.
+    """
+    from app.utils.advanced_filter_engine import (
+        AdvancedFilterConfig,
+        AdvancedFilterEngine,
+        CustomAnalysisRule,
+    )
+
+    profiles = [
+        # User A: Full 3/3 (Like + Comment + Share) with positive comment & friend tag
+        ShareProfile(name="Arif Hossain", profile_url="https://facebook.com/arif1", action_type="like", source="web", confidence=1.0, session_id="s_act"),
+        ShareProfile(name="Arif Hossain", profile_url="https://facebook.com/arif1", content="Alhamdulillah awesome post @karim #giveaway", action_type="comment", source="web", confidence=1.0, session_id="s_act"),
+        ShareProfile(name="Arif Hossain", profile_url="https://facebook.com/arif1", action_type="share", source="web", confidence=1.0, session_id="s_act"),
+
+        # User B: Like + Comment ONLY (No Share)
+        ShareProfile(name="Bithi Akter", profile_url="https://facebook.com/bithi1", action_type="like", source="web", confidence=1.0, session_id="s_act"),
+        ShareProfile(name="Bithi Akter", profile_url="https://facebook.com/bithi1", content="ধন্যবাদ সুন্দর আয়োজন @rahim", action_type="comment", source="web", confidence=1.0, session_id="s_act"),
+
+        # User C: Comment + Share ONLY (No Like)
+        ShareProfile(name="Chanchal Chowdhury", profile_url="https://facebook.com/chanchal1", action_type="comment", content="Ready for the draw!", source="web", confidence=1.0, session_id="s_act"),
+        ShareProfile(name="Chanchal Chowdhury", profile_url="https://facebook.com/chanchal1", action_type="share", source="web", confidence=1.0, session_id="s_act"),
+
+        # User D: Share ONLY (No Like, No Comment)
+        ShareProfile(name="Dipa Rani", profile_url="https://facebook.com/dipa1", action_type="share", source="web", confidence=1.0, session_id="s_act"),
+
+        # User E: Duplicate same-name account for "Arif Hossain" (different URL, also 3/3)
+        ShareProfile(name="Arif Hossain", profile_url="https://facebook.com/arif2", action_type="like", source="web", confidence=1.0, session_id="s_act"),
+        ShareProfile(name="Arif Hossain", profile_url="https://facebook.com/arif2", content="Great work @friend", action_type="comment", source="web", confidence=1.0, session_id="s_act"),
+        ShareProfile(name="Arif Hossain", profile_url="https://facebook.com/arif2", action_type="share", source="web", confidence=1.0, session_id="s_act"),
+    ]
+
+    participants = ContestValidator.validate_participants(profiles)
+    assert len(participants) == 5
+
+    # 1. Default 3/3 AND mode (Like AND Comment AND Share): only Arif #1 and Arif #2 qualify
+    cfg_default = AdvancedFilterConfig(
+        require_like=True,
+        require_comment=True,
+        require_share=True,
+        action_operator="AND",
+        one_entry_per_user=False,
+        quick_category="qualified",
+    )
+    qual_default, _, counts_default = AdvancedFilterEngine.evaluate_all(participants, cfg_default)
+    assert counts_default["qualified"] == 2
+
+    # 2. 1 Entry / Person enabled: second "Arif Hossain" is marked duplicate and excluded from winner pool
+    cfg_one_entry = AdvancedFilterConfig(
+        require_like=True,
+        require_comment=True,
+        require_share=True,
+        action_operator="AND",
+        one_entry_per_user=True,
+        quick_category="qualified",
+    )
+    qual_one, evals_one, counts_one = AdvancedFilterEngine.evaluate_all(participants, cfg_one_entry)
+    assert counts_one["qualified"] == 1
+    assert counts_one["duplicates"] == 2  # Both Arif accounts appear in 'Duplicates' view for side-by-side inspection/merge
+    assert sum(1 for ev in evals_one.values() if ev.is_duplicate_name and not ev.is_qualified_winner) == 1  # Only the 2nd Arif is excluded from winning
+    assert qual_one[0].name == "Arif Hossain"
+    assert qual_one[0].serial_code == "#0001"
+
+    # 3. Toggle OFF Share -> Require Like 👍 AND Comment 💬 only: Arif + Bithi qualify!
+    cfg_like_comment = AdvancedFilterConfig(
+        require_like=True,
+        require_comment=True,
+        require_share=False,
+        action_operator="AND",
+        one_entry_per_user=True,
+        quick_category="qualified",
+    )
+    qual_lc, _, _ = AdvancedFilterEngine.evaluate_all(participants, cfg_like_comment)
+    assert {p.name for p in qual_lc} == {"Arif Hossain", "Bithi Akter"}
+    assert [p.serial_code for p in qual_lc] == ["#0001", "#0002"]
+
+    # Verify LotteryPrintExporter prints both #0001 and #0002 even though Bithi is 2/3
+    with tempfile.TemporaryDirectory() as tmpdir:
+        out_html = os.path.join(tmpdir, "tickets_lc.html")
+        assert LotteryPrintExporter.export_printable_tickets(qual_lc, out_html) is True
+        html_doc = open(out_html, encoding="utf-8").read()
+        assert "Bithi Akter" in html_doc
+        assert "#0002" in html_doc
+
+    # 4. Action Operator = "COMMENT_AND_LIKE_OR_SHARE" -> Comment 💬 AND (Like 👍 OR Share 🔄)
+    # Qualifies Arif (all 3), Bithi (Like + Comment), and Chanchal (Comment + Share), NOT Dipa (Share only)
+    cfg_clos = AdvancedFilterConfig(
+        require_like=True,
+        require_comment=True,
+        require_share=True,
+        action_operator="COMMENT_AND_LIKE_OR_SHARE",
+        one_entry_per_user=True,
+        quick_category="qualified",
+    )
+    qual_clos, _, _ = AdvancedFilterEngine.evaluate_all(participants, cfg_clos)
+    assert {p.name for p in qual_clos} == {"Arif Hossain", "Bithi Akter", "Chanchal Chowdhury"}
+
+    # 5. Action Operator = "OR" (Any selected action: Like OR Comment OR Share) -> All 4 unique people qualify!
+    cfg_or = AdvancedFilterConfig(
+        require_like=True,
+        require_comment=True,
+        require_share=True,
+        action_operator="OR",
+        one_entry_per_user=True,
+        quick_category="qualified",
+    )
+    qual_or, _, _ = AdvancedFilterEngine.evaluate_all(participants, cfg_or)
+    assert {p.name for p in qual_or} == {"Arif Hossain", "Bithi Akter", "Chanchal Chowdhury", "Dipa Rani"}
+
+    # 6. Custom Analysis Rule (must mention @friend) + Positive Sentiment filter
+    rule_tag = CustomAnalysisRule(
+        id="r1",
+        name="Has Friend Mention",
+        rule_type="has_tags",
+        value="@",
+        enforce_for_qualification=True,
+    )
+    cfg_custom = AdvancedFilterConfig(
+        require_like=True,
+        require_comment=True,
+        require_share=False,
+        action_operator="AND",
+        sentiment_filter="positive",
+        one_entry_per_user=True,
+        custom_rules=[rule_tag],
+        quick_category="qualified",
+    )
+    qual_custom, evals_custom, counts_custom = AdvancedFilterEngine.evaluate_all(participants, cfg_custom)
+    assert {p.name for p in qual_custom} == {"Arif Hossain", "Bithi Akter"}
+    assert counts_custom["positive"] >= 3
+
+    # 7. Bi-directional Bangla <-> English digit matching ("4" <-> "৪", "14" <-> "১৪") with whole-word boundary
+    assert AdvancedFilterEngine.match_single_keyword("সঠিক উত্তর ৪!", "4", "whole_word") is True
+    assert AdvancedFilterEngine.match_single_keyword("The answer is 4!", "৪", "whole_word") is True
+    assert AdvancedFilterEngine.match_single_keyword("সঠিক উত্তর ১৪!", "4", "whole_word") is False
+    assert AdvancedFilterEngine.match_single_keyword("The answer is 14!", "৪", "whole_word") is False
+
+    # 8. Custom Action Formula ('action_combo'): (like AND comment) OR share
+    rule_act_combo = CustomAnalysisRule(
+        id="r_act",
+        name="Like+Comment OR Share",
+        rule_type="action_combo",
+        value="(like AND comment) OR share",
+        enforce_for_qualification=True,
+    )
+    cfg_act_combo = AdvancedFilterConfig(
+        require_like=False,
+        require_comment=False,
+        require_share=False,
+        one_entry_per_user=True,
+        custom_rules=[rule_act_combo],
+        quick_category="qualified",
+    )
+    qual_combo, _, _ = AdvancedFilterEngine.evaluate_all(participants, cfg_act_combo)
+    assert {p.name for p in qual_combo} == {"Arif Hossain", "Bithi Akter", "Chanchal Chowdhury", "Dipa Rani"}
+
+    # 9. CSVExporter.export_contest reflects active Action Toggle eligibility ("YES") even for 2/3 winners
+    import csv
+    from app.exporters.csv_exporter import CSVExporter
+    with tempfile.TemporaryDirectory() as tmpdir:
+        csv_lc = os.path.join(tmpdir, "lc_winners.csv")
+        qual_lc, _, _ = AdvancedFilterEngine.evaluate_all(participants, cfg_like_comment)
+        assert CSVExporter.export_contest(qual_lc, csv_lc) is True
+        with open(csv_lc, encoding="utf-8-sig") as f:
+            rows = list(csv.DictReader(f))
+        assert len(rows) == 2
+        assert rows[0]["Serial #"] == "#0001"
+        assert rows[0]["Eligible"] == "YES"
+        assert rows[1]["Name"] == "Bithi Akter"
+        assert rows[1]["Serial #"] == "#0002"
+        assert rows[1]["Eligible"] == "YES"
+        assert "QUALIFIED" in rows[1]["Status"]
+
+
+def test_three_field_chained_toggle_bar_actions_and_keywords():
+    """
+    Tests the 3-Field Chained Toggle Bar layout:
+      [Field 1] -> [Dropdown 1: AND / OR / NOT / OR NOT] -> [Field 2] -> [Dropdown 2: AND / OR / NOT / OR NOT] -> [Field 3]
+    Specifically verifies:
+      1. If Field 3 is NOT selected (toggled OFF or 'none' or empty), Field 3 and Dropdown 2 are NOT applied at all!
+      2. If Field 2 is NOT selected, Field 2 and Dropdown 1 are NOT applied.
+      3. Selecting AND, OR, NOT (AND NOT), and OR NOT in Dropdown 1 and Dropdown 2 works for both Actions and Keywords.
+      4. Grouping toggle F1 op (F2 op F3) vs (F1 op F2) op F3 works accurately.
+    """
+    from app.utils.advanced_filter_engine import (
+        AdvancedFilterConfig,
+        AdvancedFilterEngine,
+    )
+
+    profiles = [
+        # User 1: Like + Comment + Share, comment="apple fresh spam"
+        ShareProfile(name="User AllThree", profile_url="https://facebook.com/u1", action_type="like", source="web", confidence=1.0, session_id="s_chain"),
+        ShareProfile(name="User AllThree", profile_url="https://facebook.com/u1", content="apple fresh spam", action_type="comment", source="web", confidence=1.0, session_id="s_chain"),
+        ShareProfile(name="User AllThree", profile_url="https://facebook.com/u1", action_type="share", source="web", confidence=1.0, session_id="s_chain"),
+
+        # User 2: Like + Comment ONLY (NO Share), comment="apple fresh"
+        ShareProfile(name="User LikeComment", profile_url="https://facebook.com/u2", action_type="like", source="web", confidence=1.0, session_id="s_chain"),
+        ShareProfile(name="User LikeComment", profile_url="https://facebook.com/u2", content="apple fresh", action_type="comment", source="web", confidence=1.0, session_id="s_chain"),
+
+        # User 3: Comment + Share ONLY (NO Like), comment="mango sweet"
+        ShareProfile(name="User CommentShare", profile_url="https://facebook.com/u3", content="mango sweet", action_type="comment", source="web", confidence=1.0, session_id="s_chain"),
+        ShareProfile(name="User CommentShare", profile_url="https://facebook.com/u3", action_type="share", source="web", confidence=1.0, session_id="s_chain"),
+
+        # User 4: Share ONLY, no comment
+        ShareProfile(name="User ShareOnly", profile_url="https://facebook.com/u4", action_type="share", source="web", confidence=1.0, session_id="s_chain"),
+    ]
+    participants = ContestValidator.validate_participants(profiles)
+
+    # Case A: Field 1 = Like, Op1 = AND, Field 2 = Comment, Field 3 = NOT SELECTED (act_f3_enabled=False)
+    # Even if Op2 is "AND" and F3 is "share", because Field 3 is NOT selected, Field 3 is NOT applied!
+    # Both User AllThree and User LikeComment must qualify!
+    cfg_f3_off = AdvancedFilterConfig(
+        use_action_chain=True,
+        act_f1_enabled=True, act_f1_val="like",
+        act_op1="AND",
+        act_f2_enabled=True, act_f2_val="comment",
+        act_op2="AND",
+        act_f3_enabled=False, act_f3_val="share",  # Third field NOT selected -> ignored!
+        quick_category="qualified",
+    )
+    qual_a, _, _ = AdvancedFilterEngine.evaluate_all(participants, cfg_f3_off)
+    assert {p.name for p in qual_a} == {"User AllThree", "User LikeComment"}
+
+    # Case B: Field 1 = Like, Op1 = AND, Field 2 = Comment, Op2 = NOT, Field 3 = Share (ALL 3 SELECTED)
+    # Means: (Like AND Comment) AND NOT Share -> ONLY User LikeComment qualifies!
+    cfg_not_share = AdvancedFilterConfig(
+        use_action_chain=True,
+        act_f1_enabled=True, act_f1_val="like",
+        act_op1="AND",
+        act_f2_enabled=True, act_f2_val="comment",
+        act_op2="NOT",
+        act_f3_enabled=True, act_f3_val="share",
+        quick_category="qualified",
+    )
+    qual_b, _, _ = AdvancedFilterEngine.evaluate_all(participants, cfg_not_share)
+    assert {p.name for p in qual_b} == {"User LikeComment"}
+
+    # Case C: Field 1 = Comment, Op1 = AND, Field 2 = Like, Op2 = OR, Field 3 = Share
+    # With act_group_right=True: Comment AND (Like OR Share) -> User AllThree, User LikeComment, User CommentShare
+    cfg_group_right = AdvancedFilterConfig(
+        use_action_chain=True,
+        act_f1_enabled=True, act_f1_val="comment",
+        act_op1="AND",
+        act_f2_enabled=True, act_f2_val="like",
+        act_op2="OR",
+        act_f3_enabled=True, act_f3_val="share",
+        act_group_right=True,
+        quick_category="qualified",
+    )
+    qual_c, _, _ = AdvancedFilterEngine.evaluate_all(participants, cfg_group_right)
+    assert {p.name for p in qual_c} == {"User AllThree", "User LikeComment", "User CommentShare"}
+
+    # Case D: Keyword 3-Field Chain where Field 3 is NOT selected (kw_f3_enabled=False)
+    # K1="apple", Op1="AND", K2="fresh", Op2="NOT", K3="spam" (but K3 is OFF -> not applied!)
+    # Both User AllThree ("apple fresh spam") and User LikeComment ("apple fresh") must qualify!
+    cfg_kw_f3_off = AdvancedFilterConfig(
+        use_action_chain=True,
+        act_f1_enabled=True, act_f1_val="comment",
+        act_f2_enabled=False, act_f3_enabled=False,
+        use_keyword_chain=True,
+        kw_f1_enabled=True, kw_f1_text="apple",
+        kw_op1="AND",
+        kw_f2_enabled=True, kw_f2_text="fresh",
+        kw_op2="NOT",
+        kw_f3_enabled=False, kw_f3_text="spam",  # K3 unchecked -> NOT applied!
+        quick_category="qualified",
+    )
+    qual_d, _, _ = AdvancedFilterEngine.evaluate_all(participants, cfg_kw_f3_off)
+    assert {p.name for p in qual_d} == {"User AllThree", "User LikeComment"}
+
+    # Now enable K3 ("spam") with Op2="NOT" -> User AllThree is excluded as Wrong Answer, only User LikeComment qualifies!
+    cfg_kw_f3_on = AdvancedFilterConfig(
+        use_action_chain=True,
+        act_f1_enabled=True, act_f1_val="comment",
+        act_f2_enabled=False, act_f3_enabled=False,
+        use_keyword_chain=True,
+        kw_f1_enabled=True, kw_f1_text="apple",
+        kw_op1="AND",
+        kw_f2_enabled=True, kw_f2_text="fresh",
+        kw_op2="NOT",
+        kw_f3_enabled=True, kw_f3_text="spam",   # K3 checked -> applied!
+        quick_category="qualified",
+    )
+    qual_e, evals_e, counts_e = AdvancedFilterEngine.evaluate_all(participants, cfg_kw_f3_on)
+    assert {p.name for p in qual_e} == {"User LikeComment"}
+    assert counts_e["wrong"] >= 1
+
+    # Case E: Right-grouped (K1 OR (K2 NOT K3)) -> User AllThree matches K1 ("apple") so must NOT be falsely flagged as Wrong Answer!
+    cfg_kw_group_right = AdvancedFilterConfig(
+        use_action_chain=True,
+        act_f1_enabled=True, act_f1_val="comment",
+        act_f2_enabled=False, act_f3_enabled=False,
+        use_keyword_chain=True,
+        kw_f1_enabled=True, kw_f1_text="apple",
+        kw_op1="OR",
+        kw_f2_enabled=True, kw_f2_text="mango",
+        kw_op2="NOT",
+        kw_f3_enabled=True, kw_f3_text="spam",
+        kw_group_right=True,  # apple OR (mango NOT spam)
+        quick_category="qualified",
+    )
+    qual_f, evals_f, _ = AdvancedFilterEngine.evaluate_all(participants, cfg_kw_group_right)
+    assert {p.name for p in qual_f} == {"User AllThree", "User LikeComment", "User CommentShare"}
+    for p in qual_f:
+        ev = evals_f[p.normalized_key]
+        assert ev.is_qualified_winner is True
+        assert ev.matches_not_excluded is False
+        assert "WRONG ANSWER" not in ev.reason_badge
+
+
+
+
+
 
 
 

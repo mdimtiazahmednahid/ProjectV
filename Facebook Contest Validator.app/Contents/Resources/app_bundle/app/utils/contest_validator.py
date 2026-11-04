@@ -262,6 +262,49 @@ class IncrementalContestAggregator:
 
         return participant
 
+    def recalculate_state(self):
+        """
+        Recomputes internal lookup maps, disambiguators, and O(1) action/eligibility counters
+        after bulk participant merges or duplicate cleanup.
+        """
+        self._by_url.clear()
+        self._by_name_buckets.clear()
+        self._likes_count = 0
+        self._comments_count = 0
+        self._shares_count = 0
+        self._eligible_count = 0
+
+        for p in self.participants:
+            norm_name = self._clean_author_name(p.name).lower()
+            bucket = self._by_name_buckets.setdefault(norm_name, [])
+            bucket.append(p)
+            if p.profile_url:
+                norm_url = normalize_url(p.profile_url).lower()
+                if norm_url:
+                    self._by_url[norm_url] = p
+            if p.liked:
+                self._likes_count += 1
+            if p.commented:
+                self._comments_count += 1
+            if p.shared:
+                self._shares_count += 1
+            if p.is_eligible:
+                self._eligible_count += 1
+
+        for bucket in self._by_name_buckets.values():
+            if len(bucket) <= 1:
+                if bucket:
+                    bucket[0].disambiguator = ""
+            else:
+                for idx, same_name_p in enumerate(bucket, 1):
+                    if same_name_p.profile_url:
+                        slug = same_name_p.profile_url.rstrip("/").split("/")[-1][:16]
+                        same_name_p.disambiguator = f"User #{idx} · {slug}"
+                    elif same_name_p.avatar_hash:
+                        same_name_p.disambiguator = f"User #{idx} · Avatar:{same_name_p.avatar_hash[:6]}"
+                    else:
+                        same_name_p.disambiguator = f"User #{idx}"
+
     def get_sorted_participants(self) -> List[ContestParticipant]:
         result = list(self.participants)
         result.sort(key=lambda item: (-item.actions_completed, item.name.lower(), item.disambiguator))
