@@ -88,10 +88,11 @@ def test_same_name_disambiguation_by_avatar_and_url():
 
 
 def test_printable_lottery_tickets_export():
+    long_comment = "থাই চিনা বাদাম (Peanuts) এটা অত্যন্ত পুষ্টিকর এবং সুস্বাদু খাবার যা সবাই পছন্দ করে!"
     profiles = [
-        ShareProfile(name="Winner One", source="ui", confidence=0.9, session_id="s1", action_type="like", avatar_hash="1234567890abcdef"),
-        ShareProfile(name="Winner One", source="ui", confidence=0.9, session_id="s1", action_type="comment", content="Loved it!", avatar_hash="1234567890abcdef"),
-        ShareProfile(name="Winner One", source="ui", confidence=0.9, session_id="s1", action_type="share", avatar_hash="1234567890abcdef"),
+        ShareProfile(name="Winner One", profile_url="https://www.facebook.com/profile.php?id=100078091213712", source="ui", confidence=0.9, session_id="s1", action_type="like", avatar_hash="1234567890abcdef"),
+        ShareProfile(name="Winner One", profile_url="https://www.facebook.com/profile.php?id=100078091213712", source="ui", confidence=0.9, session_id="s1", action_type="comment", content=long_comment, avatar_hash="1234567890abcdef"),
+        ShareProfile(name="Winner One", profile_url="https://www.facebook.com/profile.php?id=100078091213712", source="ui", confidence=0.9, session_id="s1", action_type="share", avatar_hash="1234567890abcdef"),
     ]
     participants = ContestValidator.validate_participants(profiles)
 
@@ -103,7 +104,20 @@ def test_printable_lottery_tickets_export():
         html_text = open(out_html, encoding="utf-8").read()
         assert "#0001" in html_text
         assert "Winner One" in html_text
-        assert "Loved it!" in html_text
+        # 1. Default solid border ("border-solid"), centered serial ID, and 3-column grid
+        assert 'class="border-solid"' in html_text
+        assert "grid-template-columns: repeat(3, minmax(0, 1fr))" in html_text
+        assert "setBorderStyle(this.value)" in html_text
+        # 2. Action text has NO emoji icons ('👍' / '💬' / '🔄' removed from meta)
+        assert '<div class="meta">Like · Comment · Share</div>' in html_text
+        # 3. Long comment has '...' preview and click-to-expand toggleCommentText(this) with full comment in data-full
+        assert 'onclick="toggleCommentText(this)"' in html_text
+        assert long_comment in html_text
+        # 4. Profile link in footer is a clickable <a href="..." target="_blank"> redirecting to the profile
+        assert 'href="https://www.facebook.com/profile.php?id=100078091213712"' in html_text
+        assert 'target="_blank"' in html_text
+        # 5. No unnecessary Part 1 heading clutter above the ticket grid
+        assert "Part 1: Cut-Out Live Lottery Slips" not in html_text
 
 
 def test_extract_likes_and_comments_xml():
