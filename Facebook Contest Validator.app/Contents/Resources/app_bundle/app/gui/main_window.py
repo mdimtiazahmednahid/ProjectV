@@ -1,6 +1,6 @@
 import logging
 import os
-from PySide6.QtWidgets import (QMainWindow, QWidget, QVBoxLayout, QSplitter, 
+from PySide6.QtWidgets import (QMainWindow, QWidget, QVBoxLayout, QHBoxLayout, QFrame, QLabel, QSplitter, 
                                QTabWidget, QMessageBox, QApplication)
 from PySide6.QtCore import Qt, QThread, Signal, QTimer, QUrl
 from PySide6.QtGui import QDesktopServices
@@ -10,6 +10,14 @@ from app.gui.collector_panel import CollectorPanel
 from app.gui.results_panel import ResultsPanel
 from app.gui.sync_profile_panel import SyncProfilePanel
 from app.gui.logs_panel import LogsPanel
+from app.utils.sentra_brand import (
+    APP_DESCRIPTION,
+    APP_PILLARS,
+    APP_TAGLINE,
+    APP_UPPER,
+    APP_WINDOW_TITLE,
+    render_sentra_mark_pixmap,
+)
 from app.automation.appium_manager import AppiumManager
 from app.automation.adb_controller import ADBManager
 from app.automation.collector_engine import CollectorEngine
@@ -60,8 +68,8 @@ class SearchWorker(QThread):
 class MainWindow(QMainWindow):
     def __init__(self):
         super().__init__()
-        self.setWindowTitle("Facebook Contest Validator & Live Lottery Prep (Likes + Comments + Shares)")
-        self.resize(1180, 780)
+        self.setWindowTitle(APP_WINDOW_TITLE)
+        self.resize(1200, 820)
         
         self.settings = get_settings()
         self.appium_manager = AppiumManager(
@@ -247,7 +255,57 @@ class MainWindow(QMainWindow):
         self.setCentralWidget(main_widget)
         
         layout = QVBoxLayout()
+        layout.setSpacing(6)
+        layout.setContentsMargins(10, 8, 10, 8)
         main_widget.setLayout(layout)
+
+        # Sentra Brand Banner (matching official Sentra dark navy card & orbital signal logo)
+        brand_frame = QFrame(self)
+        brand_frame.setStyleSheet(
+            "QFrame#SentraBrandBanner { "
+            "  background-color: #0b1120; "
+            "  border: 1px solid #1e293b; "
+            "  border-radius: 10px; "
+            "}"
+        )
+        brand_frame.setObjectName("SentraBrandBanner")
+        brand_hbox = QHBoxLayout(brand_frame)
+        brand_hbox.setContentsMargins(14, 8, 16, 8)
+        brand_hbox.setSpacing(12)
+
+        logo_lbl = QLabel()
+        logo_lbl.setPixmap(render_sentra_mark_pixmap(size=38, with_badge_bg=False))
+        logo_lbl.setAlignment(Qt.AlignVCenter | Qt.AlignLeft)
+        brand_hbox.addWidget(logo_lbl)
+
+        title_lbl = QLabel(APP_UPPER)
+        title_lbl.setStyleSheet(
+            "color: #ffffff; font-size: 20px; font-weight: 800; letter-spacing: 1.5px; border: none;"
+        )
+        brand_hbox.addWidget(title_lbl)
+
+        sep_lbl = QLabel("│")
+        sep_lbl.setStyleSheet("color: #334155; font-size: 18px; border: none;")
+        brand_hbox.addWidget(sep_lbl)
+
+        story_col = QVBoxLayout()
+        story_col.setSpacing(1)
+        tagline_lbl = QLabel(f"<b>{APP_TAGLINE}</b>")
+        tagline_lbl.setStyleSheet("color: #f8fafc; font-size: 13px; border: none;")
+        desc_lbl = QLabel(APP_DESCRIPTION)
+        desc_lbl.setStyleSheet("color: #94a3b8; font-size: 11px; border: none;")
+        story_col.addWidget(tagline_lbl)
+        story_col.addWidget(desc_lbl)
+        brand_hbox.addLayout(story_col, 1)
+
+        pillars_lbl = QLabel(APP_PILLARS)
+        pillars_lbl.setStyleSheet(
+            "color: #35c5f0; font-size: 11px; font-weight: 800; letter-spacing: 1.2px; border: none;"
+        )
+        pillars_lbl.setAlignment(Qt.AlignRight | Qt.AlignVCenter)
+        brand_hbox.addWidget(pillars_lbl)
+
+        layout.addWidget(brand_frame)
         
         # Top controls
         self.device_panel = DevicePanel(self.appium_manager, self.adb_manager)

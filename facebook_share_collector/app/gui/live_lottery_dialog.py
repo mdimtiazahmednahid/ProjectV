@@ -40,7 +40,7 @@ class LiveLotteryDialog(QDialog):
         self.rule_summary_text = rule_summary_text
         self.on_disqualify_callback = on_disqualify_callback
 
-        self.setWindowTitle(f"🎡 FairDraw Live Contest Lottery — {len(self.eligible)} Qualified Winners")
+        self.setWindowTitle(f"🎡 SENTRA Live Contest Lottery — {len(self.eligible)} Qualified Winners")
         self.resize(920, 600)
         self.setStyleSheet(
             "QDialog { background-color: #0b1120; color: #f8fafc; }"
@@ -53,6 +53,8 @@ class LiveLotteryDialog(QDialog):
         self._setup_ui()
 
     def _setup_ui(self):
+        from app.utils.sentra_brand import render_sentra_mark_pixmap
+
         root_layout = QHBoxLayout(self)
         root_layout.setSpacing(14)
 
@@ -60,13 +62,23 @@ class LiveLotteryDialog(QDialog):
         stage_layout = QVBoxLayout()
         stage_layout.setSpacing(8)
 
-        title_lbl = QLabel(f"🏆 LIVE CONTEST WINNER DRAW ({len(self.eligible)} QUALIFIED IN POOL)")
+        title_frame = QFrame()
+        title_frame.setStyleSheet(
+            "background: #1e293b; border-radius: 8px; border: 1px solid #334155;"
+        )
+        title_hbox = QHBoxLayout(title_frame)
+        title_hbox.setContentsMargins(12, 8, 12, 8)
+        logo_lbl = QLabel()
+        logo_lbl.setPixmap(render_sentra_mark_pixmap(size=28, with_badge_bg=False))
+        logo_lbl.setStyleSheet("border: none; background: transparent;")
+        title_lbl = QLabel(f"SENTRA  •  🏆 LIVE CONTEST WINNER DRAW ({len(self.eligible)} QUALIFIED IN POOL)")
         title_lbl.setAlignment(Qt.AlignCenter)
         title_lbl.setStyleSheet(
-            "background: #1e293b; color: #38bdf8; font-size: 16px; font-weight: 800; "
-            "padding: 10px; border-radius: 8px; border: 1px solid #334155;"
+            "color: #38bdf8; font-size: 15px; font-weight: 800; border: none; background: transparent;"
         )
-        stage_layout.addWidget(title_lbl)
+        title_hbox.addWidget(logo_lbl)
+        title_hbox.addWidget(title_lbl, 1)
+        stage_layout.addWidget(title_frame)
 
         self.lbl_rules_banner = QLabel(f"🎯 Active Rule: {self.rule_summary_text}")
         self.lbl_rules_banner.setAlignment(Qt.AlignCenter)

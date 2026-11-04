@@ -5,6 +5,7 @@ import logging
 import os
 from typing import List, Optional, Dict, Set
 from app.models.share_profile import ContestParticipant
+from app.utils.sentra_brand import get_sentra_logo_svg
 
 logger = logging.getLogger(__name__)
 
@@ -733,9 +734,12 @@ class LotteryPrintExporter:
 </head>
 <body class="border-solid id-center actions-all-icons comment-lines-2" data-scope="{default_scope}">
     <div class="toolbar no-print">
-        <div>
+        <div style="display:flex;align-items:center;gap:8px;">
+            {get_sentra_logo_svg(size=28, bg_fill="#0b1120")}
+            <span style="font-weight:800;letter-spacing:1px;font-size:15px;">SENTRA</span>
+            <span style="opacity:0.65;">|</span>
             <strong id="toolbarTicketCount">Contest Lottery Slips ({initial_visible_count} Tickets)</strong>
-            <span style="font-size:12px;opacity:0.9;margin-left:8px;">({generated_at})</span>
+            <span style="font-size:12px;opacity:0.9;margin-left:4px;">({generated_at})</span>
         </div>
         <div class="toolbar-controls">
             <label>Show:

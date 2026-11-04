@@ -1,0 +1,15 @@
+appium:
+  host: 127.0.0.1
+  port: 4723
+
+facebook:
+  package: com.facebook.katana
+
+collector:
+  max_scrolls: 500
+  max_no_new_results: 5
+  max_runtime_minutes: 30
+  max_profiles: 50000
+
+extraction:
+  minimum_confidence: 0.60

@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>SENTRA — Every signal has a story</title>
+  <style>
+    body {
+      width: 280px;
+      margin: 0;
+      padding: 12px;
+      background: #0b1120;
+      color: #f9fafb;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      font-size: 12px;
+    }
+    .brand-header {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 6px;
+    }
+    .brand-title {
+      font-size: 15px;
+      font-weight: 800;
+      letter-spacing: 1.2px;
+      color: #ffffff;
+    }
+    .brand-sub {
+      font-size: 10.5px;
+      color: #35c5f0;
+      margin-bottom: 10px;
+      font-weight: 600;
+    }
+    .btn {
+      width: 100%;
+      border: none;
+      border-radius: 6px;
+      padding: 8px;
+      margin-bottom: 6px;
+      color: white;
+      font-weight: 700;
+      cursor: pointer;
+    }
+    .like { background: #1d4ed8; }
+    .comment { background: #7e22ce; }
+    .share { background: #15803d; }
+    .stop { background: #dc2626; }
+    .copy { background: #0284c7; }
+    .counts {
+      background: #1f2937;
+      padding: 8px;
+      border-radius: 6px;
+      text-align: center;
+      font-weight: 700;
+      margin-top: 6px;
+    }
+  </style>
+</head>
+<body>
+  <div class="brand-header">
+    <svg width="24" height="24" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <path d="M 20.3 62.3 A 32 32 0 0 1 62.3 20.3" stroke="#35c5f0" stroke-width="6.5" stroke-linecap="round"/>
+      <path d="M 79.7 37.7 A 32 32 0 0 1 37.7 79.7" stroke="#35c5f0" stroke-width="6.5" stroke-linecap="round"/>
+      <circle cx="72.6" cy="27.4" r="7.2" stroke="#35c5f0" stroke-width="6" fill="#0b1120"/>
+      <circle cx="27.4" cy="72.6" r="7.2" stroke="#35c5f0" stroke-width="6" fill="#0b1120"/>
+      <circle cx="50" cy="50" r="8.2" stroke="#35c5f0" stroke-width="6" fill="#0b1120"/>
+    </svg>
+    <span class="brand-title">SENTRA</span>
+  </div>
+  <div class="brand-sub">Every signal has a story. • OBSERVE. UNDERSTAND. DISCOVER.</div>
+  <button id="btn-like" class="btn like">1. Auto-Scrape Reactions 👍</button>
+  <button id="btn-comment" class="btn comment">2. Auto-Scrape Comments 💬</button>
+  <button id="btn-share" class="btn share">3. Auto-Scrape Shares 🔄</button>
+  <button id="btn-stop" class="btn stop">⏹ Stop & Send Batch</button>
+  <button id="btn-copy" class="btn copy">📋 Copy All to Sentra App</button>
+  <div id="counts" class="counts">👍 0 | 💬 0 | 🔄 0</div>
+  <script src="popup.js"></script>
+</body>
+</html>
+

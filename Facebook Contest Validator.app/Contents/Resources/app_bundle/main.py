@@ -129,19 +129,20 @@ def main():
     setup_logger()
     logger = logging.getLogger(__name__)
     _install_global_exception_guard(logger)
-    logger.info("Starting Facebook Contest Validator & Live Lottery Prep...")
+    logger.info("Starting Sentra — Public Data Intelligence & Contest Validator...")
 
     if sys.platform == "win32":
         try:
             import ctypes
             ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID(
-                "com.contestvalidator.facebook"
+                "com.sentra.intelligence"
             )
         except Exception:
             pass
 
     app = QApplication(sys.argv)
-    app.setApplicationName("Facebook Contest Validator")
+    app.setApplicationName("Sentra")
+    app.setApplicationDisplayName("Sentra")
     app.setStyle("Fusion")
 
     # Set native system font to avoid Qt "Sans Serif" font family lookup overhead
@@ -150,17 +151,27 @@ def main():
     elif sys.platform == "darwin":
         app.setFont(QFont("Helvetica Neue", 12))
 
+    icon_loaded = False
     icon_candidates = [
-        os.path.join(BUNDLE_RESOURCE_ROOT, "app", "resources", "AppIcon.ico"),
-        os.path.join(APP_ROOT, "app", "resources", "AppIcon.ico"),
         os.path.join(BUNDLE_RESOURCE_ROOT, "app", "resources", "AppIcon.png"),
         os.path.join(APP_ROOT, "app", "resources", "AppIcon.png"),
+        os.path.join(BUNDLE_RESOURCE_ROOT, "app", "resources", "AppIcon.ico"),
+        os.path.join(APP_ROOT, "app", "resources", "AppIcon.ico"),
     ]
     for icon_path in icon_candidates:
         if os.path.isfile(icon_path):
             app_icon = QIcon(icon_path)
             app.setWindowIcon(app_icon)
+            icon_loaded = True
             break
+
+    if not icon_loaded:
+        try:
+            from PySide6.QtGui import QPixmap
+            from app.utils.sentra_brand import render_sentra_logo_qimage
+            app.setWindowIcon(QIcon(QPixmap.fromImage(render_sentra_logo_qimage(256, with_badge_bg=True))))
+        except Exception:
+            pass
 
     window = MainWindow()
     window.show()

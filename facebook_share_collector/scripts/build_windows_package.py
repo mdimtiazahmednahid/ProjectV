@@ -298,54 +298,11 @@ if __name__ == "__main__":
 
 def _create_base_qimage():
     os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
-    from PySide6.QtCore import QPointF, Qt
-    from PySide6.QtGui import (
-        QColor,
-        QFont,
-        QGuiApplication,
-        QImage,
-        QLinearGradient,
-        QPainter,
-        QPen,
-    )
+    if PROJECT_ROOT not in os.sys.path:
+        os.sys.path.insert(0, PROJECT_ROOT)
+    from app.utils.sentra_brand import render_sentra_logo_qimage
 
-    _app = QGuiApplication.instance() or QGuiApplication([])
-    size = 512
-    img = QImage(size, size, QImage.Format_ARGB32)
-    img.fill(Qt.transparent)
-
-    p = QPainter(img)
-    p.setRenderHint(QPainter.Antialiasing, True)
-
-    grad = QLinearGradient(0, 0, size, size)
-    grad.setColorAt(0.0, QColor("#1877F2"))
-    grad.setColorAt(0.55, QColor("#1E40AF"))
-    grad.setColorAt(1.0, QColor("#0F172A"))
-
-    p.setPen(QPen(QColor("#60A5FA"), 10))
-    p.setBrush(grad)
-    margin = 24
-    p.drawRoundedRect(
-        margin, margin, size - 2 * margin, size - 2 * margin, 110, 110
-    )
-
-    wheel_grad = QLinearGradient(120, 120, 392, 392)
-    wheel_grad.setColorAt(0.0, QColor("#10B981"))
-    wheel_grad.setColorAt(1.0, QColor("#059669"))
-    p.setPen(QPen(QColor("#FBBF24"), 12))
-    p.setBrush(wheel_grad)
-    p.drawEllipse(QPointF(size / 2, size / 2), 145, 145)
-
-    p.setPen(QPen(QColor("#FFFFFF"), 24, Qt.SolidLine, Qt.RoundCap, Qt.RoundJoin))
-    p.drawLine(195, 260, 240, 308)
-    p.drawLine(240, 308, 330, 208)
-
-    font = QFont("Arial", 28, QFont.Bold)
-    p.setFont(font)
-    p.setPen(QColor("#FDE68A"))
-    p.drawText(0, 398, size, 60, Qt.AlignCenter, "3-ACTION")
-    p.end()
-    return img
+    return render_sentra_logo_qimage(size=512, with_badge_bg=True)
 
 
 def generate_windows_icons(resources_dir: str):
@@ -449,6 +406,9 @@ def build_single_file_windows_exes() -> None:
     shebang = b"#!/usr/bin/env pythonw\r\n"
 
     targets = [
+        ("w32.exe", os.path.join(WORKSPACE_ROOT, "Sentra_Windows.exe")),
+        ("w64.exe", os.path.join(WORKSPACE_ROOT, "Sentra_Windows_x64.exe")),
+        ("w64-arm.exe", os.path.join(WORKSPACE_ROOT, "Sentra_Windows_ARM64.exe")),
         ("w32.exe", os.path.join(WORKSPACE_ROOT, "Facebook_Contest_Validator_Windows.exe")),
         ("w64.exe", os.path.join(WORKSPACE_ROOT, "Facebook_Contest_Validator_Windows_x64.exe")),
         ("w64-arm.exe", os.path.join(WORKSPACE_ROOT, "Facebook_Contest_Validator_Windows_ARM64.exe")),

@@ -3,7 +3,7 @@
 <plist version="1.0">
 <dict>
 	<key>CFBundleDisplayName</key>
-	<string>Facebook Contest Validator</string>
+	<string>Sentra</string>
 	<key>CFBundleExecutable</key>
 	<string>FacebookContestValidator</string>
 	<key>CFBundleIconFile</key>
@@ -11,7 +11,7 @@
 	<key>CFBundleIdentifier</key>
 	<string>com.contestvalidator.facebook</string>
 	<key>CFBundleName</key>
-	<string>Facebook Contest Validator</string>
+	<string>Sentra</string>
 	<key>CFBundlePackageType</key>
 	<string>APPL</string>
 	<key>CFBundleShortVersionString</key>

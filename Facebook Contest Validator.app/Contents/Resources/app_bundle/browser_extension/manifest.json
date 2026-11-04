@@ -1,8 +1,8 @@
 {
   "manifest_version": 3,
-  "name": "FB Contest Validator & Lottery Scraper (Live Desktop Bridge)",
-  "version": "2.2.0",
-  "description": "Auto-scrapes Facebook Post Likes, Comments, and Shares with exact Profile Links and streams batches directly to the Desktop App.",
+  "name": "Sentra — Public Data Intelligence & Contest Scraper",
+  "version": "2.3.0",
+  "description": "Every signal has a story. Auto-scrapes Facebook Post Reactions, Comments, and Shares with exact Profile Links and streams directly to Sentra Desktop.",
   "permissions": [
     "clipboardWrite",
     "storage",
@@ -17,7 +17,7 @@
     "service_worker": "background.js"
   },
   "action": {
-    "default_title": "FB Contest Scraper",
+    "default_title": "Sentra Scraper",
     "default_popup": "popup.html"
   },
   "content_scripts": [

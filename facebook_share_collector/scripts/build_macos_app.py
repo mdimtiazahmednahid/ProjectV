@@ -14,39 +14,16 @@ SITE_PACKAGES_SRC = os.path.join(PROJECT_DIR, ".venv", "lib", "python3.14", "sit
 
 def _generate_app_icns(output_icns_path: str):
     """
-    Renders a crisp macOS .icns icon set using PySide6 QImage/QPainter and /usr/bin/iconutil.
+    Renders a crisp macOS .icns icon set of the Sentra orbital signal logo
+    using PySide6 QImage/QPainter and /usr/bin/iconutil.
     """
     os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
-    from PySide6.QtGui import QGuiApplication, QImage, QPainter, QColor, QFont, QLinearGradient, QPen
-    from PySide6.QtCore import Qt, QRect
+    if PROJECT_DIR not in sys.path:
+        sys.path.insert(0, PROJECT_DIR)
+    from PySide6.QtCore import Qt
+    from app.utils.sentra_brand import render_sentra_logo_qimage
 
-    _app = QGuiApplication.instance() or QGuiApplication([])
-
-    base_img = QImage(1024, 1024, QImage.Format_ARGB32)
-    base_img.fill(Qt.transparent)
-
-    painter = QPainter(base_img)
-    painter.setRenderHint(QPainter.Antialiasing, True)
-
-    grad = QLinearGradient(0, 0, 1024, 1024)
-    grad.setColorAt(0.0, QColor(15, 23, 42))
-    grad.setColorAt(0.5, QColor(30, 58, 138))
-    grad.setColorAt(1.0, QColor(6, 78, 59))
-
-    painter.setBrush(grad)
-    painter.setPen(QPen(QColor(56, 189, 248), 18))
-    painter.drawRoundedRect(QRect(48, 48, 928, 928), 210, 210)
-
-    font = QFont("Helvetica", 280, QFont.Bold)
-    painter.setFont(font)
-    painter.setPen(QColor(74, 222, 128))
-    painter.drawText(QRect(0, 140, 1024, 460), Qt.AlignCenter, "3/3")
-
-    sub_font = QFont("Helvetica", 120, QFont.Bold)
-    painter.setFont(sub_font)
-    painter.setPen(QColor(248, 250, 252))
-    painter.drawText(QRect(0, 540, 1024, 260), Qt.AlignCenter, "CONTEST")
-    painter.end()
+    base_img = render_sentra_logo_qimage(size=1024, with_badge_bg=True)
 
     with tempfile.TemporaryDirectory() as tmpdir:
         iconset_dir = os.path.join(tmpdir, "AppIcon.iconset")
@@ -312,6 +289,16 @@ exec "{venv_py_link}" "{main_script}"
     # Fast in-place code sync when .app bundle already exists (preserves live CWD inode for running app!)
     if "--skip-dmg" in sys.argv and os.path.isdir(existing_payload) and os.path.isfile(existing_bin):
         try:
+            icns_in_place = os.path.join(app_bundle, "Contents", "Resources", "AppIcon.icns")
+            _generate_app_icns(icns_in_place)
+            plist_in_place = os.path.join(app_bundle, "Contents", "Info.plist")
+            if os.path.isfile(plist_in_place):
+                with open(plist_in_place, "rb") as pf:
+                    pl_data = plistlib.load(pf)
+                pl_data["CFBundleName"] = "Sentra"
+                pl_data["CFBundleDisplayName"] = "Sentra"
+                with open(plist_in_place, "wb") as pf:
+                    plistlib.dump(pl_data, pf)
             for root_file in ("main.py", "run.py", "config.yaml"):
                 src_rf = os.path.join(PROJECT_DIR, root_file)
                 if os.path.isfile(src_rf):
@@ -325,7 +312,28 @@ exec "{venv_py_link}" "{main_script}"
                         ignore=shutil.ignore_patterns("__pycache__", "*.pyc"),
                     )
             os.makedirs(existing_app_data, exist_ok=True)
-            print(f"Updated macOS Intel App Bundle in-place (preserving live CWD): {app_bundle}")
+            # Also maintain Sentra.app bundle in workspace root
+            sentra_app_bundle = os.path.join(WORKSPACE_ROOT, "Sentra.app")
+            if not os.path.exists(sentra_app_bundle):
+                _copytree_no_xattr(app_bundle, sentra_app_bundle)
+            else:
+                sentra_payload = os.path.join(sentra_app_bundle, "Contents", "Resources", "app_bundle")
+                if os.path.isdir(sentra_payload):
+                    shutil.copyfile(icns_in_place, os.path.join(sentra_app_bundle, "Contents", "Resources", "AppIcon.icns"))
+                    shutil.copyfile(plist_in_place, os.path.join(sentra_app_bundle, "Contents", "Info.plist"))
+                    for root_file in ("main.py", "run.py", "config.yaml"):
+                        src_rf = os.path.join(PROJECT_DIR, root_file)
+                        if os.path.isfile(src_rf):
+                            shutil.copyfile(src_rf, os.path.join(sentra_payload, root_file))
+                    for folder in ("app", "config", "browser_extension", "bin"):
+                        src_f = os.path.join(PROJECT_DIR, folder)
+                        if os.path.isdir(src_f):
+                            _copytree_no_xattr(
+                                src_f,
+                                os.path.join(sentra_payload, folder),
+                                ignore=shutil.ignore_patterns("__pycache__", "*.pyc"),
+                            )
+            print(f"Updated Sentra macOS App Bundles in-place: {sentra_app_bundle} & {app_bundle}")
             return
         except OSError:
             pass

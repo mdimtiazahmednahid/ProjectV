@@ -1652,8 +1652,8 @@
     const header = document.createElement("div");
     header.style.cssText = "display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;border-bottom:1px solid #374151;padding-bottom:6px;";
     const title = document.createElement("span");
-    title.style.cssText = "font-weight:800;font-size:13px;color:#60a5fa;";
-    title.textContent = "🎯 FB Contest Clipboard Scraper";
+    title.style.cssText = "display:flex;align-items:center;gap:6px;font-weight:800;font-size:13px;color:#ffffff;letter-spacing:0.6px;";
+    title.innerHTML = `<svg width="20" height="20" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M 20.3 62.3 A 32 32 0 0 1 62.3 20.3" stroke="#35c5f0" stroke-width="6.5" stroke-linecap="round"/><path d="M 79.7 37.7 A 32 32 0 0 1 37.7 79.7" stroke="#35c5f0" stroke-width="6.5" stroke-linecap="round"/><circle cx="72.6" cy="27.4" r="7.2" stroke="#35c5f0" stroke-width="6" fill="#0b1120"/><circle cx="27.4" cy="72.6" r="7.2" stroke="#35c5f0" stroke-width="6" fill="#0b1120"/><circle cx="50" cy="50" r="8.2" stroke="#35c5f0" stroke-width="6" fill="#0b1120"/></svg><span>SENTRA <span style="color:#35c5f0;font-weight:600;font-size:11px;letter-spacing:0;">• Every signal has a story</span></span>`;
     const minBtn = document.createElement("button");
     minBtn.id = "fb-ext-min-btn";
     minBtn.style.cssText = "background:transparent;border:none;color:#9ca3af;cursor:pointer;font-size:14px;";

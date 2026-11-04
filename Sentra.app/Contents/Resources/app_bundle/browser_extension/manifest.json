@@ -1,0 +1,34 @@
+{
+  "manifest_version": 3,
+  "name": "Sentra — Public Data Intelligence & Contest Scraper",
+  "version": "2.3.0",
+  "description": "Every signal has a story. Auto-scrapes Facebook Post Reactions, Comments, and Shares with exact Profile Links and streams directly to Sentra Desktop.",
+  "permissions": [
+    "clipboardWrite",
+    "storage",
+    "activeTab"
+  ],
+  "host_permissions": [
+    "*://*.facebook.com/*",
+    "http://127.0.0.1/*",
+    "http://localhost/*"
+  ],
+  "background": {
+    "service_worker": "background.js"
+  },
+  "action": {
+    "default_title": "Sentra Scraper",
+    "default_popup": "popup.html"
+  },
+  "content_scripts": [
+    {
+      "matches": [
+        "*://*.facebook.com/*"
+      ],
+      "js": [
+        "content.js"
+      ],
+      "run_at": "document_idle"
+    }
+  ]
+}
