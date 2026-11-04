@@ -333,7 +333,13 @@ exec "{venv_py_link}" "{main_script}"
                                 os.path.join(sentra_payload, folder),
                                 ignore=shutil.ignore_patterns("__pycache__", "*.pyc"),
                             )
-            print(f"Updated Sentra macOS App Bundles in-place: {sentra_app_bundle} & {app_bundle}")
+            # Re-sign both .app bundles so macOS Gatekeeper / LaunchServices validates Info.plist & Resources
+            for bundle_to_sign in (app_bundle, sentra_app_bundle):
+                subprocess.run(
+                    ["/usr/bin/codesign", "--force", "--deep", "--sign", "-", bundle_to_sign],
+                    check=False,
+                )
+            print(f"Updated & re-signed Sentra macOS App Bundles in-place: {sentra_app_bundle} & {app_bundle}")
             return
         except OSError:
             pass

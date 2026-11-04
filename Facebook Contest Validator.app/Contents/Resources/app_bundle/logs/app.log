@@ -22,3 +22,5 @@
 23:03:50 INFO app.gui.main_window Auto-saved contest validation to /Users/MacBookPro/Downloads/ShareExtractor-main 2/Facebook Contest Validator.app/Contents/Resources/app_bundle/data/autosave_contest.csv
 23:03:50 INFO app.gui.main_window Auto-imported Browser Extension batch '1793810539904_051mcy' (241 profiles with links; 0 hybrid records synced).
 23:04:10 INFO app.gui.main_window Started fresh contest session 476faf4d.
+23:44:11 INFO __main__ Starting Sentra — Public Data Intelligence & Contest Validator...
+23:44:11 INFO app.automation.local_bridge_server Local HTTP Extension Bridge listening on http://127.0.0.1:19876/batch

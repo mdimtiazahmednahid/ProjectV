@@ -131,3 +131,4 @@ def render_sentra_mark_pixmap(size: int = 44, with_badge_bg: bool = False):
 
     img = render_sentra_logo_qimage(size=size, with_badge_bg=with_badge_bg)
     return QPixmap.fromImage(img)
+
