@@ -178,7 +178,7 @@
 		</data>
 		<key>Resources/app_bundle/app/exporters/lottery_print_exporter.py</key>
 		<data>
-		p6ue4SxfM2uk7/UZfi0YBvqWezI=
+		WgMj+I23BN+a2IfQnQowdC28lQQ=
 		</data>
 		<key>Resources/app_bundle/app/exporters/xlsx_exporter.py</key>
 		<data>
@@ -246,7 +246,7 @@
 		</data>
 		<key>Resources/app_bundle/app/gui/results_panel.py</key>
 		<data>
-		yP9Hf+MVp44lxZ+zcJM3Tv835Rc=
+		NAPB5nsqKOgbol3FDqXbuPYj6SA=
 		</data>
 		<key>Resources/app_bundle/app/gui/session_manager_dialog.py</key>
 		<data>
@@ -1934,19 +1934,19 @@
 		</data>
 		<key>Resources/app_bundle/data/sentra_lottery_tickets_2026-11-05_15-30.html</key>
 		<data>
-		R49GLRD2Q2xE1OlpGhHdOC21Wt0=
+		cLZWOhkWuBa8qkNVvPBlJCSRlG0=
 		</data>
 		<key>Resources/app_bundle/data/sentra_lottery_tickets_2026-11-05_15-37.html</key>
 		<data>
-		5bBUil3JLrGe8j3/RLxHBgSMNmI=
+		eBNQU5VGRbvLqvjF1MxmTZvaNO8=
 		</data>
 		<key>Resources/app_bundle/data/sentra_lottery_tickets_2026-11-05_15-43.html</key>
 		<data>
-		/1CSa1XWshPUlozdHx9C8TF3VzU=
+		R/LVoSYWpPfn5SnfiSYd8DPU3Zw=
 		</data>
 		<key>Resources/app_bundle/data/sentra_lottery_tickets_2026-11-05_16-04.html</key>
 		<data>
-		e53VVbi187/NeK3jOIrltRXLiSI=
+		xXRO4cSs5YowRDVY2Rng5HV0skc=
 		</data>
 		<key>Resources/app_bundle/data/sentra_lottery_tickets_latest.html</key>
 		<data>
@@ -9536,7 +9536,7 @@
 		<dict>
 			<key>hash2</key>
 			<data>
-			ev9gx+4dNG0q5L0zQDZqZiDBeV6J7nIhNpXctKRQ2Yg=
+			+bpHIQA6bASXpmCGR5aQfSF+n8HcC3+u6VSeT3hjd48=
 			</data>
 		</dict>
 		<key>Resources/app_bundle/app/exporters/xlsx_exporter.py</key>
@@ -9655,7 +9655,7 @@
 		<dict>
 			<key>hash2</key>
 			<data>
-			v/7VuNKcAvzXDDX1NAwriRjkkN6aPIRLqJ+sbE/oAA8=
+			P5MvIU/ediktczzrBnsfaZsQD577ecAEFCC0wXLom9s=
 			</data>
 		</dict>
 		<key>Resources/app_bundle/app/gui/session_manager_dialog.py</key>
@@ -12609,28 +12609,28 @@
 		<dict>
 			<key>hash2</key>
 			<data>
-			uFNlU/6l/x/TAlN4uZdnN1C8D5Q8eALTPlqehyb0o90=
+			RwvTzbAhyJqpXMjOKUWfBOKFGi4pSfPm3UT1OxQ0Oq4=
 			</data>
 		</dict>
 		<key>Resources/app_bundle/data/sentra_lottery_tickets_2026-11-05_15-37.html</key>
 		<dict>
 			<key>hash2</key>
 			<data>
-			YzFz9elpS+Cm29CBqvvC2JoXT+Htq+14Ra2OyvgzQt4=
+			Ty+1jcLp4ltOaasJ5RU65z5NfdPpFZ6jJa2mD78OZHQ=
 			</data>
 		</dict>
 		<key>Resources/app_bundle/data/sentra_lottery_tickets_2026-11-05_15-43.html</key>
 		<dict>
 			<key>hash2</key>
 			<data>
-			OPeMi23v9m9rnbm9AjWETCHAX5Z6DeYr3AiY/mQNxF8=
+			iNK4L12FEqJ56RlPh8EMGhFTfBkpVwkQ55Pasa8Qb74=
 			</data>
 		</dict>
 		<key>Resources/app_bundle/data/sentra_lottery_tickets_2026-11-05_16-04.html</key>
 		<dict>
 			<key>hash2</key>
 			<data>
-			Uqig8InVoTcC+YWFhbzG85umMxuf2QU326Y9HvW/K5M=
+			yu7u+P81aBXA6teeksFBEcnRsEWidpip6ukwcVVS5Is=
 			</data>
 		</dict>
 		<key>Resources/app_bundle/data/sentra_lottery_tickets_latest.html</key>

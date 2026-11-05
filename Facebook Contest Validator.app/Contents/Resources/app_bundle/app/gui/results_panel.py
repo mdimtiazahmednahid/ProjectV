@@ -1616,7 +1616,14 @@ class ResultsPanel(QWidget):
             "HTML Printable Document (*.html)"
         )
         if path:
-            if LotteryPrintExporter.export_printable_tickets(
+            try:
+                import importlib
+                import app.exporters.lottery_print_exporter as _lpe_mod
+                importlib.reload(_lpe_mod)
+                exporter_cls = _lpe_mod.LotteryPrintExporter
+            except Exception:
+                exporter_cls = LotteryPrintExporter
+            if exporter_cls.export_printable_tickets(
                 self.participants,
                 path,
                 qualified_keys=qualified_keys,

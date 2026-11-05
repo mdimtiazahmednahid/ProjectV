@@ -478,7 +478,7 @@
         padding: 14px 16px;
     }
     body.cols-2 .serial {
-        font-size: 15.5px;
+        font-size: 10px;
     }
     body.cols-2 .badge {
         font-size: 11.5px;
@@ -1190,7 +1190,7 @@
             const cs = window.getComputedStyle(el);
             const lh = parseFloat(cs.lineHeight) || (parseFloat(cs.fontSize) * 1.44) || 19.5;
             const isMultiLineRendered = el.scrollHeight > (lh * 1.45);
-            const isLongText = raw.length > 45 || raw.indexOf("\\n") !== -1 || isMultiLineRendered;
+            const isLongText = raw.indexOf("\\n") !== -1 || isMultiLineRendered;
             el.classList.toggle("comment-long", isLongText);
             el.classList.toggle("comment-short", !isLongText);
         });
