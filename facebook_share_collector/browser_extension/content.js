@@ -32,10 +32,10 @@
 
   const BATCH_PREFIX = "FB_CONTEST_BATCH_V1:";
   const BATCH_FLUSH_SIZE = 1;
-  const MAX_CLIPBOARD_RING_BATCHES = 6;
-  const MAX_CLIPBOARD_ITEMS = 160;
-  const MAX_CLIPBOARD_BYTES = 140000;
-  const MAX_HTTP_CHUNK_ITEMS = 80;
+  const MAX_CLIPBOARD_RING_BATCHES = 60;
+  const MAX_CLIPBOARD_ITEMS = 5000;
+  const MAX_CLIPBOARD_BYTES = 4500000;
+  const MAX_HTTP_CHUNK_ITEMS = 120;
 
   let isRunning = false;
   let activeAction = "like";
@@ -111,14 +111,18 @@
     "online status indicator active", "comment", "comments", "shares", "post", "posts",
     "photo", "photos", "video", "videos", "reel", "reels", "story", "stories", "sharer",
     "write an answer…", "write an answer...", "write a public comment…", "write a public comment...",
-    "show attachment", "hide attachment", "অ্যাটাচমেন্ট দেখুন", "সবচেয়ে প্রাসঙ্গিক", "সব মন্তব্য"
+    "show attachment", "hide attachment", "অ্যাটাচমেন্ট দেখুন", "সবচেয়ে প্রাসঙ্গিক", "সব মন্তব্য",
+    "সব কমেন্ট", "উত্তর দিন", "লাইক", "শেয়ার", "শেয়ার", "বন্ধু যোগ করুন", "ফলো করুন", "ফলো করছেন",
+    "মেসেজ", "বন্ধু", "অনুরোধ বাতিল করুন", "লগ ইন", "লগ ইন করুন", "নতুন অ্যাকাউন্ট তৈরি করুন"
   ]);
 
-  const UTILITY_DIALOG_ARIA_RE = /notification|messenger|chat|account|menu|your profile|settings|search facebook|create post|stories|reels/i;
+  const UTILITY_DIALOG_ARIA_RE = /notification|messenger|chat|account|menu|your profile|settings|search facebook|create post|stories|reels|cookie|log in|sign up|login/i;
   const REACTION_SUFFIX_RE = /\s+(?:Liked|Loved|Cared|Haha|Wow|Sad|Angry)$/i;
-  const PROFILE_PIC_NOISE_RE = /(?:'s\s+profile\s+(?:picture|photo)|\s+profile\s+(?:picture|photo).*|^profile\s+(?:picture|photo)\s+of\s+|^online\s+status\s+indicator\s*(?:active)?)/i;
-  const INLINE_META_SUFFIX_RE = /\s*[·•]\s*(?:\d+\s*(?:s|m|h|d|w|y|sec|min|hr|hrs|day|days|wk|wks|yr|yrs)\b|just now|yesterday|follow|following|1st|2nd|3rd|author|top fan|admin|moderator|rising contributor|top contributor|edited).*$/i;
+  const PROFILE_PIC_NOISE_RE = /(?:'s\s+profile\s+(?:picture|photo)|\s+profile\s+(?:picture|photo).*|^profile\s+(?:picture|photo)\s+of\s+|^online\s+status\s+indicator\s*(?:active)?|-?এর\s+প্রোফাইল\s+(?:ছবি|ফটো)|^প্রোফাইল\s+(?:ছবি|ফটো)\s+)/i;
+  const INLINE_META_SUFFIX_RE = /\s*[·•]\s*(?:\d+\s*(?:s|m|h|d|w|y|sec|min|hr|hrs|day|days|wk|wks|yr|yrs)\b|just now|yesterday|follow|following|1st|2nd|3rd|author|top fan|admin|moderator|rising contributor|top contributor|edited|ফলো করুন|ফলো করছেন|বন্ধু যোগ করুন|লেখক|টপ ফ্যান).*$/i;
   const TRAILING_TIME_RE = /\s+\d+\s*(?:s|m|h|d|w|y|sec|min|hr|hrs)\s*$/i;
+  const COMMENT_ARIA_PREFIX_RE = /^(?:comment|reply)\s+by\s+(.+?)(?:\s+(?:about|almost|over|\d+|a\s+few|an?\s+|just\s+now|yesterday|on\s+|at\s+|\(|·|•).*)?$/i;
+  const COMMENT_ARIA_BANGLA_RE = /^(.+?)(?:-এর\s+|\s+এর\s+)(?:মন্তব্য|উত্তর|কমেন্ট|রিপ্লাই)/i;
 
   function randomInt(min, max) {
     return Math.floor(Math.random() * (max - min + 1)) + min;
@@ -135,12 +139,21 @@
   function cleanPersonName(rawName) {
     if (!rawName) return null;
     let s = cleanText(rawName);
+    const mAriaEn = s.match(COMMENT_ARIA_PREFIX_RE);
+    if (mAriaEn && mAriaEn[1]) {
+      s = cleanText(mAriaEn[1]);
+    } else {
+      const mAriaBn = s.match(COMMENT_ARIA_BANGLA_RE);
+      if (mAriaBn && mAriaBn[1]) {
+        s = cleanText(mAriaBn[1]);
+      }
+    }
     s = s.replace(PROFILE_PIC_NOISE_RE, "").trim();
     s = s.replace(INLINE_META_SUFFIX_RE, "").trim();
     s = s.replace(REACTION_SUFFIX_RE, "").trim();
     s = s.replace(INLINE_META_SUFFIX_RE, "").trim();
     s = s.replace(TRAILING_TIME_RE, "").trim();
-    if (s.endsWith("'s Post") || s.endsWith("’s Post")) return null;
+    if (s.endsWith("'s Post") || s.endsWith("’s Post") || s.endsWith("-এর পোস্ট")) return null;
     if (s.length < 2 || s.length > 70) return null;
 
     const low = s.toLowerCase();
@@ -150,6 +163,8 @@
       low.startsWith("profile photo of") ||
       low.startsWith("profile picture of") ||
       low.includes("mutual friend") ||
+      low.includes("মিউচুয়াল ফ্রেন্ড") ||
+      low.includes(" অভিন্ন বন্ধু") ||
       low.startsWith("works at ") ||
       low.startsWith("studied at ") ||
       low.startsWith("lives in ") ||
@@ -158,7 +173,11 @@
       low.startsWith("see original") ||
       low.startsWith("see translation") ||
       low.startsWith("comment as ") ||
-      low.startsWith("reply to ")
+      low.startsWith("reply to ") ||
+      low.startsWith("log in") ||
+      low.startsWith("sign up") ||
+      low.startsWith("create new account") ||
+      low.startsWith("forgot password")
     ) {
       return null;
     }
@@ -415,11 +434,53 @@
     for (const im of imgs) {
       const src = im.getAttribute("src") || "";
       const alt = (im.getAttribute("alt") || "").toLowerCase();
-      if (src.startsWith("http") && !src.includes("emoji.php") && alt.length !== 1 && alt.length !== 2) {
+      if (
+        src.startsWith("http") &&
+        !src.includes("emoji.php") &&
+        !normalizeReactionType(alt) &&
+        alt.length !== 1 &&
+        alt.length !== 2
+      ) {
         return src;
       }
     }
     return "";
+  }
+
+  function countDistinctAvatars(container) {
+    if (!container) return 0;
+    const seenUrls = new Set();
+    let count = 0;
+    const svgImgs = container.querySelectorAll("svg image, image");
+    for (const si of svgImgs) {
+      const href = si.getAttribute("xlink:href") || si.getAttribute("href") || "";
+      if (href && href.startsWith("http")) {
+        if (!seenUrls.has(href)) {
+          seenUrls.add(href);
+          count += 1;
+        }
+      }
+    }
+    if (count > 0) return count;
+    const imgs = container.querySelectorAll("img[src]");
+    for (const im of imgs) {
+      const src = im.getAttribute("src") || "";
+      const alt = (im.getAttribute("alt") || "").toLowerCase();
+      if (
+        src.startsWith("http") &&
+        !src.includes("emoji.php") &&
+        !normalizeReactionType(alt) &&
+        alt.length !== 1 &&
+        alt.length !== 2
+      ) {
+        const w = im.naturalWidth || im.width || 32;
+        if (w >= 24 && !seenUrls.has(src)) {
+          seenUrls.add(src);
+          count += 1;
+        }
+      }
+    }
+    return count;
   }
 
   function extractNameFromAnchor(a) {
@@ -441,9 +502,13 @@
 
     for (const c of candidates) {
       if (!c) continue;
-      const firstLine = c.split(/\r?\n/)[0];
-      const valid = cleanPersonName(firstLine) || cleanPersonName(c);
-      if (valid) return valid;
+      const lines = String(c).split(/\r?\n/);
+      for (const line of lines) {
+        const validLine = cleanPersonName(line);
+        if (validLine) return validLine;
+      }
+      const validFull = cleanPersonName(c);
+      if (validFull) return validFull;
     }
     return null;
   }
@@ -454,27 +519,68 @@
     if (UTILITY_DIALOG_ARIA_RE.test(aria)) return "utility";
 
     const rect = dlg.getBoundingClientRect();
-    if (rect.width < 250 || rect.height < 180) return "utility";
+    if (rect.width < 240 || rect.height < 160) return "utility";
     if (rect.bottom <= 20 || rect.top >= window.innerHeight - 20) return "utility";
 
     const belongsToThisDialog = (node) => node.closest('div[role="dialog"]') === dlg;
 
-    if (aria.includes("people who shared") || aria.includes("who shared this")) {
-      return "share";
-    }
-    if (aria.includes("people who reacted") || aria === "reactions") {
-      return "like";
-    }
+    /* Ignore Login / Signup / Cookie consent overlays in logged-out or incognito browsers */
+    const hasPasswordOrLoginInput = Array.from(
+      dlg.querySelectorAll('input[type="password"], input[name="pass"], input[name="email"]')
+    ).some(belongsToThisDialog);
+    if (hasPasswordOrLoginInput) return "utility";
 
     const headings = Array.from(dlg.querySelectorAll('h1, h2, h3, [role="heading"], span[dir="auto"]'))
       .filter(belongsToThisDialog)
-      .slice(0, 18);
+      .slice(0, 22);
     for (const h of headings) {
       const hTxt = cleanText(h.innerText || h.textContent).toLowerCase();
-      if (hTxt === "people who shared this" || hTxt === "who shared this") {
+      if (
+        hTxt.includes("log in or sign up") ||
+        hTxt.includes("see more on facebook") ||
+        hTxt === "log in to facebook" ||
+        hTxt === "create new account" ||
+        hTxt.includes("allow all cookies") ||
+        hTxt.includes("লগ ইন করুন") ||
+        hTxt.includes("নতুন অ্যাকাউন্ট তৈরি করুন")
+      ) {
+        return "utility";
+      }
+    }
+
+    if (
+      aria.includes("people who shared") ||
+      aria.includes("who shared this") ||
+      aria.includes("যারা শেয়ার") ||
+      aria.includes("যারা শেয়ার")
+    ) {
+      return "share";
+    }
+    if (
+      aria.includes("people who reacted") ||
+      aria === "reactions" ||
+      aria.includes("যারা প্রতিক্রিয়া") ||
+      aria.includes("যারা প্রতিক্রিয়া")
+    ) {
+      return "like";
+    }
+
+    for (const h of headings) {
+      const hTxt = cleanText(h.innerText || h.textContent).toLowerCase();
+      if (
+        hTxt === "people who shared this" ||
+        hTxt === "who shared this" ||
+        hTxt.includes("যারা এটি শেয়ার") ||
+        hTxt.includes("যারা এটি শেয়ার")
+      ) {
         return "share";
       }
-      if (hTxt === "people who reacted" || hTxt === "reactions") {
+      if (
+        hTxt === "people who reacted" ||
+        hTxt === "reactions" ||
+        hTxt.includes("যারা প্রতিক্রিয়া জানিয়েছেন") ||
+        hTxt.includes("যারা প্রতিক্রিয়া জানিয়েছেন")
+      ) {
         return "like";
       }
     }
@@ -483,37 +589,122 @@
     if (tabs.length >= 2) {
       const tabTexts = tabs.map((t) => cleanText(t.innerText || t.getAttribute("aria-label") || "").toLowerCase());
       if (
-        tabTexts.some((t) => t === "all" || t.startsWith("all ") || /\d/.test(t) || t.includes("reaction") || t.includes("like") || t.includes("love"))
+        tabTexts.some(
+          (t) =>
+            t === "all" ||
+            t.startsWith("all ") ||
+            t === "সব" ||
+            t.startsWith("সব ") ||
+            /\d/.test(t) ||
+            t.includes("reaction") ||
+            t.includes("like") ||
+            t.includes("love") ||
+            t.includes("প্রতিক্রি")
+        )
       ) {
         return "like";
       }
     }
 
-    const replyButtons = Array.from(dlg.querySelectorAll('div[role="button"], span[role="button"], span'))
-      .filter((b) => belongsToThisDialog(b) && b.children.length === 0 && cleanText(b.textContent).toLowerCase() === "reply");
+    const replyButtons = Array.from(dlg.querySelectorAll('div[role="button"], span[role="button"], span')).filter(
+      (b) => {
+        if (!belongsToThisDialog(b) || b.children.length > 0) return false;
+        const bt = cleanText(b.textContent).toLowerCase();
+        return bt === "reply" || bt === "উত্তর দিন";
+      }
+    );
+
+    const commentIdLinks = Array.from(
+      dlg.querySelectorAll('a[href*="comment_id="], a[href*="reply_comment_id="]')
+    ).filter(belongsToThisDialog);
+
+    const commentArticles = Array.from(dlg.querySelectorAll('div[role="article"]')).filter((art) => {
+      if (!belongsToThisDialog(art)) return false;
+      const aLabel = cleanText(art.getAttribute("aria-label") || "").toLowerCase();
+      return (
+        aLabel.startsWith("comment by") ||
+        aLabel.startsWith("reply by") ||
+        aLabel.includes("মন্তব্য") ||
+        aLabel.includes("কমেন্ট")
+      );
+    });
+
+    const hasCommentSortFilter = headings.some((h) => {
+      const t = cleanText(h.innerText || h.textContent).toLowerCase();
+      return (
+        t === "most relevant" ||
+        t === "all comments" ||
+        t === "newest" ||
+        t === "সবচেয়ে প্রাসঙ্গিক" ||
+        t === "সবচেয়ে প্রাসঙ্গিক" ||
+        t === "সব মন্তব্য" ||
+        t === "সব কমেন্ট"
+      );
+    });
 
     const textboxes = Array.from(dlg.querySelectorAll('[role="textbox"], [contenteditable="true"]')).filter(belongsToThisDialog);
     const hasCommentComposer = textboxes.some((tb) => {
       const placeholder = cleanText(
         tb.getAttribute("aria-label") || tb.getAttribute("aria-placeholder") || tb.getAttribute("placeholder") || ""
       ).toLowerCase();
-      return placeholder.includes("comment") || placeholder.includes("reply") || placeholder.includes("answer");
+      return (
+        placeholder.includes("comment") ||
+        placeholder.includes("reply") ||
+        placeholder.includes("answer") ||
+        placeholder.includes("মন্তব্য") ||
+        placeholder.includes("কমেন্ট")
+      );
     });
 
-    if (replyButtons.length >= 1 || hasCommentComposer || aria.endsWith("'s post") || aria.endsWith("’s post")) {
+    const hasPostReactionToolbar = Array.from(dlg.querySelectorAll('[role="toolbar"]'))
+      .filter(belongsToThisDialog)
+      .some((tb) => {
+        const tbAria = cleanText(tb.getAttribute("aria-label") || "").toLowerCase();
+        return (
+          tbAria.includes("reacted") ||
+          tbAria.includes("reaction") ||
+          tbAria.includes("প্রতিক্রিয়া") ||
+          tbAria.includes("প্রতিক্রিয়া")
+        );
+      });
+
+    if (
+      replyButtons.length >= 1 ||
+      commentIdLinks.length >= 1 ||
+      commentArticles.length >= 1 ||
+      hasCommentSortFilter ||
+      hasCommentComposer ||
+      hasPostReactionToolbar ||
+      aria.endsWith("'s post") ||
+      aria.endsWith("’s post") ||
+      aria.includes("-এর পোস্ট")
+    ) {
       return "comment";
     }
 
+    /* Exclude comment timestamp links (comment_id=) when counting post/share permalinks! */
     const postPermalinkLinks = Array.from(
       dlg.querySelectorAll('a[href*="/posts/"], a[href*="story_fbid="], a[href*="/permalink.php"]')
-    ).filter(belongsToThisDialog);
+    ).filter((a) => {
+      if (!belongsToThisDialog(a)) return false;
+      const h = (a.getAttribute("href") || "").toLowerCase();
+      return !h.includes("comment_id=") && !h.includes("reply_comment_id=");
+    });
 
     const actionButtons = Array.from(dlg.querySelectorAll('div[role="button"], span[role="button"]'))
       .filter(belongsToThisDialog)
       .map((b) => cleanText(b.innerText || b.getAttribute("aria-label") || "").toLowerCase());
 
     const addFriendOrFollowCount = actionButtons.filter(
-      (txt) => txt === "add friend" || txt === "follow" || txt === "following" || txt === "message"
+      (txt) =>
+        txt === "add friend" ||
+        txt === "follow" ||
+        txt === "following" ||
+        txt === "message" ||
+        txt === "বন্ধু যোগ করুন" ||
+        txt === "ফলো করুন" ||
+        txt === "ফলো করছেন" ||
+        txt === "মেসেজ"
     ).length;
 
     const shareIndicators = Array.from(dlg.querySelectorAll('[aria-label*="Shared with"], [aria-label*="Public"]')).filter(
@@ -554,13 +745,29 @@
     return results;
   }
 
+  function tryCloseDialogElement(dlg) {
+    if (!dlg) return false;
+    const closeBtns = dlg.querySelectorAll(
+      '[aria-label="Close"], [aria-label="বন্ধ করুন"], div[role="button"][aria-label*="Close" i]'
+    );
+    for (const cb of closeBtns) {
+      if (cb.closest('div[role="dialog"]') === dlg) {
+        try {
+          cb.click();
+          return true;
+        } catch (e) {}
+      }
+    }
+    return false;
+  }
+
   function tryAutoOpenPopupForAction(actionType) {
     const dialogs = getClassifiedDialogs();
     const commentDialog = [...dialogs].reverse().find((d) => d.kind === "comment");
     const searchRoot = commentDialog ? commentDialog.el : document.body;
 
     if (actionType === "like") {
-      /* 1. Check reaction summary toolbars first (e.g. role="toolbar" aria-label="See who reacted to this" / "কে প্রতিক্রিয়া জানিয়েছেন দেখুন") */
+      /* 1. Check reaction summary toolbars and adjacent total count buttons (e.g. role="toolbar" aria-label="See who reacted to this") */
       const toolbars = Array.from(searchRoot.querySelectorAll('[role="toolbar"]'));
       for (const tb of toolbars) {
         if (isInsideIgnoredChrome(tb)) continue;
@@ -571,6 +778,20 @@
           tbAria.includes("প্রতিক্রিয়া") ||
           tbAria.includes("প্রতিক্রিয়া")
         ) {
+          /* First check if there is a sibling total reaction count button right next to the toolbar in the UFI bar */
+          const ufiRow = tb.parentElement ? tb.parentElement.parentElement || tb.parentElement : tb;
+          const siblingBtns = Array.from(ufiRow.querySelectorAll('div[role="button"], span[role="button"]')).filter(
+            (b) => !tb.contains(b)
+          );
+          for (const sb of siblingBtns) {
+            const sbTxt = cleanText(sb.innerText || sb.textContent || "");
+            if (/^\d+[kmb,.]*$/i.test(sbTxt) || /others|reactions|প্রতিক্রি/i.test(sbTxt)) {
+              try {
+                sb.click();
+                return true;
+              } catch (e) {}
+            }
+          }
           const btn = tb.querySelector('div[role="button"], span[role="button"]') || tb;
           try {
             btn.click();
@@ -675,12 +896,19 @@
     }
 
     if (actionType === "comment") {
+      /* If a Reactions or Shares popup is sitting on top of the post from Step 1/3, auto-close it so Comments can be scraped immediately! */
+      if (dialogs.length > 0) {
+        const topDlg = dialogs[dialogs.length - 1];
+        if (topDlg.kind === "like" || topDlg.kind === "share") {
+          tryCloseDialogElement(topDlg.el);
+        }
+      }
       const commentDialogs = dialogs.filter((d) => d.kind === "comment");
       if (commentDialogs.length > 0) {
         commentDialogs.sort((a, b) => {
           const ra = a.el.getBoundingClientRect();
           const rb = b.el.getBoundingClientRect();
-          return rb.width * rb.height - ra.width * ra.height;
+          return rb.width * rb.height - ra.width * rb.height;
         });
         return {
           root: commentDialogs[0].el,
@@ -689,18 +917,10 @@
           blockedByPopup: null
         };
       }
-      if (dialogs.length > 0) {
-        const topKind = dialogs[dialogs.length - 1].kind;
-        if (topKind === "like" || topKind === "share") {
-          return {
-            root: null,
-            kind: "blocked",
-            label: "⚠️ Blocked by Popup",
-            blockedByPopup: topKind
-          };
-        }
+      const nonPopupDialogs = dialogs.filter((d) => d.kind !== "like" && d.kind !== "share");
+      if (nonPopupDialogs.length > 0) {
         return {
-          root: dialogs[dialogs.length - 1].el,
+          root: nonPopupDialogs[nonPopupDialogs.length - 1].el,
           kind: "comment_dialog",
           label: "💬 Active Dialog Modal",
           blockedByPopup: null
@@ -888,7 +1108,7 @@
     return clickedExpand;
   }
 
-  function isNoiseCommentBodyLine(text, authorName) {
+  function isNoiseCommentBodyLine(text, authorName, isButtonOrReactionNode = false) {
     if (!text) return true;
     const low = text.toLowerCase();
     if (authorName && low === authorName.toLowerCase()) return true;
@@ -911,6 +1131,7 @@
       low.startsWith("view ") ||
       low.endsWith("'s post") ||
       low.endsWith("’s post") ||
+      low.endsWith("-এর পোস্ট") ||
       low === "top fan" ||
       low === "author" ||
       low === "by author" ||
@@ -922,7 +1143,10 @@
     ) {
       return true;
     }
-    if (/^(\d+\s*(?:s|m|h|d|w|y|sec|min|hr|hrs|day|days|wk|wks|yr|yrs)|just now|yesterday|\d+[KMB,.]?)$/i.test(low)) {
+    if (/^(\d+\s*(?:s|m|h|d|w|y|sec|min|hr|hrs|day|days|wk|wks|yr|yrs)|just now|yesterday)$/i.test(low)) {
+      return true;
+    }
+    if (isButtonOrReactionNode && /^\d+[KMB,.]?$/i.test(low)) {
       return true;
     }
     if (/^[·•\s]+\d+\s*(?:s|m|h|d|w|y)/i.test(low)) {
@@ -949,54 +1173,113 @@
   }
 
   /**
-   * Parses a single comment row DOM container (whether found via `<a href>` OR via a leaf `"Reply"` button!)
+   * Parses a single comment row DOM container (whether found via `<a href>`, a leaf `"Reply"` button,
+   * `<div role="article">`, or a `comment_id=` timestamp link!)
    * and returns `{ name, url, avatar_url, content, action_type: "comment" }`.
-   * Even if Facebook did not hydrate a profile `url` on this comment, keeps the comment with `name` + `avatar_url` + `content`!
+   * Excludes any nested child `<div role="article">` (replies inside a parent comment) so parent comments
+   * with replies never mix their links or text with nested replies, and prevents `@mention` links inside
+   * a comment paragraph from overwriting the comment author!
    */
   function extractCommentFromSingleRowContainer(rowEl, modalOwnerNameLower = "") {
     if (!rowEl) return null;
     triggerHoverHydration(rowEl);
 
+    const isInsideNestedCommentArticle = (node) => {
+      if (!node || node === rowEl) return false;
+      const closestArt = node.closest('div[role="article"]');
+      return Boolean(closestArt && closestArt !== rowEl && rowEl.contains(closestArt));
+    };
+
     let authorUrl = "";
     let authorName = "";
 
-    /* 1. Try finding author URL and Name from any <a href> inside rowEl */
-    const links = Array.from(rowEl.querySelectorAll("a[href]"));
+    /* 0. Check if rowEl itself (or its closest comment article) has aria-label="Comment by <Name> ..." */
+    const ownAria = cleanText(rowEl.getAttribute("aria-label") || "");
+    if (ownAria) {
+      const mEn = ownAria.match(COMMENT_ARIA_PREFIX_RE);
+      const mBn = ownAria.match(COMMENT_ARIA_BANGLA_RE);
+      const candAriaName = cleanPersonName((mEn && mEn[1]) || (mBn && mBn[1]) || "");
+      if (candAriaName) {
+        authorName = candAriaName;
+      }
+    }
+
+    /* Identify the primary comment body blocks (div[dir="auto"]) belonging to this comment (excluding nested replies) */
+    const bodyDirBlocks = Array.from(rowEl.querySelectorAll('div[dir="auto"]')).filter(
+      (b) => !isInsideNestedCommentArticle(b)
+    );
+    const firstBodyBlock = bodyDirBlocks.length > 0 ? bodyDirBlocks[0] : null;
+
+    const isInlineMentionLinkInsideBody = (a) => {
+      const parentBodyDiv = a.closest('div[dir="auto"]');
+      if (!parentBodyDiv || !rowEl.contains(parentBodyDiv)) return false;
+      const divTxt = cleanText(parentBodyDiv.innerText || parentBodyDiv.textContent || "");
+      const aTxt = cleanText(a.innerText || a.textContent || "");
+      /* If the div[dir="auto"] has surrounding comment words around the link, or if a preceding header already exists before this div[dir="auto"], it's a @mention inside the comment body! */
+      if (divTxt.length > aTxt.length + 2) return true;
+      if (firstBodyBlock && parentBodyDiv !== firstBodyBlock) return true;
+      return false;
+    };
+
+    /* 1. Try finding author URL and Name from header <a href> inside rowEl (excluding nested replies & inline @mentions) */
+    const links = Array.from(rowEl.querySelectorAll("a[href]")).filter(
+      (a) => !isInsideNestedCommentArticle(a)
+    );
     for (const a of links) {
-      const cUrl = cleanProfileUrl(a.getAttribute("href") || a.href);
+      const rawHref = a.getAttribute("href") || a.href || "";
+      const cUrl = cleanProfileUrl(rawHref);
       if (!cUrl) continue;
+      if (isInlineMentionLinkInsideBody(a)) continue;
+      /* If this link appears AFTER the first comment body block (e.g. a link in the footer or reaction bar), skip it as author */
+      if (
+        firstBodyBlock &&
+        !firstBodyBlock.contains(a) &&
+        Boolean(firstBodyBlock.compareDocumentPosition(a) & Node.DOCUMENT_POSITION_FOLLOWING)
+      ) {
+        continue;
+      }
       if (!authorUrl) authorUrl = cUrl;
       const candName = extractNameFromAnchor(a);
       if (candName) {
-        authorName = candName;
+        if (!authorName) authorName = candName;
         authorUrl = cUrl;
         break;
       }
     }
 
-    /* 2. If authorName wasn't on an <a href> (e.g. unhydrated role="link" or span header like "Ayatullah Mushkan Maryam · 4h"), grab the first valid name in rowEl */
+    /* 2. If authorName wasn't on an <a href> (e.g. avatar-only <a href>, unhydrated role="link", or span header like "Ayatullah Mushkan Maryam · 4h"), grab the first valid header name in rowEl */
     if (!authorName) {
-      const nameCandidates = rowEl.querySelectorAll(
-        'a[role="link"], span[role="link"], h3, h4, strong, span[dir="auto"], svg[aria-label], img[alt]'
-      );
+      const nameCandidates = Array.from(
+        rowEl.querySelectorAll(
+          'a[role="link"], span[role="link"], h3, h4, strong, span[dir="auto"], svg[aria-label], img[alt]'
+        )
+      ).filter((nc) => !isInsideNestedCommentArticle(nc));
       for (const nc of nameCandidates) {
-        const raw =
-          nc.getAttribute("aria-label") ||
-          nc.getAttribute("alt") ||
-          (nc.innerText || nc.textContent || "").split(/\r?\n/)[0];
-        const cleaned = cleanPersonName(raw);
-        if (cleaned) {
-          authorName = cleaned;
-          break;
+        if (nc.tagName === "A" && isInlineMentionLinkInsideBody(nc)) continue;
+        const lines = String(
+          nc.getAttribute("aria-label") || nc.getAttribute("alt") || nc.innerText || nc.textContent || ""
+        ).split(/\r?\n/);
+        for (const ln of lines) {
+          const cleaned = cleanPersonName(ln);
+          if (cleaned) {
+            authorName = cleaned;
+            break;
+          }
         }
+        if (authorName) break;
       }
     }
 
     if (!authorName) return null;
 
-    /* Skip top modal header if it's just the Post Owner and has no Reply button */
+    /* Skip top modal header if it's just the Post Owner's main post header (no Reply button, no comment_id timestamp, and not a Comment aria-label) */
     if (modalOwnerNameLower && authorName.toLowerCase() === modalOwnerNameLower) {
-      if (countLeafReplyNodes(rowEl) === 0) {
+      const hasCommentTimestamp = Array.from(
+        rowEl.querySelectorAll('a[href*="comment_id="], a[href*="reply_comment_id="]')
+      ).some((a) => !isInsideNestedCommentArticle(a));
+      const isExplicitCommentAria =
+        COMMENT_ARIA_PREFIX_RE.test(ownAria) || COMMENT_ARIA_BANGLA_RE.test(ownAria);
+      if (countLeafReplyNodes(rowEl) === 0 && !hasCommentTimestamp && !isExplicitCommentAria) {
         return null;
       }
     }
@@ -1004,7 +1287,9 @@
     const avatarUrl = extractAvatarUrlFromContainer(rowEl);
 
     /* 2b. Ensure "See original" ("মূলটি দেখুন") and "See more" ("আরও দেখুন") inside this row are clicked BEFORE reading comment text */
-    const rowBtns = rowEl.querySelectorAll('div[role="button"], span[role="button"], a[role="button"], span[dir="auto"]');
+    const rowBtns = Array.from(
+      rowEl.querySelectorAll('div[role="button"], span[role="button"], a[role="button"], span[dir="auto"]')
+    ).filter((rb) => !isInsideNestedCommentArticle(rb));
     for (const rb of rowBtns) {
       const rbTxt = cleanText(rb.innerText || rb.textContent).toLowerCase();
       const rbAria = cleanText(rb.getAttribute("aria-label") || "").toLowerCase();
@@ -1036,20 +1321,29 @@
       }
     }
 
-    /* 3. Extract comment body text from dir="auto" blocks */
-    const textBlocks = Array.from(rowEl.querySelectorAll('div[dir="auto"], span[dir="auto"]'));
+    /* 3. Extract comment body text from dir="auto" blocks (excluding nested reply articles) */
+    const textBlocks = Array.from(rowEl.querySelectorAll('div[dir="auto"], span[dir="auto"]')).filter(
+      (tb) => !isInsideNestedCommentArticle(tb)
+    );
     const bodyParts = [];
     for (const tb of textBlocks) {
       if (
         tb.parentElement &&
         tb.parentElement.closest('[dir="auto"]') &&
-        rowEl.contains(tb.parentElement.closest('[dir="auto"]'))
+        rowEl.contains(tb.parentElement.closest('[dir="auto"]')) &&
+        !isInsideNestedCommentArticle(tb.parentElement.closest('[dir="auto"]'))
       ) {
         continue;
       }
+      const isBtnOrReact = Boolean(
+        tb.closest('[role="button"], [aria-label*="reaction" i], [aria-label*="প্রতিক্রি"]')
+      );
       const rawT = cleanText(tb.innerText || tb.textContent);
       const cleanedT = rawT.replace(INLINE_META_SUFFIX_RE, "").replace(TRAILING_TIME_RE, "").trim();
-      if (isNoiseCommentBodyLine(rawT, authorName) || isNoiseCommentBodyLine(cleanedT, authorName)) {
+      if (
+        isNoiseCommentBodyLine(rawT, authorName, isBtnOrReact) ||
+        isNoiseCommentBodyLine(cleanedT, authorName, isBtnOrReact)
+      ) {
         continue;
       }
       if (!bodyParts.includes(rawT)) {
@@ -1057,12 +1351,14 @@
       }
     }
 
-    /* 4. Emoji-only comment fallback (e.g. ❤️❤️ in Asfia Jahan's comment) */
+    /* 4. Emoji / Sticker comment fallback (e.g. ❤️❤️ in Asfia Jahan's comment) */
     if (bodyParts.length === 0) {
-      const imgs = Array.from(rowEl.querySelectorAll("img[alt]"));
+      const imgs = Array.from(rowEl.querySelectorAll("img[alt]")).filter(
+        (im) => !isInsideNestedCommentArticle(im)
+      );
       for (const im of imgs) {
         const alt = cleanText(im.getAttribute("alt"));
-        if (alt && alt.length <= 16 && !alt.toLowerCase().includes("profile")) {
+        if (alt && alt.length <= 16 && !alt.toLowerCase().includes("profile") && !normalizeReactionType(alt)) {
           bodyParts.push(alt);
         }
       }
@@ -1078,10 +1374,11 @@
   }
 
   /**
-   * Dual-Engine Comment Extractor:
-   * Engine A (Leaf "Reply" Button Exact Row Finder): Walks up from every leaf "Reply" button while `countLeafReplyNodes === 1`.
-   *   Guarantees 100% extraction on Facebook's `[👍] [👎] Reply` layout even when `<a>` links have no `href` or no `role="article"`!
-   * Engine B (Anchor-First `<a href>` Finder): Scans all `<a href>` profile links inside the modal (just like Likes!).
+   * 4-Engine Comment Extractor:
+   * Engine A (Leaf "Reply" / "উত্তর দিন" Button Exact Row Finder): Walks up from every leaf Reply button while `countLeafReplyNodes === 1`.
+   * Engine B (Anchor-First `<a href>` Finder): Scans author `<a href>` profile links inside the comment area (skipping inline `@mentions` and `comment_id=` timestamps).
+   * Engine C (`div[role="article"]` Scanner): Extracts BOTH parent comments (even when they contain nested reply articles!) and leaf reply articles.
+   * Engine D (Logged-Out / Incognito / Restricted Post `comment_id=` Timestamp & Action Bar Scanner): Extracts comments even when Facebook hides `"Reply"` buttons and omits `role="article"`.
    */
   function extractCommentsFromRoot(root) {
     const found = [];
@@ -1092,7 +1389,7 @@
     const titleHeading = root.querySelector("h1, h2, [role='heading']");
     if (titleHeading) {
       const titleTxt = cleanText(titleHeading.innerText || titleHeading.textContent);
-      const mOwner = titleTxt.match(/^(.+?)(?:'s|’s)\s+post$/i);
+      const mOwner = titleTxt.match(/^(.+?)(?:'s|’s|-এর)\s+(?:post|পোস্ট)$/i);
       if (mOwner) {
         modalOwnerNameLower = mOwner[1].trim().toLowerCase();
       }
@@ -1103,7 +1400,19 @@
       const idPart = (item.url || item.name).toLowerCase();
       const key = `${idPart}|${item.content}`;
       if (seenKeys.has(key)) return;
+      /* Also check if we already recorded this exact name + content without URL and now have URL (or vice versa) */
+      const nameOnlyKey = `${item.name.toLowerCase()}|${item.content}`;
+      if (seenKeys.has(nameOnlyKey)) {
+        if (item.url) {
+          const prev = found.find(
+            (f) => f.name.toLowerCase() === item.name.toLowerCase() && f.content === item.content && !f.url
+          );
+          if (prev) prev.url = item.url;
+        }
+        return;
+      }
       seenKeys.add(key);
+      seenKeys.add(nameOnlyKey);
       found.push(item);
       if (rowNode) {
         processedRows.add(rowNode);
@@ -1111,10 +1420,29 @@
       }
     };
 
-    /* Engine A: Walk up from every leaf "Reply" node while countLeafReplyNodes === 1 */
-    const allSpansAndBtns = Array.from(
-      root.querySelectorAll("span, div[role='button']")
-    );
+    /* Engine C-First: Explicit Comment/Reply <div role="article"> elements (including parent comments that contain nested reply articles!) */
+    const articles = Array.from(root.querySelectorAll('div[role="article"]'));
+    for (const art of articles) {
+      if (isInsideIgnoredChrome(art)) continue;
+      const artAria = cleanText(art.getAttribute("aria-label") || "").toLowerCase();
+      const isExplicitCommentArticle =
+        artAria.startsWith("comment by") ||
+        artAria.startsWith("reply by") ||
+        artAria.includes("মন্তব্য") ||
+        artAria.includes("কমেন্ট") ||
+        artAria.includes("উত্তর");
+      /* Skip the outer main post wrapper article if it contains the post's UFI reaction toolbar and is not a comment article */
+      if (!isExplicitCommentArticle && art.querySelector('[role="toolbar"]') && art.querySelectorAll('div[role="article"]').length > 0) {
+        continue;
+      }
+      const item = extractCommentFromSingleRowContainer(art, modalOwnerNameLower);
+      if (item) {
+        recordComment(item, art);
+      }
+    }
+
+    /* Engine A: Walk up from every leaf "Reply" / "উত্তর দিন" node while countLeafReplyNodes === 1 */
+    const allSpansAndBtns = Array.from(root.querySelectorAll("span, div[role='button']"));
     for (const node of allSpansAndBtns) {
       if (node.children.length > 0) continue;
       if (isInsideIgnoredChrome(node)) continue;
@@ -1126,6 +1454,9 @@
       for (let depth = 0; depth < 14 && curr && curr !== root && curr !== document.body; depth++) {
         const replyCount = countLeafReplyNodes(curr);
         if (replyCount > 1) {
+          break;
+        }
+        if (countDistinctAvatars(curr) > 1) {
           break;
         }
         bestCommentRow = curr;
@@ -1140,33 +1471,70 @@
       }
     }
 
-    /* Engine B: Anchor-First <a href> scan (same mechanism that works for Likes!) */
+    /* Engine D: Logged-Out / Incognito / Restricted Post Comment Timestamp (a[href*="comment_id="]) Walker */
+    const commentTimeLinks = Array.from(
+      root.querySelectorAll('a[href*="comment_id="], a[href*="reply_comment_id="]')
+    );
+    for (const tl of commentTimeLinks) {
+      if (isInsideIgnoredChrome(tl)) continue;
+      let curr = tl.parentElement;
+      let bestRow = curr;
+      for (let depth = 0; depth < 12 && curr && curr !== root && curr !== document.body; depth++) {
+        const timeLinksInCurr = curr.querySelectorAll('a[href*="comment_id="], a[href*="reply_comment_id="]');
+        if (timeLinksInCurr.length > 1) break;
+        if (countDistinctAvatars(curr) > 1) break;
+        bestRow = curr;
+        curr = curr.parentElement;
+      }
+      if (bestRow && !processedRows.has(bestRow)) {
+        const item = extractCommentFromSingleRowContainer(bestRow, modalOwnerNameLower);
+        if (item) {
+          recordComment(item, bestRow);
+        }
+      }
+    }
+
+    /* Engine B: Anchor-First <a href> scan (covers any remaining comment layout variants) */
     const allLinks = Array.from(root.querySelectorAll("a[href]"));
     for (const a of allLinks) {
       if (isInsideIgnoredChrome(a)) continue;
-      if (a.closest('[role="tab"], [role="tablist"]')) continue;
+      if (a.closest('[role="tab"], [role="tablist"], [role="toolbar"]')) continue;
+      const rawHref = a.getAttribute("href") || a.href || "";
+      if (rawHref.includes("comment_id=") || rawHref.includes("reply_comment_id=")) continue;
 
-      /* Skip if already inside one of the processedRows from Engine A */
+      /* Skip if already inside one of the processedRows from Engine C / A / D (unless that processedRow was a parent article and 'a' is inside a child reply) */
       let alreadyCovered = false;
       for (const pr of processedRows) {
         if (pr.contains(a)) {
-          alreadyCovered = true;
-          break;
+          const closestArt = a.closest('div[role="article"]');
+          if (!closestArt || closestArt === pr || !pr.contains(closestArt)) {
+            alreadyCovered = true;
+            break;
+          }
         }
       }
       if (alreadyCovered) continue;
 
-      const cUrl = cleanProfileUrl(a.getAttribute("href") || a.href);
+      /* Skip inline @mention links inside a comment text paragraph */
+      const parentDirDiv = a.closest('div[dir="auto"]');
+      if (parentDirDiv) {
+        const pTxt = cleanText(parentDirDiv.innerText || parentDirDiv.textContent || "");
+        const aTxt = cleanText(a.innerText || a.textContent || "");
+        if (pTxt.length > aTxt.length + 2) continue;
+      }
+
+      const cUrl = cleanProfileUrl(rawHref);
       if (!cUrl) continue;
 
       let curr = a.parentElement;
       let bestRow = curr;
-      for (let depth = 0; depth < 7 && curr && curr !== root && curr !== document.body; depth++) {
+      for (let depth = 0; depth < 8 && curr && curr !== root && curr !== document.body; depth++) {
+        if (countDistinctAvatars(curr) > 1) break;
+        if (countLeafReplyNodes(curr) > 1) break;
         const otherAnchors = curr.querySelectorAll("a[href]");
         let hasDifferentPerson = false;
         for (const oa of otherAnchors) {
           if (oa === a) continue;
-          /* Ignore @mention links inside a comment text block (div[dir="auto"]) so @tagging friends doesn't break the row! */
           const oaDirBlock = oa.closest('div[dir="auto"]');
           if (oaDirBlock && !oaDirBlock.contains(a)) continue;
           const oaUrl = cleanProfileUrl(oa.getAttribute("href") || oa.href);
@@ -1186,18 +1554,6 @@
           if (!item.url) item.url = cUrl;
           recordComment(item, bestRow);
         }
-      }
-    }
-
-    /* Engine C: Comment <div role="article"> scan (covers replies & layout variants without visible Reply buttons) */
-    const articles = Array.from(root.querySelectorAll('div[role="article"]'));
-    for (const art of articles) {
-      if (isInsideIgnoredChrome(art)) continue;
-      if (processedRows.has(art)) continue;
-      if (art.querySelector('div[role="article"]')) continue; // Only leaf comment articles
-      const item = extractCommentFromSingleRowContainer(art, modalOwnerNameLower);
-      if (item) {
-        recordComment(item, art);
       }
     }
 
@@ -1427,21 +1783,29 @@
       if (curr.getAttribute("role") === "dialog" || curr.querySelector('[role="tablist"]')) {
         break;
       }
-      /* Stop if curr spans two different people's profile links */
-      if (primaryUrl) {
-        let hasOtherPerson = false;
-        const otherLinks = curr.querySelectorAll("a[href]");
-        for (const oa of otherLinks) {
-          if (oa === a) continue;
-          const oaUrl = cleanProfileUrl(oa.getAttribute("href") || oa.href || "");
-          if (oaUrl && oaUrl.toLowerCase() !== primaryUrl.toLowerCase()) {
-            hasOtherPerson = true;
-            break;
-          }
-        }
-        if (hasOtherPerson) break;
+      /* Stop if curr spans multiple listitems or multiple distinct profile avatars! */
+      if (curr.querySelectorAll('[role="listitem"]').length > 1) {
+        break;
       }
-      /* Also stop if curr contains 2+ row action buttons ("Add friend", "Follow", "Message") */
+      if (countDistinctAvatars(curr) > 1) {
+        break;
+      }
+
+      /* Stop if curr spans two different people's profile links (or ANY profile link when primaryUrl is null in Engine B!) */
+      let hasOtherPerson = false;
+      const otherLinks = curr.querySelectorAll("a[href]");
+      for (const oa of otherLinks) {
+        if (oa === a || a.contains(oa) || oa.contains(a)) continue;
+        const oaUrl = cleanProfileUrl(oa.getAttribute("href") || oa.href || "");
+        if (!oaUrl) continue;
+        if (!primaryUrl || oaUrl.toLowerCase() !== primaryUrl.toLowerCase()) {
+          hasOtherPerson = true;
+          break;
+        }
+      }
+      if (hasOtherPerson) break;
+
+      /* Also stop if curr contains 2+ row action buttons ("Add friend", "Follow", "Message", Bangla equivalents) */
       const btns = curr.querySelectorAll('div[role="button"], span[role="button"]');
       let rowActionBtnCount = 0;
       for (const b of btns) {
@@ -1452,7 +1816,13 @@
           bt === "following" ||
           bt === "message" ||
           bt === "friends" ||
-          bt === "cancel request"
+          bt === "cancel request" ||
+          bt === "বন্ধু যোগ করুন" ||
+          bt === "ফলো করুন" ||
+          bt === "ফলো করছেন" ||
+          bt === "মেসেজ" ||
+          bt === "বন্ধু" ||
+          bt === "অনুরোধ বাতিল করুন"
         ) {
           rowActionBtnCount += 1;
         }
@@ -1482,7 +1852,9 @@
       }
       const txt = n.innerText || n.textContent || "";
       if (txt) {
-        candidates.push(txt.split(/\r?\n/)[0]);
+        for (const ln of String(txt).split(/\r?\n/)) {
+          if (ln.trim()) candidates.push(ln);
+        }
       }
     }
     for (const c of candidates) {
