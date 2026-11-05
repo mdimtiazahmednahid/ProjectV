@@ -350,7 +350,7 @@ class _FacebookDOMTreeParser(HTMLParser):
                         self.current_link["reaction_type"] = react_norm
                     elif not react_norm and not self.current_link["aria_label"]:
                         self.current_link["aria_label"] = alt_text
-                if self.article_stack and len(alt_text) <= 16 and "profile" not in alt_text.lower() and not react_norm:
+                if self.article_stack and len(alt_text) <= 16 and "profile" not in alt_text.lower():
                     self.article_stack[-1]["emojis"].append(alt_text)
 
     def handle_data(self, data: str):

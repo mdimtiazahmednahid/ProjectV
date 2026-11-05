@@ -287,6 +287,8 @@ class _FacebookDOMTreeParser(HTMLParser):
         self.article_stack: List[Dict[str, Any]] = []
         self.current_link: Optional[Dict[str, Any]] = None
         self.dir_auto_depths: List[Dict[str, Any]] = []
+        self._article_seq: int = 0
+        self._last_link_rec: Optional[Dict[str, Any]] = None
 
         self.dialog_links: List[Dict[str, Any]] = []
         self.page_links: List[Dict[str, Any]] = []
@@ -307,7 +309,9 @@ class _FacebookDOMTreeParser(HTMLParser):
             self.dialog_depths.append(depth)
 
         if role == "article":
+            self._article_seq += 1
             self.article_stack.append({
+                "seq": self._article_seq,
                 "depth": depth,
                 "in_dialog": bool(self.dialog_depths),
                 "aria_label": aria_label,
@@ -317,6 +321,7 @@ class _FacebookDOMTreeParser(HTMLParser):
             })
 
         if tag_low == "a" and "href" in attr_dict:
+            in_body_dir = any(d.get("tag") == "div" for d in self.dir_auto_depths)
             self.current_link = {
                 "depth": depth,
                 "href": attr_dict.get("href", ""),
@@ -325,11 +330,13 @@ class _FacebookDOMTreeParser(HTMLParser):
                 "reaction_type": normalize_reaction_type(aria_label),
                 "text_parts": [],
                 "in_dialog": bool(self.dialog_depths),
+                "in_body_dir_auto": in_body_dir,
             }
 
-        if dir_val == "auto" and self.article_stack:
+        if dir_val == "auto":
             self.dir_auto_depths.append({
                 "depth": depth,
+                "tag": tag_low,
                 "parts": [],
             })
 
@@ -371,6 +378,8 @@ class _FacebookDOMTreeParser(HTMLParser):
                 "title": normalize_text(link_obj["title"]),
                 "reaction_type": link_obj.get("reaction_type") or "",
                 "in_dialog": link_obj["in_dialog"],
+                "in_body_dir_auto": bool(link_obj.get("in_body_dir_auto")),
+                "following_texts": [],
             }
             if link_obj["in_dialog"]:
                 self.dialog_links.append(rec)
@@ -378,12 +387,20 @@ class _FacebookDOMTreeParser(HTMLParser):
                 self.page_links.append(rec)
             if self.article_stack:
                 self.article_stack[-1]["links"].append(rec)
+            if not rec["in_body_dir_auto"] and clean_facebook_profile_url(rec["href"]):
+                self._last_link_rec = rec
 
         if self.dir_auto_depths and depth == self.dir_auto_depths[-1]["depth"]:
             block = self.dir_auto_depths.pop()
             txt = normalize_text("".join(block["parts"]))
-            if txt and self.article_stack:
-                self.article_stack[-1]["texts"].append(txt)
+            if self.dir_auto_depths and block["parts"]:
+                # Propagate text to outer dir="auto" container if nested (e.g. <div dir="auto">Hello <span>World</span></div>)
+                self.dir_auto_depths[-1]["parts"].append(" " + " ".join(block["parts"]) + " ")
+            if txt:
+                if self.article_stack:
+                    self.article_stack[-1]["texts"].append(txt)
+                if self._last_link_rec is not None:
+                    self._last_link_rec["following_texts"].append(txt)
 
         if self.article_stack and depth == self.article_stack[-1]["depth"] and tag_low == "div":
             art = self.article_stack.pop()
@@ -525,7 +542,8 @@ class BackgroundHTMLExtractor:
     @classmethod
     def _extract_comments_from_tree(cls, parser: _FacebookDOMTreeParser) -> List[Dict[str, str]]:
         results: List[Dict[str, str]] = []
-        for art in parser.articles:
+        sorted_articles = sorted(parser.articles, key=lambda a: a.get("seq", 0))
+        for art in sorted_articles:
             aria = art.get("aria_label", "")
             author_name = ""
             m_aria = COMMENT_ARIA_RE.match(aria)
@@ -536,6 +554,8 @@ class BackgroundHTMLExtractor:
 
             author_url = ""
             for lnk in art.get("links", []):
+                if lnk.get("in_body_dir_auto"):
+                    continue
                 clean_url = clean_facebook_profile_url(lnk.get("href", ""))
                 if not clean_url:
                     continue
@@ -550,6 +570,19 @@ class BackgroundHTMLExtractor:
                 if author_name and author_url:
                     break
 
+            # If author's link was an avatar-only link (or unlinked) and the name is in the first header text block
+            if not author_name:
+                for txt in art.get("texts", []):
+                    cand_clean = re.sub(
+                        r"\s*[·•]\s*(?:\d+\s*(?:s|m|h|d|w|y|sec|min|hr|hrs|day|days|wk|wks|yr|yrs)\b|just now|yesterday|follow|following).*$",
+                        "",
+                        txt,
+                        flags=re.IGNORECASE,
+                    ).strip()
+                    if _is_valid_person_name(cand_clean):
+                        author_name = cand_clean
+                        break
+
             if not author_name:
                 continue
 
@@ -560,6 +593,10 @@ class BackgroundHTMLExtractor:
                     continue
                 if txt.lower() in IGNORE_UI_LABELS or TIME_ONLY_RE.match(txt.lower()):
                     continue
+                # Skip if a child span text is already contained inside a fuller parent div[dir="auto"] text
+                if any(txt in existing for existing in body_parts):
+                    continue
+                body_parts = [existing for existing in body_parts if existing not in txt]
                 if txt not in body_parts:
                     body_parts.append(txt)
 
@@ -572,9 +609,34 @@ class BackgroundHTMLExtractor:
                 "content": " ".join(body_parts).strip(),
             })
 
-        # If a post layout doesn't use role="article" on comments, fall back to dialog links
-        if not results and parser.dialog_links:
-            return cls._resolve_links(parser.dialog_links)
+        # If a post layout doesn't use role="article" on comments, fall back to dialog/page links + their following dir="auto" texts
+        if not results:
+            source_links = parser.dialog_links if parser.dialog_links else parser.page_links
+            if source_links:
+                resolved = cls._resolve_links(source_links)
+                url_to_texts: Dict[str, List[str]] = {}
+                for lnk in source_links:
+                    if lnk.get("in_body_dir_auto"):
+                        continue
+                    c_url = clean_facebook_profile_url(lnk.get("href", ""))
+                    if not c_url:
+                        continue
+                    bucket = url_to_texts.setdefault(c_url, [])
+                    for ft in lnk.get("following_texts", []):
+                        if ft.lower() in IGNORE_UI_LABELS or TIME_ONLY_RE.match(ft.lower()):
+                            continue
+                        if ft not in bucket:
+                            bucket.append(ft)
+                for item in resolved:
+                    u = item.get("url", "")
+                    nm_low = (item.get("name") or "").lower()
+                    txts = [
+                        t for t in url_to_texts.get(u, [])
+                        if t.lower() != nm_low
+                    ]
+                    if txts:
+                        item["content"] = " ".join(txts).strip()
+                return resolved
 
         return results
 

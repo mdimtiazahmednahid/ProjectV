@@ -197,12 +197,18 @@ class MainWindow(QMainWindow):
             http_batches = self.bridge_server.pop_batches()
             if http_batches:
                 session_id = self._ensure_session_id()
+                combined_http_ids = []
+                combined_http_profs = []
                 for raw_batch_str in http_batches:
                     parsed_http = BrowserDOMExtractor.parse_clipboard_batch(raw_batch_str, session_id=session_id)
                     if parsed_http:
                         b_id, profs = parsed_http
                         if b_id not in self._processed_clipboard_batches and profs:
-                            self._ingest_extension_profiles(b_id, profs, manual=False)
+                            combined_http_ids.append(b_id)
+                            combined_http_profs.extend(profs)
+                if combined_http_ids and combined_http_profs:
+                    self._record_processed_batch_ids(combined_http_ids)
+                    self._ingest_extension_profiles(combined_http_ids[-1], combined_http_profs, manual=False)
 
             if not manual and not self.collector_panel.chk_clipboard_sync.isChecked():
                 return
@@ -250,8 +256,8 @@ class MainWindow(QMainWindow):
             new_batch_ids, profiles, total_window_batches = parsed_win
             if not new_batch_ids:
                 # All batches in the clipboard ring buffer have already been imported!
-                # If the clipboard string is getting large (>= 75 KB), automatically wipe out the consumed batch payload from the OS clipboard so it never stays full.
-                if not manual and len(text) >= 75000:
+                # If the clipboard string is getting very large (>= 2 MB), automatically wipe out the consumed batch payload from the OS clipboard.
+                if not manual and len(text) >= 2000000:
                     try:
                         clipboard.clear()
                         logger.info("Auto-cleared consumed large batch buffer from system clipboard to free memory.")

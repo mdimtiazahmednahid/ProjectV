@@ -2044,6 +2044,83 @@ def test_lottery_print_exporter_embedded_advanced_filter_and_layout_controls(tmp
     assert "🥰 Care" in html_text
 
 
+def test_web_comments_and_likes_extraction_edge_cases():
+    """
+    Verifies edge cases for Web Comments & Likes extraction in `BackgroundHTMLExtractor`:
+      1. Parent comment `<div role="article">` containing a nested reply `<div role="article">`
+         extracts both parent and reply cleanly without mixing text or authors.
+      2. Avatar-only author `<a href>` + `<span dir="auto">Author Name</span>` where the comment body
+         `<div dir="auto">` contains inline `@mention` links (`<a href="...">Tagged Friend</a>`)
+         attributes the comment strictly to the actual author, never the tagged friend.
+      3. Non-article comment layout (`div[role="dialog"]` without `role="article"`) still recovers
+         commenter name, profile URL, and comment body text.
+    """
+    from app.automation.browser_dom_extractor import BackgroundHTMLExtractor
+
+    html_nested_and_mentions = """
+    <div role="dialog" aria-label="Vejal Nai's Post">
+      <!-- Case 1: Parent comment with a nested reply article -->
+      <div role="article" aria-label="Comment by Kazi Minha 2 hours ago">
+        <a href="https://www.facebook.com/lucky.akter.9404">Kazi Minha</a>
+        <div dir="auto">সঠিক উত্তর: চিনা বাদাম। #Vejalnai</div>
+        <div role="article" aria-label="Reply by Vejal Nai 1 hour ago">
+          <a href="https://www.facebook.com/vejalnaibd">Vejal Nai</a>
+          <div dir="auto">ধন্যবাদ আপনার মতামতের জন্য!</div>
+        </div>
+      </div>
+
+      <!-- Case 2: Avatar-only author link + span header + inline @mention link inside div[dir="auto"] body -->
+      <div role="article">
+        <a href="https://www.facebook.com/profile.php?id=100093358283869"><svg role="img"></svg></a>
+        <span dir="auto">Khadija Tul Ayesha · 3h</span>
+        <div dir="auto">আসসালামুয়ালাইকুম। উত্তর চিনা বাদাম আপু <a href="https://www.facebook.com/tagged.friend.99">Tagged Friend</a></div>
+      </div>
+    </div>
+    """
+
+    comments = BackgroundHTMLExtractor.extract_from_html(
+        html_nested_and_mentions, session_id="s_edge", action_type="comment"
+    )
+    assert len(comments) == 3
+
+    c1 = next(c for c in comments if c.name == "Kazi Minha")
+    assert c1.profile_url == "https://www.facebook.com/lucky.akter.9404"
+    assert c1.content == "সঠিক উত্তর: চিনা বাদাম। #Vejalnai"
+    assert "ধন্যবাদ" not in c1.content
+
+    c2 = next(c for c in comments if c.name == "Vejal Nai")
+    assert c2.profile_url == "https://www.facebook.com/vejalnaibd"
+    assert c2.content == "ধন্যবাদ আপনার মতামতের জন্য!"
+
+    c3 = next(c for c in comments if c.name == "Khadija Tul Ayesha")
+    assert c3.profile_url == "https://www.facebook.com/profile.php?id=100093358283869"
+    assert "উত্তর চিনা বাদাম আপু" in c3.content
+    assert "Tagged Friend" in c3.content
+
+    # Case 3: Layout without role="article"
+    html_no_articles = """
+    <div role="dialog">
+      <div>
+        <a href="https://www.facebook.com/abdul.malek.123">Abdul Malek</a>
+        <div dir="auto">সঠিক উত্তর: থাই চিনা বাদাম।</div>
+      </div>
+      <div>
+        <a href="https://www.facebook.com/lazina.akter.483">Lazina Akter</a>
+        <div dir="auto">চিনা বাদাম #VejalNai</div>
+      </div>
+    </div>
+    """
+    comments_fallback = BackgroundHTMLExtractor.extract_from_html(
+        html_no_articles, session_id="s_edge2", action_type="comment"
+    )
+    assert len(comments_fallback) == 2
+    assert comments_fallback[0].name == "Abdul Malek"
+    assert comments_fallback[0].content == "সঠিক উত্তর: থাই চিনা বাদাম।"
+    assert comments_fallback[1].name == "Lazina Akter"
+    assert comments_fallback[1].content == "চিনা বাদাম #VejalNai"
+
+
+
 
 
 

@@ -1141,10 +1141,17 @@ class ResultsPanel(QWidget):
             if existing is not None:
                 self._raw_dedupe_map[raw_key] = existing
 
-        # For 'share', if an earlier pass captured the sharer without caption (or truncated) and a later pass has full caption/post link, upgrade in-place!
-        if existing is None and act_type == "share":
-            empty_share_key = (norm_name, "share", id_key or "", "")
-            existing = self._raw_dedupe_map.get(empty_share_key)
+        # For 'share' or 'comment', if an earlier pass captured the user without text (or truncated) and a later pass has full text/link, upgrade in-place!
+        if existing is None and act_type in ("share", "comment") and content_snip:
+            empty_act_key = (norm_name, act_type, id_key or "", "")
+            existing = self._raw_dedupe_map.get(empty_act_key)
+            if existing is None and act_type == "comment":
+                for k, v in self._raw_dedupe_map.items():
+                    if k[0] == norm_name and k[1] == "comment" and (k[2] == (id_key or "") or not k[2] or not id_key):
+                        old_prefix = (k[3] or "").rstrip(".… ").strip()
+                        if old_prefix and len(old_prefix) >= 6 and content_snip.startswith(old_prefix) and len(content_snip) > len(k[3]):
+                            existing = v
+                            break
             if existing is not None:
                 self._raw_dedupe_map[raw_key] = existing
 

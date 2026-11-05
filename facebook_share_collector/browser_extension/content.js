@@ -1357,8 +1357,9 @@
         (im) => !isInsideNestedCommentArticle(im)
       );
       for (const im of imgs) {
+        if (im.closest('[role="button"], [aria-label*="reaction" i]')) continue;
         const alt = cleanText(im.getAttribute("alt"));
-        if (alt && alt.length <= 16 && !alt.toLowerCase().includes("profile") && !normalizeReactionType(alt)) {
+        if (alt && alt.length <= 16 && !alt.toLowerCase().includes("profile")) {
           bodyParts.push(alt);
         }
       }
