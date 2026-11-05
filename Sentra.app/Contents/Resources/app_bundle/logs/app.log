@@ -22,3 +22,35 @@
 23:03:50 INFO app.gui.main_window Auto-saved contest validation to /Users/MacBookPro/Downloads/ShareExtractor-main 2/Facebook Contest Validator.app/Contents/Resources/app_bundle/data/autosave_contest.csv
 23:03:50 INFO app.gui.main_window Auto-imported Browser Extension batch '1793810539904_051mcy' (241 profiles with links; 0 hybrid records synced).
 23:04:10 INFO app.gui.main_window Started fresh contest session 476faf4d.
+15:29:21 INFO __main__ Starting Sentra — Every signal has a story...
+15:29:21 INFO app.automation.local_bridge_server Local HTTP Extension Bridge listening on http://127.0.0.1:19876/batch
+15:30:45 INFO app.exporters.csv_exporter Successfully exported 1062 profiles to /Users/MacBookPro/Downloads/ShareExtractor-main 2/Sentra.app/Contents/Resources/app_bundle/data/autosave.csv
+15:30:45 INFO app.gui.main_window Auto-saved raw profiles to /Users/MacBookPro/Downloads/ShareExtractor-main 2/Sentra.app/Contents/Resources/app_bundle/data/autosave.csv
+15:30:45 INFO app.exporters.csv_exporter Successfully exported 570 contest participants to /Users/MacBookPro/Downloads/ShareExtractor-main 2/Sentra.app/Contents/Resources/app_bundle/data/autosave_contest.csv
+15:30:45 INFO app.gui.main_window Auto-saved contest validation to /Users/MacBookPro/Downloads/ShareExtractor-main 2/Sentra.app/Contents/Resources/app_bundle/data/autosave_contest.csv
+15:30:45 INFO app.gui.main_window Loaded & synced 1062 unique raw records (4 enriched with URLs) across 4 session(s).
+15:30:46 INFO app.exporters.csv_exporter Successfully exported 1062 profiles to /Users/MacBookPro/Downloads/ShareExtractor-main 2/Sentra.app/Contents/Resources/app_bundle/data/autosave.csv
+15:30:46 INFO app.gui.main_window Auto-saved raw profiles to /Users/MacBookPro/Downloads/ShareExtractor-main 2/Sentra.app/Contents/Resources/app_bundle/data/autosave.csv
+15:30:46 INFO app.exporters.csv_exporter Successfully exported 570 contest participants to /Users/MacBookPro/Downloads/ShareExtractor-main 2/Sentra.app/Contents/Resources/app_bundle/data/autosave_contest.csv
+15:30:46 INFO app.gui.main_window Auto-saved contest validation to /Users/MacBookPro/Downloads/ShareExtractor-main 2/Sentra.app/Contents/Resources/app_bundle/data/autosave_contest.csv
+15:30:46 INFO app.gui.main_window Loaded & synced 1062 unique raw records (4 enriched with URLs) across 4 session(s).
+15:30:49 INFO app.exporters.lottery_print_exporter Exported 570 printable lottery tickets to /Users/MacBookPro/Downloads/ShareExtractor-main 2/Sentra.app/Contents/Resources/app_bundle/data/sentra_lottery_tickets_2026-11-05_15-30.html
+15:37:04 INFO app.exporters.lottery_print_exporter Exported 570 printable lottery tickets to /Users/MacBookPro/Downloads/ShareExtractor-main 2/Sentra.app/Contents/Resources/app_bundle/data/sentra_lottery_tickets_2026-11-05_15-37.html
+15:42:52 INFO __main__ Starting Sentra — Every signal has a story...
+15:42:52 INFO app.automation.local_bridge_server Local HTTP Extension Bridge listening on http://127.0.0.1:19876/batch
+15:43:06 INFO app.exporters.csv_exporter Successfully exported 1062 profiles to /Users/MacBookPro/Downloads/ShareExtractor-main 2/Sentra.app/Contents/Resources/app_bundle/data/autosave.csv
+15:43:06 INFO app.gui.main_window Auto-saved raw profiles to /Users/MacBookPro/Downloads/ShareExtractor-main 2/Sentra.app/Contents/Resources/app_bundle/data/autosave.csv
+15:43:06 INFO app.exporters.csv_exporter Successfully exported 570 contest participants to /Users/MacBookPro/Downloads/ShareExtractor-main 2/Sentra.app/Contents/Resources/app_bundle/data/autosave_contest.csv
+15:43:06 INFO app.gui.main_window Auto-saved contest validation to /Users/MacBookPro/Downloads/ShareExtractor-main 2/Sentra.app/Contents/Resources/app_bundle/data/autosave_contest.csv
+15:43:06 INFO app.gui.main_window Loaded & synced 1062 unique raw records (4 enriched with URLs) across 4 session(s).
+15:43:11 INFO app.exporters.lottery_print_exporter Exported 570 printable lottery tickets to /Users/MacBookPro/Downloads/ShareExtractor-main 2/Sentra.app/Contents/Resources/app_bundle/data/sentra_lottery_tickets_2026-11-05_15-43.html
+16:03:51 INFO __main__ Starting Sentra — Every signal has a story...
+16:03:51 INFO app.automation.local_bridge_server Local HTTP Extension Bridge listening on http://127.0.0.1:19876/batch
+16:04:39 INFO app.exporters.csv_exporter Successfully exported 1062 profiles to /Users/MacBookPro/Downloads/ShareExtractor-main 2/Sentra.app/Contents/Resources/app_bundle/data/autosave.csv
+16:04:39 INFO app.gui.main_window Auto-saved raw profiles to /Users/MacBookPro/Downloads/ShareExtractor-main 2/Sentra.app/Contents/Resources/app_bundle/data/autosave.csv
+16:04:39 INFO app.exporters.csv_exporter Successfully exported 570 contest participants to /Users/MacBookPro/Downloads/ShareExtractor-main 2/Sentra.app/Contents/Resources/app_bundle/data/autosave_contest.csv
+16:04:39 INFO app.gui.main_window Auto-saved contest validation to /Users/MacBookPro/Downloads/ShareExtractor-main 2/Sentra.app/Contents/Resources/app_bundle/data/autosave_contest.csv
+16:04:39 INFO app.gui.main_window Loaded & synced 1062 unique raw records (4 enriched with URLs) across 4 session(s).
+16:04:44 INFO app.exporters.lottery_print_exporter Exported 570 printable lottery tickets to /Users/MacBookPro/Downloads/ShareExtractor-main 2/Sentra.app/Contents/Resources/app_bundle/data/sentra_lottery_tickets_2026-11-05_16-04.html
+16:14:37 INFO app.gui.main_window Started fresh contest session 5d792cad.
+16:14:44 INFO app.gui.main_window Started fresh contest session 60020d23.

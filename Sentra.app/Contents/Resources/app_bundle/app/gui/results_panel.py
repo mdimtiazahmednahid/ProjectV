@@ -1622,6 +1622,7 @@ class ResultsPanel(QWidget):
                 qualified_keys=qualified_keys,
                 evaluations=self._last_evaluations,
                 default_scope=default_scope,
+                filter_config=self.get_advanced_filter_config(),
             ):
                 QDesktopServices.openUrl(QUrl.fromLocalFile(os.path.abspath(path)))
                 QMessageBox.information(
@@ -1629,7 +1630,8 @@ class ResultsPanel(QWidget):
                     "Lottery Tickets Ready",
                     f"Printable Lottery Slips & Judge Verification Sheet opened in your browser!\n\n"
                     f"• Total Participants Embedded: {len(self.participants)} ({len(qualified)} Qualified ✅, {len(self.participants) - len(qualified)} Disqualified/Incomplete ❌)\n"
-                    f"• Use the 'Show:' dropdown at the top of the page to switch between All Participants, Qualified Only, or Disqualified Only.\n\n"
+                    f"• Live Advanced Filtering & Answer Keyword Picker are built right inside the HTML page!\n"
+                    f"• Use 'Cards / Row' (1, 2, 3, or 4), 'Cards / Page', and 'Font Size' at the top of the page to customize layout before printing.\n\n"
                     f"Saved to: {path}"
                 )
             else:

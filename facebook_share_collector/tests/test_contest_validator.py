@@ -115,7 +115,12 @@ def test_printable_lottery_tickets_export():
         assert "setTicketScope(this.value)" in html_text
         assert "setBorderStyle(this.value)" in html_text
         assert "setIdPosition(this.value)" in html_text
+        assert "setIdSize(this.value)" in html_text
         assert "setCommentLines(this.value)" in html_text
+        assert '<div class="profile-row"' in html_text
+        assert "toggleFbLinkCheckbox(this.checked)" in html_text
+        assert "updateCommentAlignments()" in html_text
+        assert "comment-short" in html_text and "comment-long" in html_text
         # 2. Action row stays on a single row (flex-wrap: nowrap; white-space: nowrap) and shows ✅ / ❌ status per action (Reaction · Comment · Share)
         assert "flex-wrap: nowrap" in html_text
         assert '<span class="act-icon">✅ </span>Reaction' in html_text
@@ -1959,6 +1964,85 @@ def test_tecno_usb_and_adb_detection_edge_cases():
     assert parsed[0]["state"] == "device"
     assert parsed[0]["model"] == "TECNO Camon 20 Pro"
     assert parsed[0]["vendor"] == "Tecno"
+
+
+def test_lottery_print_exporter_embedded_advanced_filter_and_layout_controls(tmp_path):
+    """
+    Verifies that `LotteryPrintExporter.export_printable_tickets` embeds:
+      1. Interactive Advanced Filtering & Correct Answer Keyword Picker (`kwF1Text`, `kwF2Text`, `kwF3Text`,
+         `actF1Val`, `matchModeSelect`, `applyLiveFilters()`, and Category Pills).
+      2. Initial filter configuration passed from `AdvancedFilterConfig` (`INITIAL_FILTER_CONFIG`).
+      3. Admin layout controls: Cards per Row (`setColumnsPerRow` for 1, 2, 3, 4 cards/row with bigger card
+         and comment fonts on `body.cols-2` and `body.cols-1`), Cards per Page (`setCardsPerPage` with
+         `.page-break-divider`), and Font Size zoom (`setFontScale`).
+      4. Print stylesheet (`@media print`) that preserves `body.cols-1`, `body.cols-2`, `body.cols-3`, `body.cols-4`.
+    """
+    from app.exporters.lottery_print_exporter import LotteryPrintExporter
+    from app.utils.advanced_filter_engine import AdvancedFilterConfig
+
+    profiles = [
+        ShareProfile(
+            name="Shuvo Kumar Shill",
+            profile_url="https://www.facebook.com/shuvo.shill",
+            source="web",
+            confidence=0.95,
+            session_id="s_html",
+            action_type="like",
+            reactions="Care",
+        ),
+        ShareProfile(
+            name="Shuvo Kumar Shill",
+            profile_url="https://www.facebook.com/shuvo.shill",
+            source="web",
+            confidence=0.95,
+            session_id="s_html",
+            action_type="comment",
+            content="সঠিক : থাই চিনা বাদাম #VejalNai",
+        ),
+        ShareProfile(
+            name="Shuvo Kumar Shill",
+            profile_url="https://www.facebook.com/shuvo.shill",
+            source="web",
+            confidence=0.95,
+            session_id="s_html",
+            action_type="share",
+            content="সঠিক : থাই চিনা বাদাম",
+        ),
+    ]
+    participants = ContestValidator.validate_participants(profiles)
+    cfg = AdvancedFilterConfig(
+        use_keyword_chain=True,
+        kw_f1_enabled=True,
+        kw_f1_text="থাই চিনা বাদাম, বাদাম",
+        match_mode="whole_word",
+    )
+    out_file = tmp_path / "sentra_tickets.html"
+    ok = LotteryPrintExporter.export_printable_tickets(
+        participants,
+        str(out_file),
+        default_scope="qualified",
+        filter_config=cfg,
+    )
+    assert ok is True
+    html_text = out_file.read_text(encoding="utf-8")
+
+    # Verify embedded filter controls & initial config
+    assert "INITIAL_FILTER_CONFIG" in html_text
+    assert "থাই চিনা বাদাম, বাদাম" in html_text
+    assert 'id="kwF1Text"' in html_text
+    assert 'id="colsSelect"' in html_text
+    assert 'id="cardsPerPageSelect"' in html_text
+    assert 'id="fontScaleSelect"' in html_text
+    assert "setColumnsPerRow(this.value)" in html_text
+    assert "setCardsPerPage(this.value)" in html_text
+    assert "setFontScale(this.value)" in html_text
+    assert "setFbLinkMode(this.value)" in html_text
+    assert "body.fb-link-hide .ticket-footer" in html_text
+    assert "body.border-cut-solid .ticket-grid" in html_text
+    assert "body.border-cut-dashed .ticket" in html_text
+    assert "body.cols-2 .comment" in html_text
+    assert "🥰 Care" in html_text
+
 
 
 
