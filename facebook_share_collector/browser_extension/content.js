@@ -2454,11 +2454,28 @@
     for (const item of items) {
       const idKey = (item.url || item.name || "").toLowerCase();
       if (!idKey) continue;
+      const nameLower = (item.name || "").toLowerCase();
+
+      /* If an earlier pass captured this same person without a profile URL (unhydrated), and now we have their hydrated URL, migrate the key in-place! */
+      if (item.url && nameLower) {
+        const unhydratedKey =
+          actionType === "comment" ? `${nameLower}|${item.content}` : nameLower;
+        if (targetMap.has(unhydratedKey) && unhydratedKey !== (actionType === "comment" ? `${idKey}|${item.content}` : idKey)) {
+          const oldRec = targetMap.get(unhydratedKey);
+          if (oldRec && !oldRec.url) {
+            targetMap.delete(unhydratedKey);
+          }
+        }
+      }
+
       if (actionType === "comment" && item.content) {
         const hasNonAscii = /[^\x00-\x7F]/.test(item.content);
         /* If an earlier pass captured an empty comment, a truncated prefix, or an ASCII-only translation for this same author, replace it with the original/expanded comment */
         for (const [existingKey, existingItem] of Array.from(targetMap.entries())) {
-          if (!existingKey.startsWith(`${idKey}|`)) continue;
+          const sameAuthor =
+            existingKey.startsWith(`${idKey}|`) ||
+            (nameLower && (existingItem.name || "").toLowerCase() === nameLower && (!existingItem.url || !item.url || existingItem.url === item.url));
+          if (!sameAuthor) continue;
           const oldContent = (existingItem.content || "").trim();
           if (oldContent === item.content) continue;
           const isReplacingEmpty = !oldContent && item.content.length > 0;
@@ -2519,7 +2536,7 @@
 
   function isScrollableElement(el) {
     if (!el || el === document.body || el === document.documentElement) return false;
-    if (el.scrollHeight <= el.clientHeight + 6 || el.clientHeight < 100 || el.clientWidth < 180) return false;
+    if (el.scrollHeight <= el.clientHeight + 4 || el.clientHeight < 90 || el.clientWidth < 170) return false;
     const st = window.getComputedStyle(el);
     return st.overflowY !== "visible" && st.overflowY !== "hidden";
   }
@@ -2605,6 +2622,14 @@
     return null;
   }
 
+  function dispatchScrollTriggerEvents(el, deltaY = 340) {
+    if (!el) return;
+    try {
+      el.dispatchEvent(new WheelEvent("wheel", { deltaY, bubbles: true, cancelable: true }));
+      el.dispatchEvent(new Event("scroll", { bubbles: true }));
+    } catch (e) {}
+  }
+
   async function smoothHumanScroll(actionType, targetWin) {
     if (!targetWin || !targetWin.root) return false;
     const cfg = SPEED_CONFIGS[speedProfile] || SPEED_CONFIGS.human;
@@ -2625,6 +2650,7 @@
       const startTop = candidate.scrollTop;
       const maxPossibleTop = Math.max(0, candidate.scrollHeight - candidate.clientHeight);
       if (startTop >= maxPossibleTop - 2) {
+        dispatchScrollTriggerEvents(candidate, 360);
         continue;
       }
 
@@ -2633,6 +2659,7 @@
       const perStep = Math.max(12, Math.floor(totalDelta / steps));
 
       candidate.scrollTop = Math.min(maxPossibleTop, candidate.scrollTop + perStep);
+      dispatchScrollTriggerEvents(candidate, perStep);
       if (candidate.scrollTop <= startTop) {
         continue;
       }
@@ -2644,6 +2671,7 @@
         if (!isRunning) break;
         const currMax = Math.max(0, candidate.scrollHeight - candidate.clientHeight);
         candidate.scrollTop = Math.min(currMax, candidate.scrollTop + perStep);
+        dispatchScrollTriggerEvents(candidate, perStep);
         if (i === Math.floor(steps / 2)) {
           if (activeAction === "comment" || activeAction === "share" || actionType === "comment" || actionType === "share") {
             await ensureOriginalCommentsRevealed(targetWin.root);
@@ -2677,19 +2705,18 @@
       }
     }
 
-    /* Fallback for Comments when inner scroll reaches bottom or 'View more comments' is at bottom of list */
-    if (actionType === "comment") {
-      if (autoExpandComments(targetWin.root)) {
+    /* Fallback for Likes, Comments, and Shares when inner scroll reaches bottom or 'View more comments' is at bottom of list */
+    if (actionType === "comment" && autoExpandComments(targetWin.root)) {
+      return true;
+    }
+    if (lastExtractedElements.length > 0) {
+      try {
+        const lastEl = lastExtractedElements[lastExtractedElements.length - 1];
+        lastEl.scrollIntoView({ block: "end", behavior: "smooth" });
+        dispatchScrollTriggerEvents(lockedScrollEl || lastEl.parentElement || targetWin.root, 380);
+        await sleep(350);
         return true;
-      }
-      if (lastExtractedElements.length > 0) {
-        try {
-          const lastEl = lastExtractedElements[lastExtractedElements.length - 1];
-          lastEl.scrollIntoView({ block: "end", behavior: "smooth" });
-          await sleep(350);
-          return true;
-        } catch (e) {}
-      }
+      } catch (e) {}
     }
 
     return false;
@@ -2932,7 +2959,12 @@
           return;
         }
       }
-      stopScraping(`✅ Finished ${activeAction.toUpperCase()}S (${targetMap.size} total)! Click '📋 Copy All Now' if needed.`);
+      /* Final full action sync so 100% of collected items for this step are guaranteed in Sentra */
+      if (targetMap.size > 0) {
+        unsentBatch = [];
+        copyBatchToClipboard(Array.from(targetMap.values()), activeAction);
+      }
+      stopScraping(`✅ Finished ${activeAction.toUpperCase()}S (${targetMap.size} total)! Synced all ${targetMap.size} to Sentra.`);
       return;
     }
 
